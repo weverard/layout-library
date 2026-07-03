@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>45 · Live Filter Search — Layout scaffold</title>
+<!--
+  PATTERN    Live Filter Search
+  NAV MODEL  Search-as-you-type over a list with facet chips; results filter
+             instantly, a count updates, a clear control resets; an empty-state
+             shows when nothing matches.
+  BEST FOR   Directories, catalogs, docs search.
+  REGIONS    .searchbar  ·  .facets (chips)  ·  .results  ·  .count
+  RE-SKIN    --accent = active facet + match highlight; results stack on narrow.
+-->
+<style>
+  :root{
+    --bg:#F5F7FA; --surface:#fff; --ink:#16161a; --muted:#6b6f76; --line:rgba(20,20,26,.1);
+    --accent:#0284C7;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.5}
+
+  .page{max-width:860px;margin:0 auto;padding:48px 24px 80px}
+  .page-head{margin-bottom:32px}
+  .page-head h1{font-size:28px;font-weight:800;letter-spacing:-.025em;margin-bottom:6px}
+  .page-head p{font-size:15px;color:var(--muted)}
+
+  .searchbar{position:relative;margin-bottom:16px}
+  .searchbar input{width:100%;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font-size:16px;font-family:var(--sans);padding:13px 46px 13px 18px;outline:none;transition:border-color .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  .searchbar input:focus{border-color:var(--accent)}
+  .searchbar input::placeholder{color:var(--muted)}
+  .searchbar .sb-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--muted);pointer-events:none}
+  .searchbar input{padding-left:44px}
+  .searchbar .clear-btn{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);appearance:none;background:none;border:0;font-size:18px;cursor:pointer;color:var(--muted);line-height:1;padding:2px}
+  .searchbar .clear-btn:hover{color:var(--ink)}
+  .searchbar .clear-btn.show{display:block}
+
+  .controls{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  .facets{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+  .chip{display:inline-block;appearance:none;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;color:var(--muted);font-size:13px;font-family:var(--sans);padding:5px 13px;cursor:pointer;transition:all .15s;line-height:1.4}
+  .chip:hover{border-color:var(--accent);color:var(--accent)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .count{font-size:13px;color:var(--muted);white-space:nowrap;font-family:var(--mono);flex:0 0 auto}
+
+  .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .result-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;transition:box-shadow .15s,border-color .15s}
+  .result-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.08);border-color:#c5d5e8}
+  .rc-cat{font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .rc-name{font-size:15px;font-weight:700;margin-bottom:4px;line-height:1.3}
+  .rc-desc{font-size:13px;color:var(--muted);line-height:1.5}
+  mark{background:#bae6fd;color:var(--ink);border-radius:2px;padding:0 1px}
+
+  .empty-state{display:none;text-align:center;padding:60px 20px;color:var(--muted)}
+  .empty-state.show{display:block}
+  .empty-state .es-icon{font-size:36px;margin-bottom:12px}
+  .empty-state p{font-size:15px}
+
+  @media(max-width:480px){.controls{flex-direction:column;align-items:flex-start}.results{grid-template-columns:1fr}}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="page-head">
+      <h1>Resource Library</h1>
+      <p>Browse and search articles, guides, and references.</p>
+    </div>
+    <div class="searchbar">
+      <span class="sb-icon">⌕</span>
+      <input type="text" id="query" placeholder="Search resources…" autocomplete="off" />
+      <button class="clear-btn" id="clearBtn" title="Clear search">✕</button>
+    </div>
+    <div class="controls">
+      <div class="facets" id="facets"></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="results" id="results"></div>
+    <div class="empty-state" id="emptyState">
+      <div class="es-icon">○</div>
+      <p>No resources match your filters.</p>
+    </div>
+  </div>
+  <div class="scaffold">45 · filter-search &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var DATA = [
+    { name:'Getting started guide',    cat:'Onboarding', desc:'A step-by-step walkthrough of the core features and initial setup.' },
+    { name:'API authentication',        cat:'Reference',  desc:'How to obtain and rotate API keys and use OAuth 2.0 flows.' },
+    { name:'Webhook configuration',     cat:'Reference',  desc:'Send real-time event payloads to your endpoint when actions occur.' },
+    { name:'Team permissions model',    cat:'Admin',      desc:'Role-based access control and how to manage permissions per project.' },
+    { name:'Import & export data',      cat:'Onboarding', desc:'Bring in CSV or JSON datasets and export results in multiple formats.' },
+    { name:'Rate limits & quotas',      cat:'Reference',  desc:'Default rate limits by plan tier and how to request higher quotas.' },
+    { name:'Dashboard overview',        cat:'Onboarding', desc:'A tour of every panel in the main dashboard and what each metric means.' },
+    { name:'SSO & SAML setup',          cat:'Admin',      desc:'Configure SAML 2.0 identity providers including Okta and Azure AD.' },
+    { name:'Billing & invoices',        cat:'Admin',      desc:'Manage your subscription, download invoices, and update payment details.' },
+    { name:'Search filters cheatsheet', cat:'Reference',  desc:'Every filter operator and syntax example for the query language.' },
+    { name:'Audit log reference',       cat:'Admin',      desc:'Event codes, retention windows, and how to export audit logs to SIEM.' },
+    { name:'Embedding the widget',      cat:'Integrations',desc:'Drop the embed snippet into any page with a single script tag.' },
+    { name:'Slack integration',         cat:'Integrations',desc:'Post notifications to channels and respond to alerts without leaving Slack.' },
+    { name:'Zapier connector',          cat:'Integrations',desc:'Trigger workflows in 5,000+ apps using the official Zapier integration.' },
+    { name:'GraphQL schema explorer',   cat:'Reference',  desc:'Browse every type, field, and resolver in the live schema playground.' },
+    { name:'Custom domain setup',       cat:'Admin',      desc:'Point your own subdomain at the platform and provision a TLS certificate.' },
+    { name:'Localization & i18n',       cat:'Integrations',desc:'Serve the UI in multiple locales and format dates, numbers, and currency.' },
+    { name:'Version history & rollback',cat:'Reference',  desc:'Compare document versions and restore any previous state in one click.' }
+  ];
+
+  var CATS = Array.from(new Set(DATA.map(function(d){ return d.cat; }))).sort();
+  var activeCats = new Set();
+  var queryStr = '';
+
+  var queryEl = document.getElementById('query');
+  var clearBtnEl = document.getElementById('clearBtn');
+  var facetsEl = document.getElementById('facets');
+  var resultsEl = document.getElementById('results');
+  var countEl = document.getElementById('count');
+  var emptyEl = document.getElementById('emptyState');
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function highlight(text, q) {
+    if (!q) return escHtml(text);
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return escHtml(text);
+    return escHtml(text.slice(0, idx)) + '<mark>' + escHtml(text.slice(idx, idx + q.length)) + '</mark>' + escHtml(text.slice(idx + q.length));
+  }
+
+  function getFiltered() {
+    var q = queryStr.toLowerCase();
+    return DATA.filter(function(item) {
+      var matchCat = activeCats.size === 0 || activeCats.has(item.cat);
+      var matchQ = !q || item.name.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q);
+      return matchCat && matchQ;
+    });
+  }
+
+  function render() {
+    var filtered = getFiltered();
+    var total = filtered.length;
+    countEl.textContent = total + ' result' + (total !== 1 ? 's' : '');
+
+    if (total === 0) {
+      resultsEl.innerHTML = '';
+      emptyEl.classList.add('show');
+    } else {
+      emptyEl.classList.remove('show');
+      resultsEl.innerHTML = filtered.map(function(item) {
+        return '<div class="result-card">' +
+          '<div class="rc-cat">' + escHtml(item.cat) + '</div>' +
+          '<div class="rc-name">' + highlight(item.name, queryStr) + '</div>' +
+          '<div class="rc-desc">' + highlight(item.desc, queryStr) + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    clearBtnEl.classList.toggle('show', !!(queryStr || activeCats.size));
+  }
+
+  function renderFacets() {
+    facetsEl.innerHTML = CATS.map(function(cat) {
+      var on = activeCats.has(cat);
+      return '<button class="chip' + (on ? ' on' : '') + '" data-cat="' + escHtml(cat) + '">' + escHtml(cat) + '</button>';
+    }).join('');
+    facetsEl.querySelectorAll('.chip').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        var cat = this.dataset.cat;
+        if (activeCats.has(cat)) { activeCats.delete(cat); } else { activeCats.add(cat); }
+        renderFacets();
+        render();
+      });
+    });
+  }
+
+  queryEl.addEventListener('input', function() {
+    queryStr = this.value;
+    render();
+  });
+
+  clearBtnEl.addEventListener('click', function() {
+    queryStr = '';
+    queryEl.value = '';
+    activeCats.clear();
+    renderFacets();
+    render();
+    queryEl.focus();
+  });
+
+  renderFacets();
+  render();
+})();
+</script>
+</body>
+</html>

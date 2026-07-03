@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>17 · Card-Deck Swipe — Layout scaffold</title>
+<!--
+  PATTERN    Card-Deck Swipe
+  NAV MODEL  A stack of cards; advance by dragging/flicking the top card away or
+             tapping the buttons. The next card rises into focus.
+  BEST FOR   Mobile-first browsing, onboarding, "next / skip" decisions, galleries.
+  REGIONS    .deck (stack)  ·  .card  ·  .controls  ·  progress
+  RE-SKIN    Per-card --tone; CARDS array drives content + order.
+-->
+<style>
+  :root{
+    --bg:#0e0f13; --ink:#ECEDF1; --muted:#9498a4; --line:rgba(255,255,255,.12); --accent:#FF5D8F;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:radial-gradient(120% 100% at 50% 0%,#16181f,#0a0b0e);color:var(--ink);height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  .head{position:fixed;top:26px;text-align:center;width:100%}
+  .head .k{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .progress{display:flex;gap:6px;justify-content:center;margin-top:10px}
+  .progress i{width:22px;height:3px;border-radius:2px;background:var(--line)}
+  .progress i.on{background:var(--accent)}
+
+  .deck{position:relative;width:min(340px,86vw);height:460px}
+  .card{position:absolute;inset:0;border-radius:22px;padding:28px;display:flex;flex-direction:column;justify-content:flex-end;
+    color:var(--c-ink,#15161a);background:var(--c-bg,#fff);box-shadow:0 24px 60px rgba(0,0,0,.45);
+    transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s;cursor:grab;user-select:none;will-change:transform}
+  .card.drag{transition:none;cursor:grabbing}
+  .card .num{position:absolute;top:24px;left:28px;font-family:var(--mono);font-size:13px;opacity:.6}
+  .card .glyph{position:absolute;top:22px;right:26px;font-size:30px;opacity:.5}
+  .card .k{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.7}
+  .card h2{font-size:30px;letter-spacing:-.02em;margin:8px 0 8px;line-height:1.05}
+  .card p{font-size:15px;opacity:.85;line-height:1.5}
+
+  .controls{position:fixed;bottom:34px;display:flex;gap:16px;align-items:center}
+  .controls button{width:54px;height:54px;border-radius:50%;border:1.5px solid var(--line);background:#15171d;color:var(--ink);font-size:20px;cursor:pointer}
+  .controls .skip:hover{border-color:#fff}
+  .controls .like{background:var(--accent);border-color:var(--accent);color:#fff}
+  .hint{position:fixed;bottom:104px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+  .scaffold{position:fixed;right:16px;top:16px;z-index:9;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="head"><p class="k">Deck · swipe through</p><div class="progress" id="progress"></div></div>
+  <div class="deck" id="deck"></div>
+  <div class="hint">drag a card, or use the buttons</div>
+  <div class="controls"><button class="skip" id="skip" title="Skip">↩</button><button class="like" id="next" title="Next">→</button></div>
+  <div class="scaffold">17 · card-deck &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const CARDS=[
+      {bg:"#15161a",ink:"#fff",g:"♠",k:"intro",t:"A deck you flick",d:"Each card is one thing. The top card has all the focus; the rest peek behind it."},
+      {bg:"#FFE08A",g:"♦",k:"why",t:"Tactile + fast",d:"Made for thumbs. Swipe to advance, and the motion does the wayfinding."},
+      {bg:"#FF5D8F",ink:"#fff",g:"♥",k:"use",t:"Decisions",d:"Great for next / skip choices, onboarding steps, or a curated gallery."},
+      {bg:"#1F6F5C",ink:"#EAF4F0",g:"♣",k:"pace",t:"One at a time",d:"Constraint is the feature — the reader can't be overwhelmed by a wall of options."},
+      {bg:"#101216",ink:"#fff",g:"★",k:"end",t:"Loop or land",d:"Run out of cards and either restart the deck or drop into a final call to action."}
+    ];
+    const deck=document.getElementById('deck'),prog=document.getElementById('progress');
+    prog.innerHTML=CARDS.map(()=>'<i></i>').join('');const dots=[...prog.children];
+    let order=CARDS.map((_,i)=>i);
+    function build(){
+      deck.innerHTML='';
+      order.forEach((ci,depth)=>{
+        const c=CARDS[ci];const el=document.createElement('div');el.className='card';el.dataset.depth=depth;
+        el.style.setProperty('--c-bg',c.bg);el.style.setProperty('--c-ink',c.ink||'#15161a');
+        const d=Math.min(depth,3);
+        el.style.transform=`translateY(${d*14}px) scale(${1-d*0.04})`;
+        el.style.zIndex=order.length-depth;el.style.opacity=depth>3?0:1;
+        el.innerHTML=`<span class="num">${String(ci+1).padStart(2,'0')} / ${CARDS.length}</span><span class="glyph">${c.g}</span><p class="k">${c.k}</p><h2>${c.t}</h2><p>${c.d}</p>`;
+        deck.appendChild(el);
+      });
+      dots.forEach((d,i)=>d.classList.toggle('on',i===order[0]));
+      bindTop();
+    }
+    function advance(dir){
+      const front=deck.querySelector('.card[data-depth="0"]');if(!front)return;
+      front.style.transform=`translateX(${dir*460}px) rotate(${dir*16}deg)`;front.style.opacity=0;
+      setTimeout(()=>{order.push(order.shift());build();},320);
+    }
+    function bindTop(){
+      const front=deck.querySelector('.card[data-depth="0"]');if(!front)return;
+      let sx=0,dx=0,down=false;
+      front.addEventListener('pointerdown',e=>{down=true;sx=e.clientX;front.classList.add('drag');front.setPointerCapture(e.pointerId);});
+      front.addEventListener('pointermove',e=>{if(!down)return;dx=e.clientX-sx;front.style.transform=`translateX(${dx}px) rotate(${dx*0.04}deg)`;});
+      front.addEventListener('pointerup',()=>{down=false;front.classList.remove('drag');if(Math.abs(dx)>110){advance(dx>0?1:-1);}else{front.style.transform='translateY(0) scale(1)';}dx=0;});
+    }
+    document.getElementById('next').onclick=()=>advance(1);
+    document.getElementById('skip').onclick=()=>advance(-1);
+    build();
+  </script>
+</body>
+</html>

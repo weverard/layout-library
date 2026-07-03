@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>54 · Multi-Agent Handoff — Layout scaffold</title>
+<!--
+  PATTERN    Multi-Agent Handoff
+  NAV MODEL  One commerce conversation that passes between SPECIALIST agents
+             (Shopper → Payments → Fulfilment). A top indicator row shows
+             the agents with the ACTIVE one highlighted; messages are
+             labelled/coloured by which agent is speaking; visible "handoff"
+             dividers mark control passing. Advance the scenario with a
+             Continue button or quick-reply chips.
+  BEST FOR   Agent orchestration, workflow handoffs, multi-agent system demos.
+  REGIONS    .agents-bar (agent chips, .active) · .thread (.msg tagged by
+             agent) · .handoff (divider) · .controls (Continue / quick-replies)
+  RE-SKIN    --accent = active agent + handoff accents; each agent has its own
+             tint; stacks on screens below 600px.
+-->
+<style>
+  :root {
+    --bg: #F6F5F3;
+    --surface: #ffffff;
+    --ink: #141417;
+    --muted: #72737c;
+    --line: rgba(20,20,23,.10);
+    --accent: #F43F5E;
+
+    /* agent colour palette */
+    --agent-shopper: #F43F5E;
+    --agent-shopper-bg: #fff1f3;
+    --agent-payments: #7C3AED;
+    --agent-payments-bg: #f5f3ff;
+    --agent-fulfil: #0284C7;
+    --agent-fulfil-bg: #f0f9ff;
+
+    --user-bg: #1a1a1f;
+    --user-ink: #f0f0ee;
+
+    --sans: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono: ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  /* shell */
+  .shell {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* masthead */
+  .masthead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .masthead .logo {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    background: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px; flex-shrink: 0;
+  }
+  .masthead .name { font-weight: 700; font-size: 15px; }
+  .masthead .tag { font-size: 12px; color: var(--muted); }
+
+  /* agents bar */
+  .agents-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .agent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    padding: 7px 14px 7px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--surface);
+    color: var(--muted);
+    transition: border-color .2s, color .2s, background .2s, box-shadow .2s;
+    cursor: default;
+    user-select: none;
+  }
+  .agent-chip .chip-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    background: var(--line);
+    color: var(--muted);
+    transition: background .2s, color .2s;
+  }
+  .agent-chip[data-agent="shopper"] .chip-avatar { background: var(--agent-shopper-bg); color: var(--agent-shopper); }
+  .agent-chip[data-agent="payments"] .chip-avatar { background: var(--agent-payments-bg); color: var(--agent-payments); }
+  .agent-chip[data-agent="fulfil"] .chip-avatar { background: var(--agent-fulfil-bg); color: var(--agent-fulfil); }
+
+  .agent-chip.active {
+    border-color: transparent;
+    color: var(--ink);
+    box-shadow: 0 2px 8px rgba(0,0,0,.10);
+  }
+  .agent-chip[data-agent="shopper"].active { background: var(--agent-shopper); color: #fff; border-color: transparent; }
+  .agent-chip[data-agent="shopper"].active .chip-avatar { background: rgba(255,255,255,.25); color: #fff; }
+  .agent-chip[data-agent="payments"].active { background: var(--agent-payments); color: #fff; border-color: transparent; }
+  .agent-chip[data-agent="payments"].active .chip-avatar { background: rgba(255,255,255,.25); color: #fff; }
+  .agent-chip[data-agent="fulfil"].active { background: var(--agent-fulfil); color: #fff; border-color: transparent; }
+  .agent-chip[data-agent="fulfil"].active .chip-avatar { background: rgba(255,255,255,.25); color: #fff; }
+
+  .connector {
+    display: flex;
+    align-items: center;
+    color: var(--line);
+    font-size: 16px;
+    padding: 0 2px;
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  /* thread */
+  .thread {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 200px;
+  }
+
+  /* messages */
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    animation: msgIn .25s ease;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+  }
+  .msg.user .msg-row { flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    align-self: flex-end;
+  }
+  .msg[data-agent="shopper"] .msg-avatar { background: var(--agent-shopper-bg); color: var(--agent-shopper); }
+  .msg[data-agent="payments"] .msg-avatar { background: var(--agent-payments-bg); color: var(--agent-payments); }
+  .msg[data-agent="fulfil"] .msg-avatar { background: var(--agent-fulfil-bg); color: var(--agent-fulfil); }
+
+  .msg-body { display: flex; flex-direction: column; gap: 2px; max-width: 74%; }
+  .msg.user .msg-body { align-items: flex-end; }
+
+  .msg-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: .04em;
+    margin-bottom: 2px;
+    padding-left: 2px;
+  }
+  .msg[data-agent="shopper"] .msg-label { color: var(--agent-shopper); }
+  .msg[data-agent="payments"] .msg-label { color: var(--agent-payments); }
+  .msg[data-agent="fulfil"] .msg-label { color: var(--agent-fulfil); }
+  .msg.user .msg-label { color: var(--muted); text-align: right; padding-right: 2px; }
+
+  .bubble {
+    border-radius: 16px;
+    padding: 11px 15px;
+    font-size: 14px;
+    line-height: 1.55;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .msg[data-agent="shopper"] .bubble { border-color: rgba(244,63,94,.18); background: var(--agent-shopper-bg); }
+  .msg[data-agent="payments"] .bubble { border-color: rgba(124,58,237,.18); background: var(--agent-payments-bg); }
+  .msg[data-agent="fulfil"]   .bubble { border-color: rgba(2,132,199,.18); background: var(--agent-fulfil-bg); }
+  .msg.user .bubble { background: var(--user-bg); color: var(--user-ink); border-color: transparent; }
+
+  /* handoff divider */
+  .handoff {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0;
+    animation: msgIn .3s ease;
+  }
+  .handoff::before, .handoff::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .handoff-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    white-space: nowrap;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    letter-spacing: .02em;
+  }
+  .handoff-label .from { opacity: .7; }
+  .handoff-label .arrow { color: var(--accent); margin: 0 3px; }
+  .handoff-label .to { font-weight: 600; }
+
+  /* controls */
+  .controls {
+    margin-top: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .quick-chip {
+    display: inline-block;
+    font-size: 13px;
+    font-family: var(--sans);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 14px;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    appearance: none;
+    transition: border-color .15s, background .15s;
+  }
+  .quick-chip:hover { border-color: var(--accent); background: #fff5f6; }
+  .btn-continue {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    padding: 11px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--sans);
+    cursor: pointer;
+    appearance: none;
+    transition: opacity .15s, transform .1s;
+    align-self: flex-start;
+  }
+  .btn-continue:hover { opacity: .9; }
+  .btn-continue:active { transform: scale(.97); }
+  .btn-restart {
+    display: inline-flex;
+    align-items: center;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-family: var(--sans);
+    color: var(--muted);
+    cursor: pointer;
+    appearance: none;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-restart:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    .agents-bar { gap: 6px; }
+    .connector { display: none; }
+    .msg-body { max-width: 84%; }
+  }
+
+  /* scaffold badge */
+  .scaffold {
+    position: fixed; right: 16px; bottom: 16px; z-index: 9;
+    background: #000; color: #fff;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .scaffold a { color: #fff; opacity: .6; }
+  .scaffold a:hover { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="masthead">
+    <div class="logo">◈</div>
+    <span class="name">Meridian Commerce</span>
+    <span class="tag">· Multi-agent session</span>
+  </div>
+
+  <!-- agents bar -->
+  <div class="agents-bar" id="agents-bar">
+    <div class="agent-chip active" data-agent="shopper">
+      <span class="chip-avatar">🛍</span>Shopper
+    </div>
+    <span class="connector">→</span>
+    <div class="agent-chip" data-agent="payments">
+      <span class="chip-avatar">💳</span>Payments
+    </div>
+    <span class="connector">→</span>
+    <div class="agent-chip" data-agent="fulfil">
+      <span class="chip-avatar">📦</span>Fulfilment
+    </div>
+  </div>
+
+  <!-- message thread -->
+  <div class="thread" id="thread"></div>
+
+  <!-- controls -->
+  <div class="controls" id="controls">
+    <div class="chips" id="quick-chips"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn-continue" id="btn-continue">Continue →</button>
+      <button class="btn-restart" id="btn-restart" style="display:none">↺ Restart</button>
+    </div>
+  </div>
+</div>
+
+<div class="scaffold">54 · agent-handoff &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function () {
+
+  /* ── scenario script ── */
+  /* Each step: { type, agent, label, avatar, text } or type:'handoff' or type:'user' */
+  var SCRIPT = [
+    {
+      type: 'user',
+      text: 'I\'d like to order the TrailGuard Pro GTX, size 10, in slate grey.'
+    },
+    {
+      type: 'msg',
+      agent: 'shopper',
+      label: 'SHOPPER',
+      avatar: '🛍',
+      text: 'Great choice! I found the TrailGuard Pro GTX in slate grey, size 10 — currently in stock at $128. Checking payment eligibility…'
+    },
+    {
+      type: 'msg',
+      agent: 'shopper',
+      label: 'SHOPPER',
+      avatar: '🛍',
+      text: 'Item confirmed. I\'ll hand this off to the Payments agent to process your order.'
+    },
+    {
+      type: 'handoff',
+      from: 'Shopper',
+      to: 'Payments',
+      activeAgent: 'payments'
+    },
+    {
+      type: 'msg',
+      agent: 'payments',
+      label: 'PAYMENTS',
+      avatar: '💳',
+      text: 'Hi! I\'m handling payment for your order. I see a saved card on file ending in 4821. Shall I charge $128.00 to that card?'
+    },
+    {
+      type: 'user',
+      text: 'Yes, use the card on file.'
+    },
+    {
+      type: 'msg',
+      agent: 'payments',
+      label: 'PAYMENTS',
+      avatar: '💳',
+      text: 'Payment authorised ✓ — $128.00 charged to card ending 4821. Order ID: MRD-90142. Passing to Fulfilment to arrange delivery.'
+    },
+    {
+      type: 'handoff',
+      from: 'Payments',
+      to: 'Fulfilment',
+      activeAgent: 'fulfil'
+    },
+    {
+      type: 'msg',
+      agent: 'fulfil',
+      label: 'FULFILMENT',
+      avatar: '📦',
+      text: 'Order MRD-90142 received. The TrailGuard Pro GTX (slate grey, UK 10) is being picked from Warehouse West. Estimated dispatch: today before 4 pm.'
+    },
+    {
+      type: 'msg',
+      agent: 'fulfil',
+      label: 'FULFILMENT',
+      avatar: '📦',
+      text: 'You\'ll receive a shipping confirmation and tracking link by email within the hour. Estimated delivery: 2–3 business days. Is there anything else you need?'
+    }
+  ];
+
+  /* quick-reply chips shown after a user message at the given SCRIPT index */
+  /* key = the SCRIPT index of the user-type step that just rendered */
+  var CHIPS = {
+    0: ['TrailGuard Pro GTX, size 10 — slate grey', 'Show me alternatives'],
+    5: ['Yes, use the card on file', 'Use a different card']
+  };
+
+  /* ── state ── */
+  var stepIdx = 0;
+  var activeAgent = 'shopper';
+
+  /* ── dom refs ── */
+  var thread      = document.getElementById('thread');
+  var btnContinue = document.getElementById('btn-continue');
+  var btnRestart  = document.getElementById('btn-restart');
+  var quickChips  = document.getElementById('quick-chips');
+
+  /* ── agent bar chips ── */
+  function setActiveAgent(agentKey) {
+    activeAgent = agentKey;
+    var chips = document.querySelectorAll('.agent-chip');
+    chips.forEach(function (chip) {
+      chip.classList.toggle('active', chip.getAttribute('data-agent') === agentKey);
+    });
+  }
+
+  /* ── render helpers ── */
+  function appendMsg(agent, label, avatar, text) {
+    var div = document.createElement('div');
+    div.className = 'msg';
+    div.setAttribute('data-agent', agent);
+
+    var row = document.createElement('div');
+    row.className = 'msg-row';
+
+    var av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.textContent = avatar;
+
+    var body = document.createElement('div');
+    body.className = 'msg-body';
+
+    var labelEl = document.createElement('div');
+    labelEl.className = 'msg-label';
+    labelEl.textContent = label;
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+
+    body.appendChild(labelEl);
+    body.appendChild(bubble);
+    row.appendChild(av);
+    row.appendChild(body);
+    div.appendChild(row);
+    thread.appendChild(div);
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  function appendUserMsg(text) {
+    var div = document.createElement('div');
+    div.className = 'msg user';
+
+    var row = document.createElement('div');
+    row.className = 'msg-row';
+
+    var av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.textContent = '👤';
+    av.style.background = '#2a2a32';
+
+    var body = document.createElement('div');
+    body.className = 'msg-body';
+
+    var labelEl = document.createElement('div');
+    labelEl.className = 'msg-label';
+    labelEl.textContent = 'YOU';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+
+    body.appendChild(labelEl);
+    body.appendChild(bubble);
+    row.appendChild(av);
+    row.appendChild(body);
+    div.appendChild(row);
+    thread.appendChild(div);
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  function appendHandoff(from, to) {
+    var div = document.createElement('div');
+    div.className = 'handoff';
+    var label = document.createElement('div');
+    label.className = 'handoff-label';
+    label.innerHTML = '<span class="from">' + from + '</span>' +
+      '<span class="arrow">→</span>' +
+      '<span class="to">' + to + ' agent</span>';
+    div.appendChild(label);
+    thread.appendChild(div);
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  /* ── quick chips ── */
+  function renderChips(idx) {
+    var options = CHIPS[idx];
+    if (!options || options.length === 0) {
+      quickChips.innerHTML = '';
+      return;
+    }
+    quickChips.innerHTML = '';
+    options.forEach(function (text) {
+      var btn = document.createElement('button');
+      btn.className = 'quick-chip';
+      btn.textContent = text;
+      btn.addEventListener('click', function () {
+        /* chip acts as a labelled Continue — just advances */
+        quickChips.innerHTML = '';
+        advance();
+      });
+      quickChips.appendChild(btn);
+    });
+  }
+
+  /* ── advance ── */
+  function advance() {
+    /* clear chips on each advance unless we pause for a chip */
+    quickChips.innerHTML = '';
+
+    while (stepIdx < SCRIPT.length) {
+      var step = SCRIPT[stepIdx];
+      stepIdx++;
+
+      if (step.type === 'user') {
+        appendUserMsg(step.text);
+        /* after a user message, check if we show chips or continue */
+        renderChips(stepIdx - 1);
+        if (CHIPS[stepIdx - 1]) {
+          /* stop here — user needs to pick a chip (or click continue) */
+          break;
+        }
+        continue;
+      }
+
+      if (step.type === 'handoff') {
+        appendHandoff(step.from, step.to);
+        setActiveAgent(step.activeAgent);
+        /* show chips for next step if applicable */
+        renderChips(stepIdx);
+        break;
+      }
+
+      if (step.type === 'msg') {
+        appendMsg(step.agent, step.label, step.avatar, step.text);
+        break; /* reveal one message at a time */
+      }
+    }
+
+    /* end of script */
+    if (stepIdx >= SCRIPT.length) {
+      btnContinue.style.display = 'none';
+      btnRestart.style.display = '';
+      quickChips.innerHTML = '';
+    }
+  }
+
+  /* ── reset ── */
+  function restart() {
+    stepIdx = 0;
+    activeAgent = 'shopper';
+    thread.innerHTML = '';
+    quickChips.innerHTML = '';
+    setActiveAgent('shopper');
+    btnContinue.style.display = '';
+    btnRestart.style.display = 'none';
+  }
+
+  /* ── wire up ── */
+  btnContinue.addEventListener('click', function () {
+    quickChips.innerHTML = '';
+    advance();
+  });
+
+  btnRestart.addEventListener('click', function () {
+    restart();
+  });
+
+  /* seed the first step on load */
+  advance();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>28 · Arrow Rooms — Layout scaffold</title>
+<!--
+  PATTERN    Arrow Rooms (2D world)
+  NAV MODEL  Sections are "rooms" on a 2D grid. Arrow keys / on-screen D-pad walk
+              the viewport between adjacent rooms; a minimap shows where you are.
+  BEST FOR   Playful portfolios, game-like sites, exploratory storytelling.
+  REGIONS    .world (translated grid)  ·  .room (100vw×100vh)  ·  minimap + dpad
+  RE-SKIN    Per-room --tone; GRID dims set the world size.
+-->
+<style>
+  :root{--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);height:100vh;overflow:hidden;background:#000;-webkit-font-smoothing:antialiased}
+
+  .viewport{position:fixed;inset:0;overflow:hidden}
+  .world{display:grid;grid-template-columns:repeat(3,100vw);grid-auto-rows:100vh;transition:transform .55s cubic-bezier(.5,0,.2,1)}
+  .room{width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 10vw;color:var(--r-ink,#fff);background:var(--r-bg)}
+  .room .co{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+  .room h2{font-size:clamp(38px,6vw,76px);line-height:1;letter-spacing:-.03em;font-weight:800;margin:14px 0;max-width:15ch}
+  .room p{font-size:clamp(16px,1.7vw,21px);max-width:40ch;opacity:.85;line-height:1.45}
+
+  .minimap{position:fixed;left:24px;top:24px;z-index:30;display:grid;grid-template-columns:repeat(3,16px);gap:5px;padding:10px;background:rgba(20,20,24,.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.16);border-radius:12px}
+  .minimap i{width:16px;height:16px;border-radius:4px;background:rgba(255,255,255,.2)}
+  .minimap i.on{background:#fff}
+
+  .dpad{position:fixed;right:24px;bottom:24px;z-index:30;display:grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:5px}
+  .dpad button{border:1px solid rgba(255,255,255,.2);background:rgba(20,20,24,.6);backdrop-filter:blur(8px);color:#fff;border-radius:9px;font-size:15px;cursor:pointer}
+  .dpad button:hover:not(:disabled){background:rgba(255,255,255,.14)}
+  .dpad button:disabled{opacity:.2;cursor:default}
+  .dpad .u{grid-area:1/2}.dpad .l{grid-area:2/1}.dpad .r{grid-area:2/3}.dpad .d{grid-area:3/2}
+  .hint{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:30;font-family:var(--mono);font-size:12px;color:#fff;mix-blend-mode:difference}
+
+  .scaffold{position:fixed;left:24px;bottom:24px;z-index:30;background:#fff;color:#000;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#000;opacity:.55}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="viewport"><div class="world" id="world">
+    <section class="room" style="--r-bg:#101319"><span class="co">A1 · entrance</span><h2>Walk the rooms.</h2><p>Use the arrow keys or the D-pad. The viewport slides to the next room like stepping through a doorway.</p></section>
+    <section class="room" style="--r-bg:#1F6F5C"><span class="co">B1 · hall</span><h2>Move right →</h2><p>The world is a 3×3 grid. You're navigating space, not a list.</p></section>
+    <section class="room" style="--r-bg:#243B6B"><span class="co">C1 · gallery</span><h2>Corners exist.</h2><p>Go down from here to find the next row.</p></section>
+    <section class="room" style="--r-bg:#7B2D3B"><span class="co">A2 · study</span><h2>Spatial memory.</h2><p>People remember "it was bottom-left," not "page 7."</p></section>
+    <section class="room" style="--r-bg:#3B2F6B"><span class="co">B2 · centre</span><h2>The heart.</h2><p>The minimap (top-left) lights the room you're in.</p></section>
+    <section class="room" style="--r-bg:#0E5566"><span class="co">C2 · annex</span><h2>Keep exploring.</h2><p>Edges disable the D-pad so you can't walk into a wall.</p></section>
+    <section class="room" style="--r-bg:#6B4A1F"><span class="co">A3 · cellar</span><h2>Bottom-left.</h2><p>Every cell can hold its own scene, color, and mood.</p></section>
+    <section class="room" style="--r-bg:#14463A"><span class="co">B3 · vault</span><h2>Almost there.</h2><p>One more room to the right.</p></section>
+    <section class="room" style="--r-bg:#101319"><span class="co">C3 · exit</span><h2>You made it.</h2><p>End the tour in the far corner — or wander back.</p></section>
+  </div></div>
+
+  <div class="minimap" id="minimap"></div>
+  <div class="dpad">
+    <button class="u" data-dx="0" data-dy="-1">▲</button>
+    <button class="l" data-dx="-1" data-dy="0">◀</button>
+    <button class="r" data-dx="1" data-dy="0">▶</button>
+    <button class="d" data-dx="0" data-dy="1">▼</button>
+  </div>
+  <div class="hint">arrow keys to move</div>
+  <div class="scaffold">28 · rooms &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const COLS=3,ROWS=3;let cx=0,cy=0;
+    const world=document.getElementById('world');
+    const minimap=document.getElementById('minimap');
+    for(let i=0;i<COLS*ROWS;i++){const i2=document.createElement('i');minimap.appendChild(i2);}
+    const cells=[...minimap.children];
+    const dbtns=[...document.querySelectorAll('.dpad button')];
+    function update(){
+      world.style.transform=`translate(${-cx*100}vw,${-cy*100}vh)`;
+      cells.forEach((c,i)=>c.classList.toggle('on',i===cy*COLS+cx));
+      dbtns.forEach(b=>{const nx=cx+ +b.dataset.dx,ny=cy+ +b.dataset.dy;b.disabled=nx<0||nx>=COLS||ny<0||ny>=ROWS;});
+    }
+    function move(dx,dy){const nx=cx+dx,ny=cy+dy;if(nx<0||nx>=COLS||ny<0||ny>=ROWS)return;cx=nx;cy=ny;update();}
+    addEventListener('keydown',e=>{const k={ArrowRight:[1,0],ArrowLeft:[-1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(k){e.preventDefault();move(k[0],k[1]);}});
+    document.querySelector('.dpad').addEventListener('click',e=>{const b=e.target.closest('button');if(b)move(+b.dataset.dx,+b.dataset.dy);});
+    update();
+  </script>
+</body>
+</html>

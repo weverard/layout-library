@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>47 · Kanban Board — Layout scaffold</title>
+<!--
+  PATTERN    Kanban Board
+  NAV MODEL  Columns (To-do / Doing / Done) of cards; drag a card across columns
+              to move it between stages; per-column counts update.
+  BEST FOR   Task tracking, pipelines, triage.
+  REGIONS    .board  ·  .column (.col-head with count)  ·  .card (draggable).
+  RE-SKIN    --accent = column headers / drag affordance; columns scroll
+              horizontally under ~720px.
+-->
+<style>
+  :root{
+    --bg:#F4F4F2;--surface:#fff;--ink:#16161a;--muted:#6b6f76;--line:rgba(20,20,26,.12);
+    --accent:#EA580C;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:42px 24px 80px}
+  .masthead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px}
+  .masthead .brand{font-weight:700;font-size:18px}
+  .masthead .sub{font-size:13px;color:var(--muted)}
+
+  /* Board */
+  .board{display:flex;gap:16px;align-items:flex-start}
+
+  /* Column */
+  .column{flex:1;min-width:260px;background:rgba(20,20,26,.04);border-radius:14px;padding:14px 12px}
+  .col-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:0 2px}
+  .col-head h2{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .col-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:999px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;font-family:var(--mono);padding:0 6px}
+  .col-cards{display:flex;flex-direction:column;gap:10px;min-height:48px}
+
+  /* Drop target highlight */
+  .column.drag-over .col-cards{background:rgba(234,88,12,.06);border-radius:8px;outline:2px dashed rgba(234,88,12,.35);outline-offset:4px}
+
+  /* Card */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px;cursor:grab;user-select:none;transition:box-shadow .15s,border-color .15s,opacity .15s}
+  .card:hover{box-shadow:0 6px 18px rgba(0,0,0,.08);border-color:#d0d0d8}
+  .card.dragging{opacity:.4;cursor:grabbing;box-shadow:0 12px 32px rgba(0,0,0,.18)}
+  .card-title{font-size:14px;font-weight:600;line-height:1.35}
+  .card-meta{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .tag{display:inline-block;font-size:11px;font-weight:500;border-radius:5px;padding:2px 7px;background:rgba(20,20,26,.07);color:var(--muted)}
+  .tag.accent{background:rgba(234,88,12,.12);color:var(--accent)}
+  .card-who{font-size:11px;color:var(--muted);margin-left:auto;font-family:var(--mono)}
+
+  @media(max-width:720px){
+    .board{overflow-x:auto;padding-bottom:12px}
+    .column{flex:0 0 270px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="masthead">
+      <span class="brand">◇ Project Board</span>
+      <span class="sub">Q3 Cycle</span>
+    </div>
+    <div class="board">
+
+      <div class="column" data-col="todo">
+        <div class="col-head">
+          <h2>To-do</h2>
+          <span class="col-count">4</span>
+        </div>
+        <div class="col-cards">
+          <div class="card" draggable="true">
+            <div class="card-title">Audit navigation labels</div>
+            <div class="card-meta"><span class="tag">Research</span><span class="card-who">AK</span></div>
+          </div>
+          <div class="card" draggable="true">
+            <div class="card-title">Define colour token set</div>
+            <div class="card-meta"><span class="tag accent">Design</span><span class="card-who">MB</span></div>
+          </div>
+          <div class="card" draggable="true">
+            <div class="card-title">Write onboarding copy for empty states</div>
+            <div class="card-meta"><span class="tag">Content</span><span class="card-who">LW</span></div>
+          </div>
+          <div class="card" draggable="true">
+            <div class="card-title">Set up CI pipeline for staging</div>
+            <div class="card-meta"><span class="tag">Infra</span><span class="card-who">PS</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="column" data-col="doing">
+        <div class="col-head">
+          <h2>Doing</h2>
+          <span class="col-count">3</span>
+        </div>
+        <div class="col-cards">
+          <div class="card" draggable="true">
+            <div class="card-title">Redesign settings page layout</div>
+            <div class="card-meta"><span class="tag accent">Design</span><span class="card-who">MB</span></div>
+          </div>
+          <div class="card" draggable="true">
+            <div class="card-title">API rate-limit handling</div>
+            <div class="card-meta"><span class="tag">Backend</span><span class="card-who">PS</span></div>
+          </div>
+          <div class="card" draggable="true">
+            <div class="card-title">User interview synthesis — round 2</div>
+            <div class="card-meta"><span class="tag">Research</span><span class="card-who">AK</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="column" data-col="done">
+        <div class="col-head">
+          <h2>Done</h2>
+          <span class="col-count">3</span>
+        </div>
+        <div class="col-cards">
+          <div class="card" draggable="true">
+            <div class="card-title">Kick-off presentation deck</div>
+            <div class="card-meta"><span class="tag">Planning</span><span class="card-who">LW</span></div>
+          </div>
+          <div class="card" draggable="true">
+            <div class="card-title">Database schema v1 approved</div>
+            <div class="card-meta"><span class="tag">Infra</span><span class="card-who">PS</span></div>
+          </div>
+          <div class="card" draggable="true">
+            <div class="card-title">Competitive landscape map</div>
+            <div class="card-meta"><span class="tag">Research</span><span class="card-who">AK</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="scaffold">47 · kanban &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var dragging = null;
+  var srcCol = null;
+
+  function countCards(col){
+    return col.querySelector('.col-cards').querySelectorAll('.card').length;
+  }
+  function updateCount(col){
+    col.querySelector('.col-count').textContent = countCards(col);
+  }
+
+  document.querySelectorAll('.card').forEach(function(card){
+    card.addEventListener('dragstart', function(e){
+      dragging = card;
+      srcCol = card.closest('.column');
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', function(){
+      if(dragging) dragging.classList.remove('dragging');
+      dragging = null;
+      srcCol = null;
+      document.querySelectorAll('.column').forEach(function(c){
+        c.classList.remove('drag-over');
+      });
+    });
+  });
+
+  document.querySelectorAll('.column').forEach(function(col){
+    col.addEventListener('dragover', function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', function(e){
+      if(!col.contains(e.relatedTarget)){
+        col.classList.remove('drag-over');
+      }
+    });
+    col.addEventListener('drop', function(e){
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      if(!dragging) return;
+      var dest = col.querySelector('.col-cards');
+      var placeholder = getDragAfterElement(dest, e.clientY);
+      if(placeholder){
+        dest.insertBefore(dragging, placeholder);
+      } else {
+        dest.appendChild(dragging);
+      }
+      if(srcCol && srcCol !== col){
+        updateCount(srcCol);
+        updateCount(col);
+      }
+    });
+  });
+
+  function getDragAfterElement(container, y){
+    var cards = Array.from(container.querySelectorAll('.card:not(.dragging)'));
+    return cards.reduce(function(closest, child){
+      var box = child.getBoundingClientRect();
+      var offset = y - box.top - box.height / 2;
+      if(offset < 0 && offset > closest.offset){
+        return {offset: offset, el: child};
+      }
+      return closest;
+    }, {offset: -Infinity, el: null}).el;
+  }
+})();
+</script>
+</body>
+</html>

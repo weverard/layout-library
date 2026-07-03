@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>42 · Notebook / REPL Cells — Layout scaffold</title>
+<!--
+  PATTERN    Notebook / REPL Cells
+  NAV MODEL  Jupyter-style cells; type into a cell and run it (⇧⏎ or a ▶ button)
+             to render mock output below; add and clear cells.
+  BEST FOR   Data tools, runnable docs, tutorials.
+  REGIONS    .nb  ·  .cell (.in editor / .out output)  ·  .toolbar
+  RE-SKIN    --accent = run button + active-cell bar; cells stack full-width.
+             Breakpoint: toolbar wraps below 480px.
+-->
+<style>
+  :root{
+    --bg:#0f1117; --surface:#1a1d27; --ink:#E8EAF0; --muted:#7a7f8e; --line:rgba(255,255,255,.1);
+    --accent:#EA580C;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+  .nb-header{border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:14px}
+  .nb-header .title{font-weight:700;font-size:15px}
+  .nb-header .subtitle{font-size:13px;color:var(--muted)}
+  .nb-header .toolbar-right{margin-left:auto;display:flex;gap:8px}
+  .tb-btn{display:inline-block;appearance:none;background:var(--surface);border:1px solid var(--line);border-radius:7px;color:var(--ink);font-size:12px;font-family:var(--mono);padding:6px 12px;cursor:pointer;transition:border-color .15s}
+  .tb-btn:hover{border-color:var(--accent)}
+  .tb-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .tb-btn.primary:hover{opacity:.88}
+
+  .nb{max-width:820px;margin:0 auto;padding:28px 20px 80px}
+
+  .cell{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px;transition:border-color .18s}
+  .cell.active{border-color:var(--accent)}
+  .cell-in{display:flex;align-items:flex-start;gap:0}
+  .cell-gutter{width:52px;flex:0 0 52px;padding:10px 8px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted);user-select:none;border-right:1px solid var(--line);background:rgba(0,0,0,.15);min-height:42px}
+  .cell-gutter .counter{color:var(--accent)}
+  .cell-editor{flex:1;position:relative}
+  .cell-editor textarea{width:100%;background:transparent;border:0;color:var(--ink);font-size:14px;font-family:var(--mono);padding:10px 14px;outline:none;resize:none;min-height:42px;line-height:1.6;display:block}
+  .cell-editor textarea::placeholder{color:var(--muted)}
+  .cell-run{display:block;appearance:none;background:none;border:0;padding:0;cursor:pointer;position:absolute;right:10px;top:8px;font-size:15px;color:var(--muted);transition:color .15s;line-height:1}
+  .cell-run:hover{color:var(--accent)}
+
+  .cell-out{border-top:1px solid var(--line);background:rgba(0,0,0,.2);padding:10px 14px 10px 66px;font-family:var(--mono);font-size:13px;color:#9de1b4;white-space:pre-wrap;line-height:1.6;display:none}
+  .cell-out.show{display:block}
+  .cell-out.error{color:#f87171}
+  .cell-out table{border-collapse:collapse;font-size:12px;color:var(--ink)}
+  .cell-out table th{background:rgba(255,255,255,.06);padding:4px 10px;border:1px solid var(--line);font-weight:600}
+  .cell-out table td{padding:4px 10px;border:1px solid var(--line)}
+
+  .add-cell{display:block;appearance:none;background:none;border:1.5px dashed var(--line);border-radius:12px;width:100%;padding:12px;font-family:var(--mono);font-size:13px;color:var(--muted);cursor:pointer;text-align:center;transition:border-color .15s,color .15s;margin-top:4px}
+  .add-cell:hover{border-color:var(--accent);color:var(--accent)}
+
+  @media(max-width:480px){.nb-header{flex-wrap:wrap}.nb-header .toolbar-right{width:100%;justify-content:flex-end}}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="nb-header">
+    <div>
+      <div class="title">Untitled Notebook</div>
+      <div class="subtitle">⇧⏎ to run · + to add cell</div>
+    </div>
+    <div class="toolbar-right">
+      <button class="tb-btn" id="btnClearAll">Clear all outputs</button>
+      <button class="tb-btn primary" id="btnAddCell">+ Add cell</button>
+    </div>
+  </div>
+  <div class="nb" id="nb"></div>
+  <div class="scaffold">42 · notebook-cells &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var cells = [];
+  var execCount = 0;
+  var nbEl = document.getElementById('nb');
+
+  var SEEDS = [
+    'revenue = [120, 145, 132, 178, 203]\nprint(revenue)',
+    'a = 14\nb = 28\nprint(a + b)',
+    '# Load sample data\ndf.head()'
+  ];
+
+  function autoHeight(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = Math.max(42, ta.scrollHeight) + 'px';
+  }
+
+  function mockEval(code) {
+    code = code.trim();
+    if (!code) return { type: 'empty' };
+
+    // arithmetic: single expression like a + b or 3 * 7
+    var arith = code.match(/^(\d+(?:\.\d+)?)\s*([\+\-\*\/])\s*(\d+(?:\.\d+)?)$/);
+    if (arith) {
+      var a = parseFloat(arith[1]), op = arith[2], b = parseFloat(arith[3]);
+      var r;
+      if (op==='+') r=a+b; else if (op==='-') r=a-b; else if (op==='*') r=a*b; else r=(b!==0?a/b:null);
+      if (r === null) return { type: 'error', text: 'ZeroDivisionError: division by zero' };
+      return { type: 'text', text: String(r) };
+    }
+
+    // variable assignment with array: revenue = [...]
+    var arrAssign = code.match(/(\w+)\s*=\s*\[([^\]]+)\]/);
+    if (arrAssign) {
+      var varName = arrAssign[1];
+      var vals = arrAssign[2].split(',').map(function(v){ return v.trim(); });
+      var printLine = code.match(/print\(.*\)/);
+      if (printLine) {
+        return { type: 'text', text: '[' + vals.join(', ') + ']' };
+      }
+      return { type: 'text', text: varName + ' = [' + vals.join(', ') + ']' };
+    }
+
+    // simple variable assignment a = N
+    var varAssign = code.match(/^(\w+)\s*=\s*(-?\d+(?:\.\d+)?)$/m);
+    if (varAssign) {
+      return { type: 'silent' };
+    }
+
+    // a + b or named var addition
+    var varAdd = code.match(/^(\w+)\s*\+\s*(\w+)$/);
+    if (varAdd) {
+      return { type: 'text', text: '42' };
+    }
+
+    // print(...)
+    var printMatch = code.match(/^print\((.+)\)$/m);
+    if (printMatch) {
+      var inner = printMatch[1].trim();
+      // unwrap quotes
+      var quoted = inner.match(/^["'](.*)["']$/);
+      if (quoted) return { type: 'text', text: quoted[1] };
+      // simple arithmetic inside print
+      var arithIn = inner.match(/^(-?\d+(?:\.\d+)?)\s*([\+\-\*\/])\s*(-?\d+(?:\.\d+)?)$/);
+      if (arithIn) {
+        var x=parseFloat(arithIn[1]),op2=arithIn[2],y=parseFloat(arithIn[3]);
+        var res2;
+        if(op2==='+') res2=x+y; else if(op2==='-') res2=x-y; else if(op2==='*') res2=x*y; else res2=(y!==0?x/y:null);
+        if(res2===null) return {type:'error',text:'ZeroDivisionError: division by zero'};
+        return { type: 'text', text: String(res2) };
+      }
+      return { type: 'text', text: inner };
+    }
+
+    // df.head() → mini table
+    if (code.match(/df\.head\(\)/)) {
+      return { type: 'table' };
+    }
+
+    // comment only
+    if (code.replace(/\s+/g,'').startsWith('#')) {
+      return { type: 'silent' };
+    }
+
+    // fallback: echo the code back
+    return { type: 'text', text: '→ ' + code.split('\n')[code.split('\n').length-1] };
+  }
+
+  function renderOutput(outEl, result, count) {
+    if (result.type === 'empty' || result.type === 'silent') {
+      outEl.classList.remove('show','error');
+      outEl.innerHTML = '';
+      return;
+    }
+    outEl.classList.add('show');
+    outEl.classList.remove('error');
+    if (result.type === 'error') {
+      outEl.classList.add('error');
+      outEl.textContent = result.text;
+    } else if (result.type === 'table') {
+      outEl.innerHTML = '<table><tr><th>id</th><th>name</th><th>value</th><th>category</th></tr><tr><td>0</td><td>Alpha</td><td>42</td><td>A</td></tr><tr><td>1</td><td>Beta</td><td>17</td><td>B</td></tr><tr><td>2</td><td>Gamma</td><td>88</td><td>A</td></tr><tr><td>3</td><td>Delta</td><td>34</td><td>C</td></tr><tr><td>4</td><td>Epsilon</td><td>61</td><td>B</td></tr></table>';
+    } else {
+      outEl.textContent = result.text;
+    }
+  }
+
+  function runCell(cellData, idx) {
+    execCount++;
+    var count = execCount;
+    cellData.runCount = count;
+    var gutterEl = document.querySelector('[data-cell-idx="' + idx + '"] .counter');
+    if (gutterEl) gutterEl.textContent = '[' + count + ']';
+    var outEl = document.querySelector('[data-cell-idx="' + idx + '"] .cell-out');
+    var result = mockEval(cellData.code);
+    if (outEl) renderOutput(outEl, result, count);
+  }
+
+  function addCell(seedCode, focusIt) {
+    var idx = cells.length;
+    var cellData = { code: seedCode || '', runCount: null };
+    cells.push(cellData);
+
+    var div = document.createElement('div');
+    div.className = 'cell';
+    div.dataset.cellIdx = idx;
+    div.innerHTML =
+      '<div class="cell-in">' +
+        '<div class="cell-gutter">In&nbsp;<span class="counter"></span></div>' +
+        '<div class="cell-editor">' +
+          '<textarea rows="1" placeholder="Type code and press ⇧⏎ to run…" spellcheck="false"></textarea>' +
+          '<button class="cell-run" title="Run (⇧⏎)">▶</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cell-out"></div>';
+
+    var ta = div.querySelector('textarea');
+    var runBtn = div.querySelector('.cell-run');
+    var outEl = div.querySelector('.cell-out');
+
+    ta.value = cellData.code;
+
+    ta.addEventListener('input', function() {
+      cellData.code = this.value;
+      autoHeight(this);
+    });
+
+    ta.addEventListener('focus', function() {
+      document.querySelectorAll('.cell').forEach(function(c){ c.classList.remove('active'); });
+      div.classList.add('active');
+    });
+
+    ta.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        cellData.code = ta.value;
+        runCell(cellData, idx);
+        // focus next or create
+        if (idx === cells.length - 1) {
+          addCell('', true);
+        } else {
+          var nextTA = document.querySelector('[data-cell-idx="' + (idx+1) + '"] textarea');
+          if (nextTA) nextTA.focus();
+        }
+      }
+    });
+
+    runBtn.addEventListener('click', function() {
+      cellData.code = ta.value;
+      runCell(cellData, idx);
+    });
+
+    nbEl.insertBefore(div, document.getElementById('addCellBtn'));
+
+    if (cellData.code) {
+      autoHeight(ta);
+    }
+
+    if (focusIt) {
+      ta.focus();
+    }
+
+    return div;
+  }
+
+  // Add cell button sentinel
+  var addBtn = document.createElement('button');
+  addBtn.className = 'add-cell';
+  addBtn.id = 'addCellBtn';
+  addBtn.textContent = '+ Add cell';
+  nbEl.appendChild(addBtn);
+  addBtn.addEventListener('click', function() { addCell('', true); });
+
+  document.getElementById('btnAddCell').addEventListener('click', function() { addCell('', true); });
+  document.getElementById('btnClearAll').addEventListener('click', function() {
+    document.querySelectorAll('.cell-out').forEach(function(o) {
+      o.classList.remove('show','error');
+      o.innerHTML = '';
+    });
+    document.querySelectorAll('.cell-gutter .counter').forEach(function(c){ c.textContent=''; });
+    cells.forEach(function(c){ c.runCount=null; });
+    execCount = 0;
+  });
+
+  // Seed cells
+  SEEDS.forEach(function(s) { addCell(s, false); });
+  // focus first cell
+  var firstTA = document.querySelector('.cell textarea');
+  if (firstTA) firstTA.focus();
+})();
+</script>
+</body>
+</html>

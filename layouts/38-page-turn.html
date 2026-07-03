@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>38 · Page-Turn Book — Layout scaffold</title>
+<!--
+  PATTERN    Page-Turn Book
+  NAV MODEL  Spreads flip like a book/magazine; click a page edge or the arrows
+             to turn (a 3D page fold). Under ~700px shows one page at a time with
+             a horizontal slide instead of the 3D fold.
+  BEST FOR   Lookbooks, reports, storybooks, portfolios.
+  REGIONS    .book (perspective) · .page (front/back faces) · .controls.
+  RE-SKIN    --accent = page accents/controls; under ~700px show one page at a
+             time (slide instead of fold).
+-->
+<style>
+  :root{
+    --bg:#F4F4F2; --surface:#fff; --ink:#16161a; --muted:#6b6f76;
+    --line:rgba(20,20,26,.12); --accent:#B45309;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);
+       -webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;
+       padding:24px 16px;gap:28px}
+
+  /* ── Book (desktop 3D) ── */
+  .book-wrap{
+    display:flex;align-items:center;gap:24px;
+  }
+  .book{
+    position:relative;
+    width:600px;height:380px;
+    perspective:1200px;
+    /* click on left/right halves to turn */
+    cursor:default;
+  }
+  /* Left (previous-page) click zone */
+  .book-zone-left,.book-zone-right{
+    position:absolute;top:0;bottom:0;width:48%;z-index:10;cursor:pointer;
+  }
+  .book-zone-left{left:0}
+  .book-zone-right{right:0}
+
+  /* Each .page is absolutely stacked; front/back faces inside */
+  .page{
+    position:absolute;inset:0;
+    transform-style:preserve-3d;
+    transform-origin:left center;
+    transition:transform .6s cubic-bezier(.4,0,.2,1);
+    /* z managed by JS */
+  }
+  .page-front,.page-back{
+    position:absolute;inset:0;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .page-back{
+    transform:rotateY(180deg);
+  }
+
+  /* Page surface */
+  .pg{
+    width:100%;height:100%;display:flex;flex-direction:column;
+    padding:36px 40px;gap:14px;
+  }
+  .pg-kicker{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .pg-kicker.accent{color:var(--accent)}
+  .pg h2{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1.15}
+  .pg p{font-size:14px;color:var(--muted);max-width:36ch;line-height:1.6}
+  .pg-num{margin-top:auto;font-family:var(--mono);font-size:13px;color:var(--muted)}
+
+  /* Page colour themes */
+  .p-cover{background:#1a1a2e;color:#fff}
+  .p-cover .pg-kicker{color:var(--accent)}
+  .p-cover h2{color:#fff}
+  .p-cover .pg-num{color:rgba(255,255,255,.4)}
+  .p-warm{background:#fffbf2;border:1px solid var(--line)}
+  .p-cool{background:#f0f4ff;border:1px solid var(--line)}
+  .p-dark{background:#1e1e28;color:#fff}
+  .p-dark h2{color:#fff}
+  .p-dark .pg-kicker{color:rgba(255,255,255,.5)}
+  .p-dark .pg-num{color:rgba(255,255,255,.3)}
+  .p-mid{background:#fdf4f0;border:1px solid var(--line)}
+
+  /* Spine shadow */
+  .book::after{
+    content:'';position:absolute;top:0;bottom:0;left:50%;width:4px;
+    background:rgba(0,0,0,.12);transform:translateX(-50%);z-index:5;
+    pointer-events:none;
+  }
+
+  /* ── Controls ── */
+  .arrow-btn{
+    appearance:none;background:var(--surface);border:1px solid var(--line);
+    padding:0;font:inherit;cursor:pointer;
+    width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;transition:background .15s,border-color .15s,opacity .15s;
+    flex-shrink:0;
+  }
+  .arrow-btn:hover:not(:disabled){background:#eaeae6;border-color:#c0c0c8}
+  .arrow-btn:disabled{opacity:.25;cursor:not-allowed}
+
+  .page-counter{
+    font-size:13px;font-family:var(--mono);color:var(--muted);text-align:center;
+    min-width:7ch;
+  }
+
+  /* ── Mobile: single-page slide ── */
+  @media(max-width:700px){
+    .book-wrap{gap:12px}
+    .book{
+      width:min(360px, calc(100vw - 112px));
+      height:260px;
+      perspective:none;
+      overflow:hidden;
+    }
+    .book::after{display:none}
+    .book-zone-left,.book-zone-right{display:none}
+    .page{
+      transform:none !important;
+      transition:none !important;
+      transform-style:flat;
+    }
+    .page-front,.page-back{
+      backface-visibility:visible;
+      -webkit-backface-visibility:visible;
+      transform:none !important;
+    }
+    .pg{padding:24px 20px;gap:10px}
+    .pg h2{font-size:20px}
+    /* Slide animation applied via JS class */
+    .page.slide-in-right{animation:slideInR .3s ease both}
+    .page.slide-in-left{animation:slideInL .3s ease both}
+    @keyframes slideInR{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    @keyframes slideInL{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;
+             border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+  <div class="book-wrap">
+    <button class="arrow-btn" id="btnPrev" aria-label="Previous page">←</button>
+
+    <div class="book" id="book">
+      <!-- pages injected by JS -->
+      <div class="book-zone-left" id="zoneLeft"></div>
+      <div class="book-zone-right" id="zoneRight"></div>
+    </div>
+
+    <button class="arrow-btn" id="btnNext" aria-label="Next page">→</button>
+  </div>
+
+  <div class="page-counter" id="pageCounter"></div>
+
+  <div class="scaffold">38 · page-turn &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  /* Page data: each entry = {front, back} */
+  /* We render pairs: page 0 is the cover+back-of-cover, page 1 is spread 2 etc. */
+  /* Simple model: each .page element has a front face and a back face; */
+  /* turning rotates it -180deg around the left spine edge. */
+  /* currentPage tracks how many pages are flipped (0 = all closed, N = N pages flipped). */
+
+  var pages = [
+    {
+      frontClass:'p-cover',
+      frontContent:'<div class="pg-kicker accent">Annual Report</div><h2>Ideas Worth Building</h2><p>A look at the work, the people, and the projects that shaped the year.</p><div class="pg-num">Cover</div>',
+      backClass:'p-warm',
+      backContent:'<div class="pg-kicker">Introduction</div><h2>A word from the editor</h2><p>This year we explored more questions than we answered — and that\'s exactly the point. Every spread in this report begins with a question.</p><div class="pg-num">i</div>'
+    },
+    {
+      frontClass:'p-cool',
+      frontContent:'<div class="pg-kicker">Chapter 1</div><h2>The shape of things</h2><p>Design isn\'t decoration — it\'s the architecture of decisions. The teams that shipped the most memorable work shared one habit: they started with constraints.</p><div class="pg-num">2</div>',
+      backClass:'p-warm',
+      backContent:'<div class="pg-kicker">Chapter 1 cont.</div><h2>Constraints as compass</h2><p>When the canvas is unlimited, the work sprawls. The most focused projects we saw this year were born inside tight briefs and tighter timelines.</p><div class="pg-num">3</div>'
+    },
+    {
+      frontClass:'p-dark',
+      frontContent:'<div class="pg-kicker">Chapter 2</div><h2>Building in public</h2><p>Transparency became a strategy this year. Studios that shared work-in-progress found audiences, collaborators, and critics — all useful.</p><div class="pg-num">4</div>',
+      backClass:'p-mid',
+      backContent:'<div class="pg-kicker">Chapter 2 cont.</div><h2>The feedback loop</h2><p>Fast cycles beat long silences. Shipped early and iterated often — the projects that stuck followed that pattern without exception.</p><div class="pg-num">5</div>'
+    },
+    {
+      frontClass:'p-warm',
+      frontContent:'<div class="pg-kicker">Chapter 3</div><h2>Tools & materials</h2><p>Every generation of makers redefines what counts as a tool. This year the line between tool and collaborator blurred in ways we\'re still making sense of.</p><div class="pg-num">6</div>',
+      backClass:'p-cool',
+      backContent:'<div class="pg-kicker">Closing</div><h2>What comes next</h2><p>The questions we couldn\'t answer this year are the brief for next year. We\'re already at work. Thanks for reading.</p><div class="pg-num">7</div>'
+    }
+  ];
+
+  var NUM_PAGES = pages.length;
+  var currentFlipped = 0;  /* 0 = none flipped, NUM_PAGES = all flipped */
+  var isMobile = false;
+  var animating = false;
+
+  var bookEl = document.getElementById('book');
+  var btnPrev = document.getElementById('btnPrev');
+  var btnNext = document.getElementById('btnNext');
+  var counterEl = document.getElementById('pageCounter');
+  var zoneLeft = document.getElementById('zoneLeft');
+  var zoneRight = document.getElementById('zoneRight');
+
+  /* Build page elements */
+  var pageEls = [];
+  pages.forEach(function(data, i){
+    var pg = document.createElement('div');
+    pg.className = 'page';
+
+    var front = document.createElement('div');
+    front.className = 'page-front';
+    front.innerHTML = '<div class="pg ' + data.frontClass + '">' + data.frontContent + '</div>';
+
+    var back = document.createElement('div');
+    back.className = 'page-back';
+    back.innerHTML = '<div class="pg ' + data.backClass + '">' + data.backContent + '</div>';
+
+    pg.appendChild(front);
+    pg.appendChild(back);
+    bookEl.insertBefore(pg, zoneLeft);
+    pageEls.push(pg);
+  });
+
+  function checkMobile(){
+    return window.innerWidth <= 700;
+  }
+
+  function applyZIndex(){
+    /* Pages not yet flipped sit on top (highest index first for unflipped) */
+    /* Flipped pages sit behind in flipped order */
+    pageEls.forEach(function(el, i){
+      if(i < currentFlipped){
+        /* flipped: lower z so they sit behind */
+        el.style.zIndex = i;
+      } else {
+        /* unflipped: higher z — front pages on top */
+        el.style.zIndex = NUM_PAGES + NUM_PAGES - i;
+      }
+    });
+  }
+
+  function renderDesktop(){
+    pageEls.forEach(function(el, i){
+      if(i < currentFlipped){
+        el.style.transform = 'rotateY(-180deg)';
+      } else {
+        el.style.transform = 'rotateY(0deg)';
+      }
+    });
+    applyZIndex();
+  }
+
+  function renderMobile(direction){
+    /* Show only the current "visible" page front/back as a single card */
+    /* currentFlipped tells us which spread we're on */
+    /* Visible page index = currentFlipped (the top unflipped page's front face) */
+    /* or if all flipped, show last back face */
+    pageEls.forEach(function(el, i){
+      el.style.display = 'none';
+      el.classList.remove('slide-in-right','slide-in-left');
+    });
+    var idx = Math.min(currentFlipped, NUM_PAGES - 1);
+    /* show front of idx if not fully flipped, else show back of last */
+    var showEl = pageEls[idx];
+    showEl.style.display = '';
+    /* show only relevant face */
+    var front = showEl.querySelector('.page-front');
+    var back = showEl.querySelector('.page-back');
+    if(currentFlipped < NUM_PAGES){
+      /* Looking at front of page idx */
+      front.style.display = '';
+      back.style.display = 'none';
+    } else {
+      /* All flipped, show back of last page */
+      front.style.display = 'none';
+      back.style.display = '';
+    }
+    /* Slide animation */
+    if(direction === 'next'){
+      showEl.classList.add('slide-in-right');
+    } else if(direction === 'prev'){
+      showEl.classList.add('slide-in-left');
+    }
+  }
+
+  function renderCounter(){
+    /* Page number: 0 flipped = cover (page 1 of 2*N), etc. */
+    var display;
+    if(currentFlipped === 0){
+      display = 'Cover';
+    } else if(currentFlipped >= NUM_PAGES){
+      display = 'Back — page ' + (NUM_PAGES * 2);
+    } else {
+      /* front of page currentFlipped is visible */
+      display = 'Page ' + (currentFlipped * 2 + 1) + ' – ' + (currentFlipped * 2 + 2) + ' of ' + (NUM_PAGES * 2);
+    }
+    counterEl.textContent = display;
+  }
+
+  function render(direction){
+    isMobile = checkMobile();
+    if(isMobile){
+      renderMobile(direction || null);
+    } else {
+      /* Restore all faces visibility in desktop */
+      pageEls.forEach(function(el){
+        el.style.display = '';
+        el.querySelectorAll('.page-front,.page-back').forEach(function(f){
+          f.style.display = '';
+        });
+      });
+      renderDesktop();
+    }
+    btnPrev.disabled = (currentFlipped === 0);
+    btnNext.disabled = (currentFlipped >= NUM_PAGES);
+    renderCounter();
+  }
+
+  function turnNext(){
+    if(animating || currentFlipped >= NUM_PAGES) return;
+    animating = true;
+    currentFlipped++;
+    render('next');
+    setTimeout(function(){ animating = false; }, 650);
+  }
+
+  function turnPrev(){
+    if(animating || currentFlipped <= 0) return;
+    animating = true;
+    currentFlipped--;
+    render('prev');
+    setTimeout(function(){ animating = false; }, 650);
+  }
+
+  btnNext.addEventListener('click', turnNext);
+  btnPrev.addEventListener('click', turnPrev);
+  zoneRight.addEventListener('click', turnNext);
+  zoneLeft.addEventListener('click', turnPrev);
+
+  window.addEventListener('resize', function(){ render(null); });
+
+  render(null);
+})();
+</script>
+</body>
+</html>

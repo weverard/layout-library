@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>27 · Elevator Floors — Layout scaffold</title>
+<!--
+  PATTERN    Elevator Floors
+  NAV MODEL  Sections are stacked "floors" of a building. An elevator panel of
+              floor buttons rides you between them with a vertical transition.
+  BEST FOR   Playful one-pagers, "levels", a guided vertical tour, brand sites.
+  REGIONS    .building (translateY)  ·  .floor (full screen)  ·  .panel (buttons)
+  RE-SKIN    Per-floor --tone; FLOORS count drives the panel.
+-->
+<style>
+  :root{
+    --ink:#fff; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);height:100vh;overflow:hidden;background:#000;-webkit-font-smoothing:antialiased}
+
+  .building{height:100vh;transition:transform .7s cubic-bezier(.5,0,.2,1)}
+  .floor{height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 9vw;color:var(--f-ink,#fff);background:var(--f-bg)}
+  .floor .lvl{font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .floor h2{font-size:clamp(40px,7vw,86px);line-height:.98;letter-spacing:-.03em;font-weight:800;margin:14px 0;max-width:16ch}
+  .floor p{font-size:clamp(17px,1.8vw,22px);max-width:44ch;opacity:.85;line-height:1.45}
+
+  /* elevator panel */
+  .panel{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:30;background:rgba(20,20,24,.7);backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:12px 10px;display:flex;flex-direction:column;gap:8px}
+  .panel button{width:42px;height:42px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;
+    font-family:var(--mono);font-size:13px;cursor:pointer;transition:background .15s,box-shadow .2s}
+  .panel button:hover{background:rgba(255,255,255,.1)}
+  .panel button.on{background:#fff;color:#000;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+  .ind{position:fixed;left:26px;top:26px;z-index:30;font-family:var(--mono);font-size:13px;color:#fff;mix-blend-mode:difference;display:flex;align-items:center;gap:8px}
+  .ind .arrow{transition:transform .3s}
+
+  .scaffold{position:fixed;left:26px;bottom:24px;z-index:30;background:#fff;color:#000;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#000;opacity:.55}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="ind"><span class="arrow" id="arrow">▲</span> <span id="floorLabel">Floor 01</span></div>
+  <div class="building" id="building">
+    <section class="floor" style="--f-bg:#0f1115"><span class="lvl">Floor 01 · Lobby</span><h2>Take the elevator.</h2><p>Each floor is a full screen. Press a button on the right and ride up or down — the building slides to meet you.</p></section>
+    <section class="floor" style="--f-bg:#7B2D3B"><span class="lvl">Floor 02 · Mezzanine</span><h2>Vertical, with intent.</h2><p>The metaphor makes order obvious: higher is later. The transition direction tells you which way you moved.</p></section>
+    <section class="floor" style="--f-bg:#1F6F5C"><span class="lvl">Floor 03 · Studios</span><h2>One idea per level.</h2><p>Floors keep sections from blurring together — you always know exactly where you are in the stack.</p></section>
+    <section class="floor" style="--f-bg:#243B6B"><span class="lvl">Floor 04 · Offices</span><h2>Jump anywhere.</h2><p>Unlike pure scroll, the panel lets you skip straight to a distant floor — express service.</p></section>
+    <section class="floor" style="--f-bg:#0f1115"><span class="lvl">Floor 05 · Roof</span><h2>Top floor.</h2><p>End with the view. The panel highlights where you are; the indicator shows the direction of travel.</p></section>
+  </div>
+
+  <nav class="panel" id="panel"></nav>
+  <div class="scaffold">27 · elevator &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const building=document.getElementById('building');
+    const floors=[...building.children];const N=floors.length;
+    const labels=floors.map(f=>f.querySelector('.lvl').textContent.split('·')[0].trim());
+    let cur=0;
+    const panel=document.getElementById('panel');
+    // elevator buttons: top floor at the top
+    for(let i=N-1;i>=0;i--){const b=document.createElement('button');b.textContent=String(i+1).padStart(2,'0');b.dataset.i=i;panel.appendChild(b);}
+    const btns=[...panel.children];
+    function go(i){
+      i=Math.max(0,Math.min(N-1,i));
+      document.getElementById('arrow').style.transform=i>cur?'rotate(0deg)':i<cur?'rotate(180deg)':'';
+      cur=i;building.style.transform=`translateY(${-i*100}vh)`;
+      btns.forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
+      document.getElementById('floorLabel').textContent=labels[i]||('Floor '+String(i+1).padStart(2,'0'));
+    }
+    panel.addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(+b.dataset.i);});
+    addEventListener('keydown',e=>{if(e.key==='ArrowUp')go(cur+1);if(e.key==='ArrowDown')go(cur-1);});
+    addEventListener('wheel',e=>{if(Math.abs(e.deltaY)<30)return;e.preventDefault();go(cur+(e.deltaY>0?1:-1));},{passive:false});
+    go(0);
+  </script>
+</body>
+</html>

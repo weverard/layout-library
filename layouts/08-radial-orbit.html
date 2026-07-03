@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08 · Radial Orbit — Layout scaffold</title>
+<!--
+  PATTERN    Radial / Orbit
+  NAV MODEL  Equal-weight items orbit a central hub; click a spoke to rotate it
+             to the top and load its detail in the center.
+  BEST FOR   A small index of peers — portfolio, modes, "choose a world."
+  REGIONS    .stage  ·  .ring (rotates)  ·  .spoke (orbiting item)  ·  .core (detail)
+  RE-SKIN    --accent; set item count in JS (positions auto-compute).
+-->
+<style>
+  :root{
+    --bg:#0c0d12; --ink:#ECEDF2; --muted:#9a9cae; --line:rgba(255,255,255,.14);
+    --accent:#2DD4BF; --spoke:#171924;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:radial-gradient(circle at 50% 45%,#13151d,#090a0e);color:var(--ink);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  .stage{position:fixed;inset:0;display:grid;place-items:center}
+  .ring{position:relative;width:560px;height:560px;border-radius:50%;transition:transform .7s cubic-bezier(.6,.05,.2,1)}
+  .ring::before{content:"";position:absolute;inset:0;border-radius:50%;border:1px dashed var(--line)}
+  .spoke{position:absolute;top:50%;left:50%;width:104px;height:104px;margin:-52px;border-radius:50%;
+    background:var(--spoke);border:1px solid var(--line);display:grid;place-items:center;text-align:center;
+    cursor:pointer;transition:transform .7s cubic-bezier(.6,.05,.2,1),border-color .2s,background .2s}
+  .spoke span{font-size:13px;font-weight:600;padding:0 8px;line-height:1.2}
+  .spoke small{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+  .spoke:hover{border-color:var(--accent)}
+  .spoke.active{background:var(--accent);color:#04201c;border-color:var(--accent)}
+  .spoke.active small{color:#04201c;opacity:.7}
+
+  .core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:300px;text-align:center;pointer-events:none}
+  .core .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  .core h2{font-size:26px;letter-spacing:-.01em;margin:8px 0 8px}
+  .core p{font-size:14px;color:var(--muted);line-height:1.55}
+
+  .hint{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="ring" id="ring"></div>
+    <div class="core" id="core"></div>
+  </div>
+  <div class="hint">click any orbiting node</div>
+  <div class="scaffold">08 · radial-orbit &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const ITEMS=[
+      {t:"Discover",n:"01",d:"Frame the question and gather the fact base before anything else."},
+      {t:"Define",n:"02",d:"Turn ambiguity into one sharp, answerable problem statement."},
+      {t:"Design",n:"03",d:"Generate options; let the matrix, not the loudest voice, decide."},
+      {t:"Prototype",n:"04",d:"Make the smallest thing that tests the riskiest assumption."},
+      {t:"Validate",n:"05",d:"Put it in front of reality and watch what actually happens."},
+      {t:"Ship",n:"06",d:"Cut scope to the few moves that change the outcome this quarter."},
+      {t:"Measure",n:"07",d:"A north-star metric and the value-driver tree beneath it."},
+      {t:"Iterate",n:"08",d:"Feed what you learned back to the top and go around again."}
+    ];
+    const ring=document.getElementById('ring'),core=document.getElementById('core');
+    const R=232, N=ITEMS.length, step=360/N;
+    let current=0;
+    ITEMS.forEach((it,i)=>{
+      const a=i*step;
+      const s=document.createElement('button');s.className='spoke';s.dataset.i=i;s.dataset.angle=a;
+      s.style.transform=`rotate(${a}deg) translate(${R}px) rotate(${-a}deg)`;
+      s.innerHTML=`<span>${it.t}<small>${it.n}</small></span>`;
+      ring.appendChild(s);
+    });
+    const spokes=[...ring.querySelectorAll('.spoke')];
+    function select(i){
+      current=i;const a=+spokes[i].dataset.angle;
+      // rotate ring so item i sits at top (-90deg), counter-rotate items to stay upright
+      const rot=-90-a;
+      ring.style.transform=`rotate(${rot}deg)`;
+      spokes.forEach((s,j)=>{const aj=+s.dataset.angle;s.style.transform=`rotate(${aj}deg) translate(${R}px) rotate(${-aj-rot}deg)`;s.classList.toggle('active',j===i);});
+      const it=ITEMS[i];core.innerHTML=`<p class="k">${it.n} · node</p><h2>${it.t}</h2><p>${it.d}</p>`;
+    }
+    ring.addEventListener('click',e=>{const s=e.target.closest('.spoke');if(s)select(+s.dataset.i);});
+    select(0);
+  </script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>41 · Conversational Form — Layout scaffold</title>
+<!--
+  PATTERN    Conversational Form
+  NAV MODEL  Typeform-style — ONE question on screen at a time; press Enter (or a
+             Next button) to advance; a progress bar tracks completion; a recap at
+             the end.
+  BEST FOR   Surveys, lead capture, onboarding.
+  REGIONS    .flow  ·  .q (question card)  ·  .progress  ·  .recap
+  RE-SKIN    --accent = progress fill + focus ring; single comfortable column.
+             Breakpoint: stacks below 540px (padding only).
+-->
+<style>
+  :root{
+    --bg:#F5F5F3; --surface:#fff; --ink:#16161a; --muted:#6b6f76; --line:rgba(20,20,26,.1);
+    --accent:#10B981;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.5}
+
+  .progress{position:fixed;top:0;left:0;right:0;height:3px;background:var(--line);z-index:10}
+  .progress-fill{height:100%;background:var(--accent);transition:width .4s ease}
+
+  .flow{min-height:100vh;display:grid;place-items:center;padding:40px 24px}
+
+  .q{width:100%;max-width:580px;animation:rise .35s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  .q-num{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .q-label{font-size:clamp(22px,4vw,32px);font-weight:700;letter-spacing:-.02em;margin-bottom:24px;line-height:1.25}
+  .q input[type="text"]{width:100%;background:transparent;border:0;border-bottom:2px solid var(--line);color:var(--ink);font-size:20px;font-family:var(--sans);padding:10px 2px;outline:none;transition:border-color .2s}
+  .q input[type="text"]:focus{border-color:var(--accent)}
+  .q input[type="text"]::placeholder{color:var(--muted)}
+
+  .choices{display:flex;flex-direction:column;gap:10px}
+  .choice{display:block;appearance:none;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 18px;font-size:16px;font-family:var(--sans);cursor:pointer;text-align:left;transition:border-color .18s,background .18s;color:var(--ink)}
+  .choice:hover{border-color:var(--accent);background:#f0fdf9}
+  .choice.selected{border-color:var(--accent);background:#ecfdf5;font-weight:600}
+  .choice .badge{display:inline-block;width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);font-size:11px;text-align:center;line-height:20px;font-family:var(--mono);margin-right:10px;transition:background .18s,border-color .18s;vertical-align:middle}
+  .choice.selected .badge{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .actions{display:flex;align-items:center;gap:14px;margin-top:26px}
+  .btn-next{appearance:none;background:var(--accent);border:0;border-radius:10px;color:#fff;font-size:15px;font-family:var(--sans);font-weight:600;padding:12px 26px;cursor:pointer;transition:opacity .15s}
+  .btn-next:hover{opacity:.88}
+  .btn-next:disabled{opacity:.38;cursor:default}
+  .btn-back{appearance:none;background:none;border:0;font-size:14px;font-family:var(--sans);color:var(--muted);cursor:pointer;padding:4px 0}
+  .btn-back:hover{color:var(--ink)}
+  .hint{font-size:13px;color:var(--muted);margin-left:auto}
+  .hint kbd{font-family:var(--mono);border:1px solid var(--line);border-radius:4px;padding:2px 5px;font-size:11px}
+
+  /* Recap */
+  .recap{width:100%;max-width:580px;animation:rise .35s ease}
+  .recap-title{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+  .recap-sub{color:var(--muted);font-size:15px;margin-bottom:30px}
+  .recap-list{display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+  .recap-item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .recap-item .ri-q{font-size:12px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+  .recap-item .ri-a{font-size:16px;font-weight:600}
+  .btn-restart{appearance:none;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;color:var(--ink);font-size:15px;font-family:var(--sans);padding:12px 22px;cursor:pointer;margin-right:10px;transition:border-color .15s}
+  .btn-restart:hover{border-color:var(--accent)}
+  .btn-submit{appearance:none;background:var(--accent);border:0;border-radius:10px;color:#fff;font-size:15px;font-family:var(--sans);font-weight:600;padding:12px 26px;cursor:pointer;opacity:1;transition:opacity .15s}
+  .btn-submit:hover{opacity:.88}
+
+  @media(max-width:540px){.hint{display:none}.actions{flex-wrap:wrap}}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="progress"><div class="progress-fill" id="prog"></div></div>
+  <div class="flow" id="flow"></div>
+  <div class="scaffold">41 · conversational-form &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var QUESTIONS = [
+    {
+      type: 'text',
+      label: 'What\'s your name?',
+      placeholder: 'Type your name…'
+    },
+    {
+      type: 'text',
+      label: 'What\'s your work email?',
+      placeholder: 'name@company.com'
+    },
+    {
+      type: 'choice',
+      label: 'What best describes your role?',
+      options: ['Product / Design', 'Engineering', 'Marketing / Growth', 'Founder / Executive', 'Other']
+    },
+    {
+      type: 'text',
+      label: 'What are you hoping to accomplish?',
+      placeholder: 'Tell us briefly…'
+    },
+    {
+      type: 'choice',
+      label: 'How did you hear about us?',
+      options: ['Search engine', 'Social media', 'Word of mouth', 'Newsletter / Blog', 'Event or conference']
+    }
+  ];
+
+  var answers = new Array(QUESTIONS.length).fill('');
+  var currentIndex = 0;
+  var flowEl = document.getElementById('flow');
+  var progEl = document.getElementById('prog');
+
+  function updateProgress(idx) {
+    var pct = (idx / QUESTIONS.length) * 100;
+    progEl.style.width = pct + '%';
+  }
+
+  function renderQuestion(idx) {
+    updateProgress(idx);
+    var q = QUESTIONS[idx];
+    var saved = answers[idx];
+    var html = '<div class="q">';
+    html += '<div class="q-num">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>';
+    html += '<div class="q-label">' + q.label + '</div>';
+    if (q.type === 'text') {
+      html += '<input type="text" id="qinput" placeholder="' + q.placeholder + '" autocomplete="off" value="' + escHtml(saved) + '" />';
+    } else if (q.type === 'choice') {
+      var letters = 'ABCDEFGHIJ';
+      html += '<div class="choices">';
+      q.options.forEach(function(opt, oi) {
+        var sel = saved === opt ? ' selected' : '';
+        html += '<button class="choice' + sel + '" data-val="' + escHtml(opt) + '"><span class="badge">' + letters[oi] + '</span>' + escHtml(opt) + '</button>';
+      });
+      html += '</div>';
+    }
+    html += '<div class="actions">';
+    if (idx > 0) { html += '<button class="btn-back" id="btnBack">← Back</button>'; }
+    html += '<button class="btn-next" id="btnNext">' + (idx === QUESTIONS.length - 1 ? 'Finish' : 'Next') + '</button>';
+    if (q.type === 'text') { html += '<span class="hint">press <kbd>Enter</kbd></span>'; }
+    html += '</div>';
+    html += '</div>';
+    flowEl.innerHTML = html;
+
+    var btnNext = document.getElementById('btnNext');
+    var btnBack = document.getElementById('btnBack');
+
+    if (q.type === 'text') {
+      var inp = document.getElementById('qinput');
+      inp.focus();
+      if (inp.value.length) { inp.setSelectionRange(inp.value.length, inp.value.length); }
+      btnNext.disabled = !inp.value.trim();
+      inp.addEventListener('input', function() {
+        btnNext.disabled = !this.value.trim();
+      });
+      inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); advance(inp.value.trim()); }
+      });
+      btnNext.addEventListener('click', function() { advance(inp.value.trim()); });
+    } else {
+      var selectedVal = saved || '';
+      btnNext.disabled = !selectedVal;
+      var choices = flowEl.querySelectorAll('.choice');
+      choices.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          choices.forEach(function(b) { b.classList.remove('selected'); });
+          this.classList.add('selected');
+          selectedVal = this.dataset.val;
+          btnNext.disabled = false;
+        });
+      });
+      btnNext.addEventListener('click', function() { advance(selectedVal); });
+    }
+
+    if (btnBack) {
+      btnBack.addEventListener('click', function() {
+        currentIndex--;
+        renderQuestion(currentIndex);
+      });
+    }
+  }
+
+  function advance(val) {
+    if (!val) return;
+    answers[currentIndex] = val;
+    currentIndex++;
+    if (currentIndex >= QUESTIONS.length) {
+      renderRecap();
+    } else {
+      renderQuestion(currentIndex);
+    }
+  }
+
+  function renderRecap() {
+    updateProgress(QUESTIONS.length);
+    var html = '<div class="recap">';
+    html += '<div class="recap-title">You\'re all set ✓</div>';
+    html += '<div class="recap-sub">Here\'s what you shared. Edit anything before submitting.</div>';
+    html += '<div class="recap-list">';
+    QUESTIONS.forEach(function(q, i) {
+      html += '<div class="recap-item"><div class="ri-q">' + escHtml(q.label) + '</div><div class="ri-a">' + escHtml(answers[i]) + '</div></div>';
+    });
+    html += '</div>';
+    html += '<button class="btn-restart" id="btnRestart">← Start over</button>';
+    html += '<button class="btn-submit" id="btnSubmit">Submit →</button>';
+    html += '</div>';
+    flowEl.innerHTML = html;
+    document.getElementById('btnRestart').addEventListener('click', function() {
+      answers = new Array(QUESTIONS.length).fill('');
+      currentIndex = 0;
+      renderQuestion(0);
+    });
+    document.getElementById('btnSubmit').addEventListener('click', function() {
+      var btn = document.getElementById('btnSubmit');
+      btn.textContent = 'Submitted ✓';
+      btn.disabled = true;
+    });
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  renderQuestion(0);
+})();
+</script>
+</body>
+</html>

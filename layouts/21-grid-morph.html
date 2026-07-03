@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>21 · Grid-to-Detail Morph — Layout scaffold</title>
+<!--
+  PATTERN    Grid-to-Detail Morph
+  NAV MODEL  A masonry grid where clicking a tile expands it in place into a
+             full detail view (FLIP animation) — the tile literally becomes the
+             page. No route change; close morphs it back.
+  BEST FOR   Galleries, portfolios, case-study indexes, image-led catalogs.
+  REGIONS    .grid (tiles)  ·  .detail (overlay that animates from the tile rect)
+  RE-SKIN    --accent; ITEMS array; uses View Transitions API when available.
+-->
+<style>
+  :root{
+    --bg:#0f1013; --ink:#ECEDF1; --muted:#9498a4; --line:rgba(255,255,255,.12); --accent:#22D3EE;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:54px 24px 100px}
+  .head{margin-bottom:30px}
+  .head .k{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .head h1{font-size:clamp(30px,4vw,46px);letter-spacing:-.02em;margin-top:10px}
+
+  .grid{columns:3 240px;column-gap:18px}
+  .tile{break-inside:avoid;margin:0 0 18px;border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid var(--line);background:#16181d;transition:transform .15s,border-color .15s}
+  .tile:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .tile .pic{background:var(--p);}
+  .tile .cap{padding:13px 14px}
+  .tile .cap .t{font-weight:600;font-size:15px}
+  .tile .cap .d{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+  .detail{position:fixed;inset:0;z-index:40;background:var(--bg);display:none;overflow:auto}
+  .detail.open{display:block}
+  .detail .hero{height:46vh;background:var(--p)}
+  .detail .body{max-width:680px;margin:0 auto;padding:34px 24px 90px}
+  .detail .k{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h2{font-size:40px;letter-spacing:-.02em;margin:8px 0 14px}
+  .detail p{color:var(--muted);font-size:18px;line-height:1.65}
+  .detail .close{position:fixed;top:18px;right:20px;z-index:42;font-family:var(--mono);font-size:13px;background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:999px;padding:8px 14px;color:#fff;cursor:pointer}
+
+  ::view-transition-old(tile),::view-transition-new(tile){animation-duration:.35s}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:50;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head"><p class="k">Gallery · click any tile</p><h1>Tiles that become pages.</h1></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="detail" id="detail">
+    <span class="close" id="close">esc ✕</span>
+    <div class="hero" id="dHero"></div>
+    <div class="body"><p class="k" id="dK"></p><h2 id="dT"></h2><p id="dD"></p></div>
+  </div>
+
+  <div class="scaffold">21 · grid-morph &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const ITEMS=[
+      {p:"linear-gradient(135deg,#22D3EE,#3b82f6)",h:180,t:"Tidewater",k:"study 01",d:"Clicking a tile expands it in place. With the View Transitions API the image morphs from grid cell to hero; without it, a clean cross-fade."},
+      {p:"linear-gradient(135deg,#f472b6,#a855f7)",h:240,t:"Magenta",k:"study 02",d:"Masonry keeps varied aspect ratios honest. Each tile carries its own height."},
+      {p:"linear-gradient(135deg,#34d399,#10b981)",h:150,t:"Fern",k:"study 03",d:"The grid is the index; the morph is the navigation. No separate page load."},
+      {p:"linear-gradient(135deg,#fbbf24,#f97316)",h:210,t:"Ember",k:"study 04",d:"Great for portfolios where the work is visual and the transition should feel seamless."},
+      {p:"linear-gradient(135deg,#60a5fa,#6366f1)",h:170,t:"Cobalt",k:"study 05",d:"Close morphs the hero back into its tile — spatial continuity both ways."},
+      {p:"linear-gradient(135deg,#f87171,#ef4444)",h:200,t:"Signal",k:"study 06",d:"Image-led catalogs feel like one continuous surface instead of stacked pages."},
+      {p:"linear-gradient(135deg,#2dd4bf,#0ea5e9)",h:150,t:"Lagoon",k:"study 07",d:"Tap targets stay large; captions hint before you commit to opening."},
+      {p:"linear-gradient(135deg,#c084fc,#7c3aed)",h:230,t:"Iris",k:"study 08",d:"The pattern scales to dozens of items without extra chrome."}
+    ];
+    const grid=document.getElementById('grid'),detail=document.getElementById('detail');
+    grid.innerHTML=ITEMS.map((it,i)=>`<div class="tile" data-i="${i}"><div class="pic" style="--p:${it.p};height:${it.h}px"></div><div class="cap"><div class="t">${it.t}</div><div class="d">${it.k}</div></div></div>`).join('');
+    function openDetail(i){
+      const it=ITEMS[i];
+      document.getElementById('dHero').style.setProperty('--p',it.p);
+      document.getElementById('dK').textContent=it.k;document.getElementById('dT').textContent=it.t;document.getElementById('dD').textContent=it.d;
+      detail.classList.add('open');document.body.style.overflow='hidden';
+    }
+    function close(){detail.classList.remove('open');document.body.style.overflow='';}
+    const hero=document.getElementById('dHero');
+    grid.addEventListener('click',e=>{const t=e.target.closest('.tile');if(!t)return;const i=+t.dataset.i;
+      const pic=t.querySelector('.pic');
+      if(document.startViewTransition){
+        pic.style.viewTransitionName='tile';                 // named in the OLD snapshot
+        const vt=document.startViewTransition(()=>{
+          pic.style.viewTransitionName='';                   // hand the name off…
+          openDetail(i);
+          hero.style.viewTransitionName='tile';              // …to the hero in the NEW snapshot
+        });
+        vt.finished.finally(()=>{hero.style.viewTransitionName='';});
+      }else openDetail(i);
+    });
+    document.getElementById('close').onclick=()=>{if(document.startViewTransition)document.startViewTransition(close);else close();};
+    addEventListener('keydown',e=>{if(e.key==='Escape'&&detail.classList.contains('open'))close();});
+  </script>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>49 · Card Wallet — Layout scaffold</title>
+<!--
+  PATTERN    Card Wallet
+  NAV MODEL  A fanned stack of passes/cards; tap a card to bring it forward
+              (others dim/recede); tap the raised card again to flip it for details;
+              tap away to restore the fan. The fan persists (no discard — distinct
+              from 17 Card-Deck Swipe).
+  BEST FOR   Passes/tickets, accounts, loyalty/wallets.
+  REGIONS    .wallet  ·  .pass (.front/.back faces)  ·  .detail.
+  RE-SKIN    --accent = active-pass glow; fan tightens on narrow screens (~480px).
+-->
+<style>
+  :root{
+    --bg:#F4F4F2;--surface:#fff;--ink:#16161a;--muted:#6b6f76;--line:rgba(20,20,26,.12);
+    --accent:#0F766E;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+
+  .wrap{max-width:480px;margin:0 auto;padding:48px 24px 80px}
+  .masthead{margin-bottom:40px}
+  .masthead .brand{font-weight:700;font-size:18px}
+  .masthead .sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+  /* Wallet scene — relative container to position cards */
+  .wallet-scene{position:relative;height:320px;display:flex;align-items:flex-end;justify-content:center}
+
+  /* Each pass */
+  .pass{
+    position:absolute;
+    width:340px;
+    height:200px;
+    border-radius:16px;
+    cursor:pointer;
+    transform-origin:bottom center;
+    transition:transform .35s cubic-bezier(.4,0,.2,1), opacity .3s, box-shadow .3s, z-index 0s;
+    perspective:1000px;
+  }
+  .pass.flipped .pass-inner{transform:rotateY(180deg)}
+  .pass-inner{
+    position:relative;
+    width:100%;height:100%;
+    transform-style:preserve-3d;
+    transition:transform .5s cubic-bezier(.4,0,.2,1);
+    border-radius:16px;
+  }
+  .front,.back{
+    position:absolute;
+    inset:0;
+    border-radius:16px;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    padding:22px 24px;
+    display:flex;
+    flex-direction:column;
+  }
+  .back{transform:rotateY(180deg)}
+
+  /* Pass colour schemes */
+  .pass:nth-child(1) .front,.pass:nth-child(1) .back{background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff}
+  .pass:nth-child(2) .front,.pass:nth-child(2) .back{background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff}
+  .pass:nth-child(3) .front,.pass:nth-child(3) .back{background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff}
+  .pass:nth-child(4) .front,.pass:nth-child(4) .back{background:linear-gradient(135deg,#be185d,#f472b6);color:#fff}
+  .pass:nth-child(5) .front,.pass:nth-child(5) .back{background:linear-gradient(135deg,#374151,#6b7280);color:#fff}
+
+  .pass-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.7;font-family:var(--mono)}
+  .pass-name{font-size:20px;font-weight:700;margin-top:4px;letter-spacing:-.01em}
+  .pass-num{font-family:var(--mono);font-size:14px;margin-top:auto;opacity:.8;letter-spacing:.08em}
+  .pass-sub{font-size:12px;opacity:.6;margin-top:2px}
+
+  .back-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.7;font-family:var(--mono);margin-bottom:10px}
+  .detail-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.15)}
+  .detail-row:last-child{border-bottom:none}
+  .detail-k{opacity:.65}
+  .detail-v{font-weight:600}
+
+  /* Fan positions (bottom = 0, top = 4). JS sets inline transforms. */
+  /* Raised state */
+  .pass.raised{
+    z-index:10;
+    box-shadow:0 20px 60px rgba(0,0,0,.28), 0 0 0 3px var(--accent);
+  }
+  .pass.dim{opacity:.45;pointer-events:none}
+
+  /* Backdrop (click away) */
+  .backdrop{display:none;position:fixed;inset:0;z-index:5}
+  .backdrop.active{display:block}
+
+  .hint{text-align:center;margin-top:24px;font-size:13px;color:var(--muted)}
+
+  @media(max-width:480px){
+    .pass{width:290px;height:172px}
+    .wallet-scene{height:280px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="masthead">
+      <div class="brand">◇ Wallet</div>
+      <div class="sub">5 passes</div>
+    </div>
+
+    <div class="wallet-scene" id="wallet-scene">
+
+      <div class="pass" data-idx="0">
+        <div class="pass-inner">
+          <div class="front">
+            <div class="pass-label">Membership</div>
+            <div class="pass-name">Meridian Club</div>
+            <div class="pass-num" style="margin-top:auto">•••• •••• •••• 4821</div>
+            <div class="pass-sub">Expires 08 / 28 · Gold tier</div>
+          </div>
+          <div class="back">
+            <div class="back-label">Meridian Club — Details</div>
+            <div class="detail-row"><span class="detail-k">Member</span><span class="detail-v">A. Kellerman</span></div>
+            <div class="detail-row"><span class="detail-k">Tier</span><span class="detail-v">Gold</span></div>
+            <div class="detail-row"><span class="detail-k">Points</span><span class="detail-v">12,480</span></div>
+            <div class="detail-row"><span class="detail-k">Joined</span><span class="detail-v">Mar 2021</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pass" data-idx="1">
+        <div class="pass-inner">
+          <div class="front">
+            <div class="pass-label">Transit</div>
+            <div class="pass-name">City Rail Pass</div>
+            <div class="pass-num" style="margin-top:auto">CR-008-4401-77</div>
+            <div class="pass-sub">Monthly · Zone A–C</div>
+          </div>
+          <div class="back">
+            <div class="back-label">City Rail — Details</div>
+            <div class="detail-row"><span class="detail-k">Valid until</span><span class="detail-v">30 Jun 2026</span></div>
+            <div class="detail-row"><span class="detail-k">Zones</span><span class="detail-v">A, B, C</span></div>
+            <div class="detail-row"><span class="detail-k">Trips left</span><span class="detail-v">Unlimited</span></div>
+            <div class="detail-row"><span class="detail-k">Auto-renew</span><span class="detail-v">On</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pass" data-idx="2">
+        <div class="pass-inner">
+          <div class="front">
+            <div class="pass-label">Rewards</div>
+            <div class="pass-name">Roast House</div>
+            <div class="pass-num" style="margin-top:auto">★ ★ ★ ★ ☆ ☆ ☆ ☆ ☆ ☆</div>
+            <div class="pass-sub">4 of 10 stamps · next: free drip</div>
+          </div>
+          <div class="back">
+            <div class="back-label">Roast House — Details</div>
+            <div class="detail-row"><span class="detail-k">Stamps</span><span class="detail-v">4 / 10</span></div>
+            <div class="detail-row"><span class="detail-k">Reward</span><span class="detail-v">Free drip coffee</span></div>
+            <div class="detail-row"><span class="detail-k">Earned</span><span class="detail-v">Since Jan 2025</span></div>
+            <div class="detail-row"><span class="detail-k">Expires</span><span class="detail-v">Never</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pass" data-idx="3">
+        <div class="pass-inner">
+          <div class="front">
+            <div class="pass-label">Event</div>
+            <div class="pass-name">Northgate Fest</div>
+            <div class="pass-num" style="margin-top:auto">TKT-2026-009341</div>
+            <div class="pass-sub">Sat 12 Jul · Gate 3 · General</div>
+          </div>
+          <div class="back">
+            <div class="back-label">Northgate Fest — Details</div>
+            <div class="detail-row"><span class="detail-k">Date</span><span class="detail-v">12 Jul 2026</span></div>
+            <div class="detail-row"><span class="detail-k">Doors</span><span class="detail-v">14:00</span></div>
+            <div class="detail-row"><span class="detail-k">Gate</span><span class="detail-v">3 — North</span></div>
+            <div class="detail-row"><span class="detail-k">Seat</span><span class="detail-v">General admission</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pass" data-idx="4">
+        <div class="pass-inner">
+          <div class="front">
+            <div class="pass-label">Gift card</div>
+            <div class="pass-name">Atelier Store</div>
+            <div class="pass-num" style="margin-top:auto">GC-7734-KMPX-2201</div>
+            <div class="pass-sub">Balance: $42.50</div>
+          </div>
+          <div class="back">
+            <div class="back-label">Atelier Store — Details</div>
+            <div class="detail-row"><span class="detail-k">Balance</span><span class="detail-v">$42.50</span></div>
+            <div class="detail-row"><span class="detail-k">Original</span><span class="detail-v">$100.00</span></div>
+            <div class="detail-row"><span class="detail-k">Last used</span><span class="detail-v">14 May 2026</span></div>
+            <div class="detail-row"><span class="detail-k">Expires</span><span class="detail-v">Dec 2028</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint" id="hint">Tap a card to raise it · tap again to flip</div>
+  </div>
+
+  <div class="backdrop" id="backdrop"></div>
+  <div class="scaffold">49 · card-wallet &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var passes = Array.from(document.querySelectorAll('.pass'));
+  var n = passes.length;
+  var raisedIdx = -1;
+  var backdrop = document.getElementById('backdrop');
+
+  // Fan layout parameters
+  var FAN_Y_STEP = 22;   // px each card is raised in the stack
+  var FAN_SCALE_STEP = 0.04;
+
+  function applyFan(){
+    passes.forEach(function(p, i){
+      var depth = n - 1 - i; // 0 = top card, n-1 = bottom card
+      p.style.transform = 'translateY(' + (depth * FAN_Y_STEP) + 'px) scale(' + (1 - depth * FAN_SCALE_STEP) + ')';
+      p.style.zIndex = i + 1;
+      p.classList.remove('raised','dim','flipped');
+    });
+    raisedIdx = -1;
+    backdrop.classList.remove('active');
+    document.getElementById('hint').textContent = 'Tap a card to raise it · tap again to flip';
+  }
+
+  function raiseCard(idx){
+    raisedIdx = idx;
+    passes.forEach(function(p, i){
+      p.classList.remove('raised','dim','flipped');
+      if(i === idx){
+        p.style.transform = 'translateY(-60px) scale(1.04)';
+        p.style.zIndex = 20;
+        p.classList.add('raised');
+      } else {
+        var depth = n - 1 - i;
+        p.style.transform = 'translateY(' + (depth * FAN_Y_STEP) + 'px) scale(' + (1 - depth * FAN_SCALE_STEP) + ')';
+        p.style.zIndex = i + 1;
+        p.classList.add('dim');
+      }
+    });
+    backdrop.classList.add('active');
+    document.getElementById('hint').textContent = 'Tap again to flip · tap outside to put back';
+  }
+
+  passes.forEach(function(p, i){
+    p.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(raisedIdx === i){
+        // Flip the raised card
+        p.classList.toggle('flipped');
+      } else {
+        raiseCard(i);
+      }
+    });
+  });
+
+  backdrop.addEventListener('click', applyFan);
+
+  applyFan();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>06 · Infinite Canvas — Layout scaffold</title>
+<!--
+  PATTERN    Infinite Canvas
+  NAV MODEL  Pan (drag) + zoom (wheel) across a 2D plane of nodes. Semantic
+             zoom: detail appears only when you zoom in close enough.
+  BEST FOR   Knowledge maps, system diagrams, idea boards, a spatial index.
+  REGIONS    .viewport (fixed camera)  ·  .world (transformed plane)  ·  .node
+  RE-SKIN    --accent + node styling. Touch: one-finger pan.
+-->
+<style>
+  :root{
+    --bg:#0E1014; --node:#181b22; --ink:#E8EAED; --muted:#969ca6;
+    --line:rgba(255,255,255,.12); --grid:rgba(255,255,255,.045); --accent:#7C5CFF;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+
+  .viewport{position:fixed;inset:0;overflow:hidden;cursor:grab;background:radial-gradient(120% 120% at 50% 40%,#15181f,#0a0c0f)}
+  .viewport.grab{cursor:grabbing}
+  .world{position:absolute;top:0;left:0;width:6000px;height:4000px;transform-origin:0 0;will-change:transform;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:48px 48px}
+  .links{position:absolute;inset:0;pointer-events:none;overflow:visible}
+  .links line{stroke:var(--line);stroke-width:1.5}
+
+  .node{position:absolute;width:248px;background:var(--node);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 12px 34px rgba(0,0,0,.45)}
+  .node .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .node h3{font-size:17px;margin:6px 0 6px}
+  .node p{font-size:13.5px;color:var(--muted);line-height:1.55}
+  .world.far .node p{display:none}
+  .world.far .node{padding:12px 14px}
+  .world.far .node h3{font-size:15px;margin-bottom:0}
+
+  .hud{position:fixed;left:16px;top:16px;z-index:10;font-family:var(--mono);font-size:12px;color:var(--muted);background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+  .ctrls{position:fixed;right:16px;top:16px;z-index:10;display:flex;gap:6px}
+  .ctrls button{font-family:var(--mono);font-size:15px;background:var(--node);color:var(--ink);border:1px solid var(--line);border-radius:9px;width:34px;height:34px;cursor:pointer}
+  .ctrls button:hover{border-color:var(--accent)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="hud">drag to pan · scroll to zoom · <span id="z">100%</span></div>
+  <div class="ctrls"><button id="zin">+</button><button id="zout">−</button><button id="reset">⟲</button></div>
+
+  <div class="viewport" id="vp">
+    <div class="world" id="world">
+      <svg class="links">
+        <line x1="604" y1="430" x2="980" y2="300"></line>
+        <line x1="604" y1="430" x2="940" y2="620"></line>
+        <line x1="604" y1="430" x2="320" y2="640"></line>
+        <line x1="980" y1="300" x2="1320" y2="430"></line>
+        <line x1="940" y1="620" x2="1300" y2="760"></line>
+      </svg>
+      <div class="node" style="left:480px;top:360px"><span class="tag">core</span><h3>Infinite Canvas</h3><p>Place ideas in space. Pan and zoom to move; nothing is a "page."</p></div>
+      <div class="node" style="left:880px;top:240px"><span class="tag">idea</span><h3>Semantic zoom</h3><p>Zoom out and detail melts to titles; zoom in to read.</p></div>
+      <div class="node" style="left:840px;top:560px"><span class="tag">idea</span><h3>Spatial memory</h3><p>People remember where things are, not what page they were on.</p></div>
+      <div class="node" style="left:200px;top:580px"><span class="tag">use</span><h3>System maps</h3><p>Architecture, mind-maps, research boards, a living index.</p></div>
+      <div class="node" style="left:1220px;top:360px"><span class="tag">link</span><h3>Connections</h3><p>Edges carry as much meaning as the nodes.</p></div>
+      <div class="node" style="left:1200px;top:700px"><span class="tag">link</span><h3>Clusters</h3><p>Group by proximity; let neighborhoods form.</p></div>
+    </div>
+  </div>
+
+  <div class="scaffold">06 · infinite-canvas &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const vp=document.getElementById('vp'),world=document.getElementById('world'),zlab=document.getElementById('z');
+    let x=-260,y=-180,scale=1,drag=false,sx=0,sy=0;
+    const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+    function apply(){world.style.transform=`translate(${x}px,${y}px) scale(${scale})`;zlab.textContent=Math.round(scale*100)+'%';world.classList.toggle('far',scale<0.62);}
+    vp.addEventListener('mousedown',e=>{drag=true;vp.classList.add('grab');sx=e.clientX-x;sy=e.clientY-y;});
+    addEventListener('mousemove',e=>{if(!drag)return;x=e.clientX-sx;y=e.clientY-sy;apply();});
+    addEventListener('mouseup',()=>{drag=false;vp.classList.remove('grab');});
+    vp.addEventListener('wheel',e=>{e.preventDefault();const f=e.deltaY<0?1.12:0.89;const wx=(e.clientX-x)/scale,wy=(e.clientY-y)/scale;scale=clamp(scale*f,0.3,2.6);x=e.clientX-wx*scale;y=e.clientY-wy*scale;apply();},{passive:false});
+    document.getElementById('zin').onclick=()=>{scale=clamp(scale*1.2,0.3,2.6);apply();};
+    document.getElementById('zout').onclick=()=>{scale=clamp(scale*0.83,0.3,2.6);apply();};
+    document.getElementById('reset').onclick=()=>{x=-260;y=-180;scale=1;apply();};
+    // basic touch pan
+    vp.addEventListener('touchstart',e=>{const t=e.touches[0];drag=true;sx=t.clientX-x;sy=t.clientY-y;},{passive:true});
+    vp.addEventListener('touchmove',e=>{if(!drag)return;const t=e.touches[0];x=t.clientX-sx;y=t.clientY-sy;apply();},{passive:true});
+    vp.addEventListener('touchend',()=>{drag=false;});
+    apply();
+  </script>
+</body>
+</html>

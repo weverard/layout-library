@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02 · Centered Document — Layout scaffold</title>
+<!--
+  PATTERN    Centered Document
+  NAV MODEL  Slim sticky top bar for global nav; an in-page "On this page"
+             rail tracks the reader's position within the article.
+  BEST FOR   Articles, docs, blog posts, changelogs, essays — long-form reading.
+  REGIONS    header (sticky top nav)  |  .toc (in-page anchors)  |  article  |  footer
+  RE-SKIN    Change --accent; swap --serif for the body to taste. TOC hides < 1000px.
+-->
+<style>
+  :root{
+    --bg:#FBFAF7; --surface:#fff; --ink:#1A1814; --muted:#6f6a60;
+    --line:rgba(26,24,20,.12); --accent:#B45309;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--serif);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.7}
+  a{color:inherit;text-decoration:none}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .bar{max-width:1100px;margin:0 auto;height:58px;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+  .brand{font-family:var(--sans);font-weight:700;letter-spacing:-.01em}
+  nav.top{display:flex;gap:26px;font-family:var(--sans);font-size:14px}
+  nav.top a{color:var(--muted)}nav.top a:hover,nav.top a.active{color:var(--ink)}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:56px 24px 0;display:grid;grid-template-columns:1fr;gap:48px}
+  @media (min-width:1000px){.wrap{grid-template-columns:200px minmax(0,720px);justify-content:center}}
+
+  .toc{display:none}
+  @media (min-width:1000px){
+    .toc{display:block;position:sticky;top:90px;align-self:start;font-family:var(--sans)}
+    .toc p{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+    .toc a{display:block;font-size:13.5px;color:var(--muted);padding:5px 0 5px 12px;border-left:2px solid var(--line)}
+    .toc a.active{color:var(--accent);border-color:var(--accent)}
+    .toc a:hover{color:var(--ink)}
+  }
+
+  article{min-width:0}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  article h1{font-size:clamp(34px,5vw,52px);line-height:1.08;letter-spacing:-.02em;margin:10px 0 14px}
+  .byline{font-family:var(--sans);font-size:14px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:34px}
+  article h2{font-family:var(--sans);font-size:24px;letter-spacing:-.01em;margin:42px 0 12px;scroll-margin-top:84px}
+  article p{font-size:19px;margin:14px 0;color:#2a261f}
+  article blockquote{border-left:3px solid var(--accent);padding-left:18px;margin:22px 0;color:var(--muted);font-style:italic}
+
+  footer{max-width:1100px;margin:80px auto 0;padding:28px 24px;border-top:1px solid var(--line);
+    font-family:var(--sans);font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:var(--ink);color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono);box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  .scaffold a{color:#fff;opacity:.7}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="brand">Ledger</div>
+      <nav class="top">
+        <a class="active" href="#">Writing</a>
+        <a href="#">Notes</a>
+        <a href="#">About</a>
+        <a href="#">RSS</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <nav class="toc" aria-label="On this page">
+      <p>On this page</p>
+      <a class="active" href="#intro">Introduction</a>
+      <a href="#why">Why centered</a>
+      <a href="#measure">The measure</a>
+      <a href="#close">Closing</a>
+    </nav>
+
+    <article>
+      <p class="eyebrow">Essay</p>
+      <h1>The centered column still wins for reading.</h1>
+      <p class="byline">By A. Writer · 6 min read · Updated today</p>
+
+      <h2 id="intro">Introduction</h2>
+      <p>When the job is reading, constrain the line length and get out of the way. A single centered column with a quiet top bar is the most durable layout on the web — it is what docs, blogs, and essays converge on for a reason.</p>
+
+      <h2 id="why">Why centered</h2>
+      <p>Global navigation lives in the sticky header so it is always one reach away. Local navigation — the structure of this page — lives in the in-page rail, which tracks where you are as you scroll.</p>
+      <blockquote>The reader should never wonder where they are or how far is left.</blockquote>
+
+      <h2 id="measure">The measure</h2>
+      <p>Hold the body to roughly 60–75 characters per line. Everything else — type scale, spacing, rhythm — follows from protecting that measure.</p>
+
+      <h2 id="close">Closing</h2>
+      <p>Fork this when the deliverable is words. Swap the serif for a sans if the voice calls for it; the structure does not change.</p>
+    </article>
+  </div>
+
+  <footer>
+    <span>© Ledger</span>
+    <span>Built on the Centered Document scaffold</span>
+  </footer>
+
+  <div class="scaffold">02 · centered-doc &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    // tiny scroll-spy for the in-page rail
+    var links=[...document.querySelectorAll('.toc a')];
+    var ids=links.map(a=>a.getAttribute('href').slice(1));
+    function spy(){var y=scrollY+100,cur=ids[0];ids.forEach(function(id){var el=document.getElementById(id);if(el&&el.offsetTop<=y)cur=id;});links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur));}
+    addEventListener('scroll',spy,{passive:true});spy();
+  </script>
+</body>
+</html>

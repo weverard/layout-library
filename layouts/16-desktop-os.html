@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16 · Desktop OS — Layout scaffold</title>
+<!--
+  PATTERN    Desktop OS / Windowed
+  NAV MODEL  A "desktop" metaphor: open content as draggable windows from a dock;
+             focus by clicking; close/minimise. Playful, spatial, multi-tasking.
+  BEST FOR   Personal sites, creative portfolios, playful dashboards.
+  REGIONS    .menubar  ·  .desktop (windows)  ·  .window (drag by header)  ·  .dock
+  RE-SKIN    --accent; APPS map defines each window's content.
+-->
+<style>
+  :root{
+    --ink:#1b1d22; --muted:#71757e; --line:rgba(20,20,26,.14); --accent:#3B82F6;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);height:100vh;overflow:hidden;
+    background:linear-gradient(135deg,#5b8def,#9a6bff 60%,#f06bd0);-webkit-font-smoothing:antialiased}
+
+  .menubar{height:30px;background:rgba(255,255,255,.6);backdrop-filter:blur(12px);display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13px;font-weight:600;position:relative;z-index:50}
+  .menubar .sp{margin-left:auto;font-weight:400;color:var(--muted);font-family:var(--mono);font-size:12px}
+
+  .desktop{position:absolute;inset:30px 0 0 0;overflow:hidden}
+  .icon{position:absolute;width:84px;text-align:center;cursor:pointer;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+  .icon .gi{width:54px;height:54px;margin:0 auto 6px;border-radius:14px;background:rgba(255,255,255,.85);box-shadow:0 8px 20px rgba(0,0,0,.2);display:grid;place-items:center;font-size:24px;color:var(--accent)}
+  .icon span{font-size:12px}
+
+  .window{position:absolute;width:440px;background:#fff;border-radius:13px;box-shadow:0 24px 60px rgba(0,0,0,.34);overflow:hidden;border:1px solid rgba(0,0,0,.08)}
+  .window .bar{height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--line);cursor:grab;background:#f7f7f9}
+  .window .bar.drag{cursor:grabbing}
+  .window .lights{display:flex;gap:7px}
+  .window .lights i{width:12px;height:12px;border-radius:50%}
+  .lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+  .window .title{font-size:13px;font-weight:600;color:var(--muted)}
+  .window .content{padding:20px;max-height:60vh;overflow:auto}
+  .window .content h2{font-size:20px;letter-spacing:-.01em;margin-bottom:8px}
+  .window .content p{color:var(--muted);font-size:14px;line-height:1.6}
+  .window .content .k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+
+  .dock{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:60;display:flex;gap:10px;padding:9px 12px;background:rgba(255,255,255,.55);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.5);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.22)}
+  .dock button{width:46px;height:46px;border-radius:12px;border:0;background:#fff;color:var(--accent);font-size:20px;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.12);transition:transform .12s}
+  .dock button:hover{transform:translateY(-6px) scale(1.08)}
+
+  .scaffold{position:fixed;right:16px;top:38px;z-index:70;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="menubar"><b> Beacon</b> <span>File</span><span>View</span><span>Window</span><span class="sp">100% · ◐ · Fri 14:32</span></div>
+  <div class="desktop" id="desktop">
+    <div class="icon" style="left:24px;top:20px" data-app="about"><div class="gi">◎</div><span>About</span></div>
+    <div class="icon" style="left:24px;top:128px" data-app="work"><div class="gi">▦</div><span>Work</span></div>
+    <div class="icon" style="left:24px;top:236px" data-app="notes"><div class="gi">¶</div><span>Notes</span></div>
+  </div>
+
+  <div class="dock" id="dock"></div>
+  <div class="scaffold">16 · desktop-os &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const APPS={
+      about:{t:"About.app",x:160,y:60,k:"readme",h:"A site that behaves like an OS",b:"Open windows, drag them around, stack them. The desktop metaphor turns a portfolio into a place you poke at rather than scroll."},
+      work:{t:"Work.app",x:300,y:140,k:"portfolio",h:"Selected projects",b:"Each window is a workspace. Open several and compare them side by side — multitasking is the whole pitch."},
+      notes:{t:"Notes.app",x:440,y:90,k:"scratch",h:"Thinking out loud",b:"Sticky, informal, personal. The windowed model rewards play and rewards curiosity."}
+    };
+    const desktop=document.getElementById('desktop');let ztop=10;
+    function focus(w){ztop++;w.style.zIndex=ztop;}
+    function open(app){
+      const a=APPS[app];const existing=document.getElementById('w-'+app);if(existing){focus(existing);return;}
+      const w=document.createElement('div');w.className='window';w.id='w-'+app;w.style.left=a.x+'px';w.style.top=a.y+'px';
+      w.innerHTML=`<div class="bar"><span class="lights"><i data-close></i><i></i><i></i></span><span class="title">${a.t}</span></div>
+        <div class="content"><p class="k">${a.k}</p><h2>${a.h}</h2><p>${a.b}</p></div>`;
+      desktop.appendChild(w);focus(w);drag(w);
+      w.querySelector('[data-close]').addEventListener('click',e=>{e.stopPropagation();w.remove();});
+      w.addEventListener('mousedown',()=>focus(w));
+    }
+    function drag(w){
+      const bar=w.querySelector('.bar');let ox,oy,moving=false;
+      bar.addEventListener('mousedown',e=>{moving=true;bar.classList.add('drag');ox=e.clientX-w.offsetLeft;oy=e.clientY-w.offsetTop;});
+      addEventListener('mousemove',e=>{if(!moving)return;w.style.left=Math.max(0,e.clientX-ox)+'px';w.style.top=Math.max(0,e.clientY-oy)+'px';});
+      addEventListener('mouseup',()=>{moving=false;bar.classList.remove('drag');});
+    }
+    desktop.addEventListener('click',e=>{const ic=e.target.closest('.icon');if(ic)open(ic.dataset.app);});
+    const dock=document.getElementById('dock');
+    dock.innerHTML=Object.entries(APPS).map(([k,a])=>`<button data-app="${k}" title="${a.t}">${a.k==='readme'?'◎':a.k==='portfolio'?'▦':'¶'}</button>`).join('');
+    dock.addEventListener('click',e=>{const b=e.target.closest('button');if(b)open(b.dataset.app);});
+    open('about');
+  </script>
+</body>
+</html>

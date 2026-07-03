@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>57 · Diagonal / Skewed Editorial — Layout scaffold</title>
+<!--
+  PATTERN    Diagonal / Skewed Editorial
+  NAV MODEL  Skewed section dividers, oversized rotated type, and asymmetric
+             off-grid blocks that reveal as you scroll — the diagonals guide
+             the eye from section to section.
+  BEST FOR   Editorial, fashion, manifestos, brand sites.
+  REGIONS    .section (.skew) · .headline (rotated) · .aside.
+  RE-SKIN    --accent = section fills / rules. Under ~640px diagonals flatten
+             and rotated type straightens for legibility; layout stays intact.
+-->
+<style>
+  :root{
+    --bg:#faf9f7; --ink:#111; --muted:#6b6b72; --light:#f0ede8;
+    --accent:#F97316;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+
+  /* ── Global reveal state ───────────────────────────────── */
+  .reveal{opacity:0;transform:translateY(36px);transition:opacity .75s ease,transform .75s ease}
+  .reveal.in{opacity:1;transform:translateY(0)}
+
+  /* ── Masthead ──────────────────────────────────────────── */
+  .mast{display:flex;align-items:center;justify-content:space-between;padding:28px 40px;position:relative;z-index:10}
+  .mast .brand{font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .mast nav{display:flex;gap:28px;font-size:14px;color:var(--muted)}
+  .mast nav a:hover{color:var(--ink)}
+
+  /* ── SECTION 1 — hero diagonal ────────────────────────── */
+  /* We use clip-path on the section background; content counter-clips */
+  .s1{
+    position:relative;min-height:90vh;
+    background:var(--ink);color:#faf9f7;
+    clip-path:polygon(0 0,100% 0,100% 88%,0 100%);
+    padding:60px 40px 160px;
+    display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:40px
+  }
+  .s1-left .n{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+  .s1-left h1{font-size:clamp(52px,10vw,130px);font-weight:800;letter-spacing:-.04em;line-height:.92;margin-bottom:28px}
+  .s1-left p{font-size:18px;color:rgba(250,249,247,.6);max-width:38ch;line-height:1.6;margin-bottom:32px}
+  .btn-line{display:inline-block;padding:13px 30px;border:1.5px solid #faf9f7;border-radius:3px;font-size:14px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;transition:background .2s,color .2s}
+  .btn-line:hover{background:#faf9f7;color:var(--ink)}
+  .s1-right{align-self:stretch;display:flex;align-items:center;justify-content:flex-end;padding-bottom:40px}
+  .big-num{font-size:clamp(120px,22vw,280px);font-weight:900;letter-spacing:-.06em;line-height:1;color:rgba(255,255,255,.06)}
+
+  /* ── SECTION 2 — skewY wrapper ────────────────────────── */
+  .s2-wrap{position:relative;margin-top:-60px;padding:0 0 60px}
+  .s2-skew{
+    transform:skewY(-4deg);transform-origin:top left;
+    background:var(--accent);
+    padding:100px 40px
+  }
+  .s2-inner{transform:skewY(4deg);display:grid;grid-template-columns:1fr 2fr;gap:60px;max-width:1100px;margin:0 auto;align-items:center}
+  .s2-aside .k{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(0,0,0,.5);margin-bottom:16px}
+  .s2-aside p{font-size:15px;color:rgba(0,0,0,.7);line-height:1.6;max-width:26ch}
+  .s2-headline{font-size:clamp(44px,7vw,96px);font-weight:800;letter-spacing:-.04em;line-height:.96;color:#fff}
+
+  /* ── SECTION 3 — asymmetric off-grid ──────────────────── */
+  .s3{padding:120px 40px 100px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:3fr 1fr 2fr;gap:48px;align-items:start}
+  .s3-main h2{font-size:clamp(36px,6vw,80px);font-weight:800;letter-spacing:-.04em;line-height:.96;margin-bottom:28px}
+  .s3-main p{font-size:18px;color:var(--muted);line-height:1.6;max-width:44ch}
+  .s3-rule{width:1px;background:var(--ink);height:200px;margin-top:16px}
+  .s3-aside .k{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+  .s3-aside p{font-size:15px;color:var(--muted);line-height:1.6}
+  .s3-aside .big-word{font-size:clamp(52px,8vw,100px);font-weight:900;letter-spacing:-.05em;color:var(--light);line-height:1;margin-bottom:16px}
+
+  /* Rotated headline flourish */
+  .rotated-label{
+    writing-mode:vertical-rl;transform:rotate(180deg);
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent);align-self:center;justify-self:center
+  }
+
+  /* ── SECTION 4 — dark close diagonal ──────────────────── */
+  .s4-wrap{margin-top:60px}
+  .s4-skew{
+    transform:skewY(3deg);transform-origin:top left;
+    background:var(--ink);
+    padding:100px 40px 140px;clip-path:polygon(0 0,100% 5%,100% 100%,0 100%)
+  }
+  .s4-inner{transform:skewY(-3deg);max-width:900px;margin:0 auto;color:#faf9f7}
+  .s4-inner .k{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+  .s4-inner h2{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.04em;line-height:.96;margin-bottom:32px}
+  .s4-inner p{font-size:18px;color:rgba(250,249,247,.55);max-width:50ch;line-height:1.6;margin-bottom:36px}
+  .s4-row{display:flex;gap:40px;flex-wrap:wrap;margin-top:48px;border-top:1px solid rgba(255,255,255,.12);padding-top:32px}
+  .s4-stat .big{font-size:52px;font-weight:800;color:var(--accent);letter-spacing:-.03em;line-height:1}
+  .s4-stat small{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(250,249,247,.5)}
+
+  /* ── Responsive ─────────────────────────────────────────── */
+  @media(max-width:640px){
+    .mast{padding:20px 20px}
+    .s1{clip-path:none;grid-template-columns:1fr;padding:40px 20px 80px;min-height:auto}
+    .s1-right{display:none}
+    .s2-skew{transform:none;padding:60px 20px}
+    .s2-inner{transform:none;grid-template-columns:1fr;gap:24px}
+    .s3{grid-template-columns:1fr;padding:60px 20px}
+    .s3-rule,.rotated-label{display:none}
+    .s3-aside .big-word{font-size:56px}
+    .s4-skew{transform:none;clip-path:none;padding:60px 20px 80px}
+    .s4-inner{transform:none}
+    .s4-row{gap:24px}
+  }
+
+  /* ── Reduced-motion ─────────────────────────────────────── */
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+  }
+
+  /* ── Scaffold ───────────────────────────────────────────── */
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+  <div class="mast">
+    <span class="brand">Oblique</span>
+    <nav><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+  </div>
+
+  <!-- Section 1 — hero clip-path diagonal -->
+  <section class="s1">
+    <div class="s1-left reveal">
+      <p class="n">01 — Form</p>
+      <h1>Off the grid.</h1>
+      <p>Diagonals break the tyranny of the rectangle. The angle is the argument — a page that moves before you do.</p>
+      <a class="btn-line" href="#">Read the manifesto</a>
+    </div>
+    <div class="s1-right reveal">
+      <span class="big-num">01</span>
+    </div>
+  </section>
+
+  <!-- Section 2 — skewY accent band -->
+  <div class="s2-wrap">
+    <div class="s2-skew">
+      <div class="s2-inner">
+        <div class="s2-aside reveal">
+          <p class="k">The angle</p>
+          <p>A skewed wrapper with counter-skewed content: the background tilts while the type stays upright and readable.</p>
+        </div>
+        <h2 class="s2-headline reveal">Shape is navigation.</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3 — off-grid columns + rotated label -->
+  <section class="s3">
+    <div class="s3-main reveal">
+      <h2>Editorial asks the reader to work.</h2>
+      <p>Asymmetry signals intention. When nothing is centred, the eye hunts — and in hunting it reads more closely.</p>
+    </div>
+    <span class="rotated-label reveal">02 — Layout</span>
+    <div class="s3-aside reveal">
+      <span class="big-word">Less.</span>
+      <p class="k">The rule</p>
+      <p>Hierarchy from position, not from a grid of boxes. The column rule is the only ornament.</p>
+    </div>
+  </section>
+
+  <!-- Section 4 — dark closing skew -->
+  <div class="s4-wrap">
+    <div class="s4-skew">
+      <div class="s4-inner">
+        <p class="k reveal">03 — Close</p>
+        <h2 class="reveal">Restraint lands harder.</h2>
+        <p class="reveal">Three typefaces. Two colours. One diagonal. The argument ends where the shape ends.</p>
+        <a class="btn-line reveal" href="#" style="color:#faf9f7;border-color:#faf9f7">Start a project</a>
+        <div class="s4-row">
+          <div class="s4-stat reveal"><div class="big">12</div><small>years cutting angles</small></div>
+          <div class="s4-stat reveal"><div class="big">240</div><small>editorials shipped</small></div>
+          <div class="s4-stat reveal"><div class="big">4°</div><small>the only skew you need</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scaffold">57 · diagonal-editorial &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  if(prefersReduced || !window.IntersectionObserver){
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+    return;
+  }
+
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('in');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(function(el){ obs.observe(el); });
+})();
+</script>
+</body>
+</html>

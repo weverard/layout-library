@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>59 · Cursor-Mask Reveal — Layout scaffold</title>
+<!--
+  PATTERN    Cursor-Mask Reveal
+  NAV MODEL  A shaped mask follows the cursor and reveals a DIFFERENT image /
+             layer beneath the top one — a full swap, not just dimming (distinct
+             from 30 Spotlight Scroll which dims around a single layer). On touch,
+             the mask follows tap and drag.
+  BEST FOR   Before/after comparisons, teasers, interactive heroes.
+  REGIONS    .stage · .top (over layer) · .under (revealed layer) · the mask.
+  RE-SKIN    --accent = under-layer theme colour; --mask-r = default radius.
+             Larger default radius on small screens (< 640px) for finger use.
+             Breakpoint: pointer still works on touch via pointermove.
+-->
+<style>
+  :root{
+    --accent:#EF4444;
+    --mask-r:140px;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+
+  @media(max-width:640px){
+    :root{ --mask-r:200px }
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden;background:#000;line-height:1.5;cursor:none}
+
+  /* ── Stage ────────────────────────────────────────────── */
+  .stage{position:fixed;inset:0;overflow:hidden}
+
+  /* ── UNDER layer — dark/dramatic, different scene ─────── */
+  .under{
+    position:absolute;inset:0;
+    background:linear-gradient(135deg,#0a0a0f 0%,#1a0a1a 40%,#0f0a1f 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:#f4f4f2;text-align:center;padding:32px;
+    user-select:none;
+  }
+  .under::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(239,68,68,.18) 0%,transparent 70%);
+    pointer-events:none
+  }
+  .under .k{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;position:relative}
+  .under h2{font-size:clamp(42px,9vw,108px);font-weight:900;letter-spacing:-.04em;line-height:.92;position:relative;margin-bottom:24px}
+  .under p{font-size:18px;color:rgba(244,244,242,.55);max-width:42ch;line-height:1.6;position:relative}
+  .under .tag{display:inline-block;margin-top:28px;padding:10px 26px;border:1.5px solid var(--accent);border-radius:3px;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);position:relative}
+
+  /* ── TOP layer — light, different scene, clips via mask ─ */
+  .top{
+    position:absolute;inset:0;
+    background:linear-gradient(135deg,#fafaf8 0%,#f0ece4 50%,#e8e4dc 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:#111;text-align:center;padding:32px;
+    user-select:none;
+    /* mask applied via JS as a CSS clip-path or mask-image */
+  }
+  .top::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(180,160,120,.2) 0%,transparent 70%);
+    pointer-events:none
+  }
+  .top .k{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#b8a070;margin-bottom:20px;position:relative}
+  .top h2{font-size:clamp(42px,9vw,108px);font-weight:900;letter-spacing:-.04em;line-height:.92;position:relative;margin-bottom:24px}
+  .top p{font-size:18px;color:rgba(17,17,17,.5);max-width:42ch;line-height:1.6;position:relative}
+  .top .tag{display:inline-block;margin-top:28px;padding:10px 26px;border:1.5px solid #111;border-radius:3px;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#111;position:relative}
+
+  /* ── Hint ─────────────────────────────────────────────── */
+  .hint{
+    position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(244,244,242,.35);z-index:10;pointer-events:none;
+    transition:opacity .5s;white-space:nowrap
+  }
+  .hint.hidden{opacity:0}
+
+  /* ── Custom cursor ring ───────────────────────────────── */
+  .cursor-ring{
+    position:fixed;z-index:20;pointer-events:none;
+    border-radius:50%;
+    border:1.5px solid rgba(239,68,68,.7);
+    transform:translate(-50%,-50%);
+    transition:width .12s ease,height .12s ease;
+  }
+
+  /* ── Scaffold ─────────────────────────────────────────── */
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono);cursor:auto}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <!-- UNDER — revealed layer (dark scene) -->
+    <div class="under" id="under" aria-hidden="true">
+      <p class="k">The other side</p>
+      <h2>Dark matter.</h2>
+      <p>This layer lives beneath — only visible where your cursor cuts through the surface.</p>
+      <span class="tag">Revealed</span>
+    </div>
+
+    <!-- TOP — over layer, masked by cursor hole -->
+    <div class="top" id="top">
+      <p class="k">Move the cursor</p>
+      <h2>Light surface.</h2>
+      <p>Drag the circle to peel back the top layer and expose what is hiding underneath.</p>
+      <span class="tag">Top layer</span>
+    </div>
+  </div>
+
+  <div class="hint" id="hint">Move cursor to reveal</div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <div class="scaffold">59 · cursor-mask &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var topLayer = document.getElementById('top');
+  var ring = document.getElementById('cursorRing');
+  var hint = document.getElementById('hint');
+
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  // Radius from CSS var
+  function getMaskR(){
+    var raw = getComputedStyle(document.documentElement).getPropertyValue('--mask-r').trim();
+    return parseInt(raw, 10) || 140;
+  }
+
+  var maskR = getMaskR();
+  var currentX = window.innerWidth / 2;
+  var currentY = window.innerHeight / 2;
+  var rafId = null;
+  var hasMoved = false;
+
+  function setMask(x, y){
+    var r = maskR;
+    // clip-path circle: clip(r at x y) shows content INSIDE the circle;
+    // we want to HIDE the top layer inside the circle (show a hole), so invert:
+    // Use a polygon that covers the whole viewport minus the circle.
+    // Easiest: use mask-image with a radial-gradient that is transparent at centre.
+    // transparent centre = hole in .top, revealing .under
+    topLayer.style.webkitMaskImage =
+      'radial-gradient(circle ' + r + 'px at ' + x + 'px ' + y + 'px, transparent ' + (r - 1) + 'px, black ' + r + 'px)';
+    topLayer.style.maskImage =
+      'radial-gradient(circle ' + r + 'px at ' + x + 'px ' + y + 'px, transparent ' + (r - 1) + 'px, black ' + r + 'px)';
+
+    // Ring cursor
+    ring.style.left = x + 'px';
+    ring.style.top = y + 'px';
+    ring.style.width = (r * 2) + 'px';
+    ring.style.height = (r * 2) + 'px';
+  }
+
+  function applyFrame(){
+    rafId = null;
+    setMask(currentX, currentY);
+  }
+
+  // Initialise mask at centre
+  setMask(currentX, currentY);
+
+  document.addEventListener('pointermove', function(e){
+    currentX = e.clientX;
+    currentY = e.clientY;
+    if(!hasMoved){
+      hasMoved = true;
+      hint.classList.add('hidden');
+    }
+    if(!rafId) rafId = requestAnimationFrame(applyFrame);
+  }, { passive: true });
+
+  // Also handle touch explicitly for devices that don't fire pointermove
+  document.addEventListener('touchmove', function(e){
+    if(e.touches.length > 0){
+      currentX = e.touches[0].clientX;
+      currentY = e.touches[0].clientY;
+      if(!hasMoved){
+        hasMoved = true;
+        hint.classList.add('hidden');
+      }
+      if(!rafId) rafId = requestAnimationFrame(applyFrame);
+    }
+  }, { passive: true });
+
+  // Hover hint — hide cursor ring when over scaffold (auto cursor)
+  document.querySelector('.scaffold').addEventListener('mouseenter', function(){
+    ring.style.opacity = '0';
+  });
+  document.querySelector('.scaffold').addEventListener('mouseleave', function(){
+    ring.style.opacity = '1';
+  });
+
+  // On resize, re-read mask radius and update
+  window.addEventListener('resize', function(){
+    maskR = getMaskR();
+    if(!rafId) rafId = requestAnimationFrame(applyFrame);
+  }, { passive: true });
+
+  // Reduced-motion: still functional, just no rAF tricks needed (DOM events work)
+  // The mask still follows pointer — just no extra animations
+  if(prefersReduced){
+    // no-op extra — core pointer tracking above is already minimal
+  }
+})();
+</script>
+</body>
+</html>

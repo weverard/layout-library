@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>37 · Stepper / Wizard — Layout scaffold</title>
+<!--
+  PATTERN    Stepper / Wizard
+  NAV MODEL  Numbered linear steps along a progress rail; Next/Back move along;
+             completed steps show a tick; click a completed step to jump back to it.
+  BEST FOR   Checkout, onboarding, multi-part forms.
+  REGIONS    .rail (steps) · .step (.done / .current) · .panel (step content) ·
+             .controls (Back/Next).
+  RE-SKIN    --accent = current/done step + rail fill; rail goes vertical under ~640px.
+-->
+<style>
+  :root{
+    --bg:#F4F4F2; --surface:#fff; --ink:#16161a; --muted:#6b6f76;
+    --line:rgba(20,20,26,.12); --accent:#2563EB;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);
+       -webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh;
+       display:flex;align-items:center;justify-content:center;padding:24px}
+
+  .wizard{
+    background:var(--surface);border:1px solid var(--line);border-radius:24px;
+    padding:36px 40px 40px;box-shadow:0 4px 32px rgba(0,0,0,.08);
+    width:100%;max-width:640px;display:flex;flex-direction:column;gap:36px;
+  }
+  .wizard-title{font-weight:700;font-size:20px;letter-spacing:-.02em}
+
+  /* ── Rail ── */
+  .rail{
+    display:flex;align-items:flex-start;gap:0;
+  }
+  .step{
+    display:flex;flex-direction:column;align-items:center;flex:1;gap:8px;position:relative;
+  }
+  /* connector line between nodes */
+  .step:not(:last-child)::after{
+    content:'';position:absolute;top:18px;left:50%;right:-50%;height:2px;
+    background:var(--line);z-index:0;
+    transition:background .3s;
+  }
+  .step.done:not(:last-child)::after{background:var(--accent)}
+
+  .node{
+    width:36px;height:36px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;z-index:1;position:relative;
+    border:2px solid var(--line);background:var(--surface);color:var(--muted);
+    transition:background .2s,border-color .2s,color .2s;
+    cursor:default;
+    /* UA reset since some steps become buttons */
+    appearance:none;font-family:inherit;
+  }
+  button.node{cursor:pointer}
+  button.node:hover{border-color:var(--accent);color:var(--accent)}
+  .step.current .node{
+    border-color:var(--accent);background:var(--accent);color:#fff;
+  }
+  .step.done .node{
+    border-color:var(--accent);background:var(--accent);color:#fff;
+  }
+  .step-label{
+    font-size:12px;font-weight:500;color:var(--muted);text-align:center;
+    line-height:1.3;max-width:72px;
+    transition:color .2s;
+  }
+  .step.current .step-label{color:var(--accent);font-weight:600}
+  .step.done .step-label{color:var(--ink)}
+
+  /* ── Panel ── */
+  .panels{position:relative;overflow:hidden;min-height:240px}
+  .panel{
+    display:none;flex-direction:column;gap:16px;
+    animation:panelIn .25s ease both;
+  }
+  .panel.active{display:flex}
+  @keyframes panelIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+  .panel h2{font-size:18px;font-weight:700;letter-spacing:-.02em}
+  .panel p{color:var(--muted);font-size:14px;max-width:480px}
+
+  .field-row{display:flex;gap:12px;flex-wrap:wrap}
+  .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+  .field label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+  .field input,.field select,.field textarea{
+    border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+    font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--bg);
+    outline:none;transition:border-color .15s;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+  .field textarea{resize:vertical;min-height:80px}
+  .field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b6f76' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+
+  .review-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .review-item{}
+  .review-item .rk{font-size:11px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .review-item .rv{font-size:15px;font-weight:500;margin-top:2px}
+
+  .done-check{font-size:48px;text-align:center;padding:12px 0}
+  .done-msg{text-align:center;color:var(--muted);font-size:15px}
+
+  /* ── Controls ── */
+  .controls{display:flex;justify-content:space-between;align-items:center;padding-top:4px}
+  .btn{
+    appearance:none;background:none;border:0;padding:0;font:inherit;cursor:pointer;
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;
+    transition:background .15s,color .15s,opacity .15s;
+  }
+  .btn-back{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+  .btn-back:hover:not(:disabled){background:#eaeae6}
+  .btn-next{background:var(--accent);color:#fff}
+  .btn-next:hover:not(:disabled){background:#1d4fd8}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .step-counter{font-size:12px;font-family:var(--mono);color:var(--muted)}
+
+  /* ── Responsive: vertical rail under 640px ── */
+  @media(max-width:640px){
+    .wizard{padding:24px 20px 28px}
+    .rail{flex-direction:column;align-items:flex-start;gap:0}
+    .step{flex-direction:row;gap:12px;align-items:center;flex:none;width:100%;padding:6px 0}
+    .step:not(:last-child)::after{
+      top:36px;left:17px;right:auto;width:2px;height:calc(100% + 0px);bottom:auto;
+    }
+    .step-label{text-align:left;max-width:none}
+    .review-grid{grid-template-columns:1fr}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;
+             border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wizard">
+    <div class="wizard-title">Create your account</div>
+
+    <!-- Rail -->
+    <nav class="rail" id="rail" aria-label="Progress"></nav>
+
+    <!-- Panels -->
+    <div class="panels">
+      <!-- Panel 0 -->
+      <div class="panel" id="panel-0">
+        <h2>Account</h2>
+        <p>Enter your email address and choose a secure password to get started.</p>
+        <div class="field-row">
+          <div class="field">
+            <label>Email address</label>
+            <input type="email" placeholder="you@example.com" />
+          </div>
+        </div>
+        <form onsubmit="return false" autocomplete="off" style="display:contents">
+        <input type="text" autocomplete="username" aria-hidden="true" tabindex="-1" style="display:none" />
+        <div class="field-row">
+          <div class="field">
+            <label>Password</label>
+            <input type="password" placeholder="8+ characters" autocomplete="new-password" />
+          </div>
+          <div class="field">
+            <label>Confirm</label>
+            <input type="password" placeholder="Repeat password" autocomplete="new-password" />
+          </div>
+        </div>
+        </form>
+      </div>
+      <!-- Panel 1 -->
+      <div class="panel" id="panel-1">
+        <h2>Your details</h2>
+        <p>Tell us a bit about yourself so we can personalise your experience.</p>
+        <div class="field-row">
+          <div class="field">
+            <label>First name</label>
+            <input type="text" placeholder="Ada" />
+          </div>
+          <div class="field">
+            <label>Last name</label>
+            <input type="text" placeholder="Lovelace" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Role</label>
+            <select>
+              <option>Designer</option>
+              <option>Engineer</option>
+              <option>Product</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Team size</label>
+            <select>
+              <option>Solo</option>
+              <option>2–10</option>
+              <option>11–50</option>
+              <option>50+</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- Panel 2 -->
+      <div class="panel" id="panel-2">
+        <h2>Preferences</h2>
+        <p>Choose what works best for you — you can change these later in settings.</p>
+        <div class="field-row">
+          <div class="field">
+            <label>Theme</label>
+            <select>
+              <option>System default</option>
+              <option>Light</option>
+              <option>Dark</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Language</label>
+            <select>
+              <option>English</option>
+              <option>French</option>
+              <option>German</option>
+              <option>Spanish</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>How did you hear about us?</label>
+          <textarea placeholder="Optional — colleague referral, search, social…"></textarea>
+        </div>
+      </div>
+      <!-- Panel 3 -->
+      <div class="panel" id="panel-3">
+        <h2>Review</h2>
+        <p>Check everything looks right before you finish.</p>
+        <div class="review-grid">
+          <div class="review-item"><div class="rk">Email</div><div class="rv">you@example.com</div></div>
+          <div class="review-item"><div class="rk">Name</div><div class="rv">Ada Lovelace</div></div>
+          <div class="review-item"><div class="rk">Role</div><div class="rv">Designer</div></div>
+          <div class="review-item"><div class="rk">Team size</div><div class="rv">2–10</div></div>
+          <div class="review-item"><div class="rk">Theme</div><div class="rv">System default</div></div>
+          <div class="review-item"><div class="rk">Language</div><div class="rv">English</div></div>
+        </div>
+      </div>
+      <!-- Panel 4 -->
+      <div class="panel" id="panel-4">
+        <div class="done-check">✓</div>
+        <h2 style="text-align:center">All done!</h2>
+        <p class="done-msg">Your account is set up and ready to go. Check your inbox for a confirmation email.</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="btn btn-back" id="btnBack">← Back</button>
+      <span class="step-counter" id="stepCounter"></span>
+      <button class="btn btn-next" id="btnNext">Next →</button>
+    </div>
+  </div>
+
+  <div class="scaffold">37 · stepper &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var STEPS = [
+    {label:'Account'},
+    {label:'Details'},
+    {label:'Preferences'},
+    {label:'Review'},
+    {label:'Done'}
+  ];
+  var total = STEPS.length;
+  var currentStep = 0;
+
+  var railEl = document.getElementById('rail');
+  var btnBack = document.getElementById('btnBack');
+  var btnNext = document.getElementById('btnNext');
+  var counterEl = document.getElementById('stepCounter');
+
+  /* Build rail nodes */
+  var nodeEls = [];
+  STEPS.forEach(function(s, i){
+    var stepDiv = document.createElement('div');
+    stepDiv.className = 'step';
+    stepDiv.setAttribute('aria-current', 'false');
+
+    /* Node: button for done steps (jump-back), span otherwise */
+    var nodeEl = document.createElement('span');
+    nodeEl.className = 'node';
+    nodeEl.setAttribute('aria-label', s.label);
+
+    var labelEl = document.createElement('span');
+    labelEl.className = 'step-label';
+    labelEl.textContent = s.label;
+
+    stepDiv.appendChild(nodeEl);
+    stepDiv.appendChild(labelEl);
+    railEl.appendChild(stepDiv);
+    nodeEls.push({stepDiv:stepDiv, nodeEl:nodeEl, labelEl:labelEl});
+  });
+
+  function renderRail(){
+    nodeEls.forEach(function(obj, i){
+      var stepDiv = obj.stepDiv;
+      var nodeEl = obj.nodeEl;
+      stepDiv.classList.remove('done','current');
+      stepDiv.removeAttribute('aria-current');
+      /* Convert node to button or span depending on state */
+      if(i < currentStep){
+        stepDiv.classList.add('done');
+        /* Make it a clickable button if it isn't already */
+        if(nodeEl.tagName !== 'BUTTON'){
+          var btn = document.createElement('button');
+          btn.className = nodeEl.className;
+          btn.setAttribute('aria-label', 'Go back to ' + STEPS[i].label);
+          btn.innerHTML = '✓';
+          nodeEl.replaceWith(btn);
+          obj.nodeEl = btn;
+          (function(idx){ btn.addEventListener('click', function(){ jumpTo(idx); }); })(i);
+        } else {
+          obj.nodeEl.innerHTML = '✓';
+        }
+      } else if(i === currentStep){
+        stepDiv.classList.add('current');
+        stepDiv.setAttribute('aria-current','step');
+        if(nodeEl.tagName === 'BUTTON'){
+          var span = document.createElement('span');
+          span.className = nodeEl.className;
+          span.setAttribute('aria-label', STEPS[i].label);
+          span.textContent = i + 1;
+          nodeEl.replaceWith(span);
+          obj.nodeEl = span;
+        } else {
+          obj.nodeEl.textContent = i + 1;
+        }
+      } else {
+        if(nodeEl.tagName === 'BUTTON'){
+          var span2 = document.createElement('span');
+          span2.className = nodeEl.className;
+          span2.setAttribute('aria-label', STEPS[i].label);
+          span2.textContent = i + 1;
+          nodeEl.replaceWith(span2);
+          obj.nodeEl = span2;
+        } else {
+          obj.nodeEl.textContent = i + 1;
+        }
+      }
+    });
+  }
+
+  function renderPanels(){
+    for(var i = 0; i < total; i++){
+      var p = document.getElementById('panel-' + i);
+      if(p){
+        p.classList.toggle('active', i === currentStep);
+      }
+    }
+  }
+
+  function renderControls(){
+    btnBack.disabled = (currentStep === 0);
+    /* On last step hide Next */
+    var isLast = (currentStep === total - 1);
+    btnNext.style.display = isLast ? 'none' : '';
+    counterEl.textContent = 'Step ' + (currentStep + 1) + ' of ' + total;
+  }
+
+  function render(){
+    renderRail();
+    renderPanels();
+    renderControls();
+  }
+
+  function jumpTo(idx){
+    if(idx < currentStep){
+      currentStep = idx;
+      render();
+    }
+  }
+
+  btnNext.addEventListener('click', function(){
+    if(currentStep < total - 1){
+      currentStep++;
+      render();
+    }
+  });
+
+  btnBack.addEventListener('click', function(){
+    if(currentStep > 0){
+      currentStep--;
+      render();
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

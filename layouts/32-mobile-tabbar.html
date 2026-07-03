@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>32 · Mobile Tab-Bar Shell — Layout scaffold</title>
+<!--
+  PATTERN    Mobile Tab-Bar Shell
+  NAV MODEL  A phone-frame app with a fixed bottom tab bar of 4 items. Tap a tab (or swipe
+             the content left/right) to change section; the active icon highlights.
+  BEST FOR   mobile apps, PWAs, content apps.
+  REGIONS    .phone (frame) · .screen (sections) · .tabbar (4 .tab).
+  RE-SKIN    --accent = active tab tint; ≥480px the phone centers on a backdrop, below it
+             fills the viewport.
+-->
+<style>
+  :root{
+    --bg:#1a1b20; --surface:#fff; --ink:#16161a; --muted:#71757e; --line:rgba(20,20,26,.1); --accent:#0EA5A4;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
+    min-height:100vh;display:grid;place-items:center}
+
+  /* ── phone frame (desktop) ── */
+  .phone{
+    position:relative;
+    width:390px;max-width:100vw;
+    height:92vh;max-height:844px;
+    background:#111;
+    border-radius:50px;
+    padding:12px;
+    box-shadow:0 40px 100px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.12);
+  }
+  .screen{
+    position:relative;
+    width:100%;height:100%;
+    border-radius:40px;
+    overflow:hidden;
+    background:var(--surface);
+    display:flex;flex-direction:column;
+  }
+
+  /* notch */
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:126px;height:34px;background:#111;border-radius:0 0 20px 20px;z-index:20}
+
+  /* ── sections viewport ── */
+  .sections-wrap{flex:1;overflow:hidden;position:relative}
+  .sections{display:flex;width:400%;height:100%;transition:transform .3s cubic-bezier(.4,0,.2,1)}
+  .sections.no-transition{transition:none}
+
+  .section{width:25%;height:100%;overflow-y:auto;flex-shrink:0}
+
+  /* ── tab bar ── */
+  .tabbar{
+    display:flex;flex-shrink:0;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    padding:6px 0 max(env(safe-area-inset-bottom),8px);
+    position:relative;z-index:10;
+  }
+  .tab{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:6px 4px 2px;
+    appearance:none;background:none;border:0;padding-top:6px;font:inherit;cursor:pointer;
+    color:var(--muted);transition:color .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .tab.active{color:var(--accent)}
+  .tab-icon{display:block;width:26px;height:26px;line-height:26px;text-align:center;font-size:20px}
+  .tab-label{font-size:10px;font-weight:600;letter-spacing:.01em}
+
+  /* ── section content ── */
+  .sec-head{
+    padding:54px 22px 16px; /* room for notch */
+    border-bottom:1px solid var(--line);
+  }
+  .sec-head h1{font-size:22px;letter-spacing:-.01em;margin-bottom:2px}
+  .sec-head .sub{font-size:13px;color:var(--muted)}
+
+  .card-list{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+  .card{background:#f5f5f3;border-radius:16px;padding:16px;display:flex;align-items:flex-start;gap:12px}
+  .card-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;background:#e8e8e5}
+  .card-body .t{font-weight:600;font-size:14px;margin-bottom:2px}
+  .card-body .d{font-size:12px;color:var(--muted);line-height:1.4}
+  .card-meta{margin-left:auto;font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap;padding-top:2px}
+
+  .stat-row{display:flex;gap:10px;padding:14px 16px 0}
+  .stat{flex:1;background:#f5f5f3;border-radius:14px;padding:14px;text-align:center}
+  .stat .val{font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+  .profile-header{display:flex;flex-direction:column;align-items:center;padding:52px 22px 20px;border-bottom:1px solid var(--line)}
+  .avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#7dd3fc);display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;margin-bottom:12px}
+  .profile-header .name{font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .profile-header .handle{font-size:13px;color:var(--muted);margin-top:2px}
+  .profile-stats{display:flex;gap:0;border-bottom:1px solid var(--line)}
+  .profile-stat{flex:1;text-align:center;padding:16px 8px;border-right:1px solid var(--line)}
+  .profile-stat:last-child{border-right:0}
+  .profile-stat .val{font-size:17px;font-weight:700}
+  .profile-stat .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+  .menu-list{padding:8px 16px}
+  .menu-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:500}
+  .menu-row:last-child{border-bottom:0}
+  .menu-ico{width:34px;height:34px;border-radius:10px;background:#f0f0ee;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .menu-row .chev{margin-left:auto;color:var(--muted);font-size:16px}
+
+  .feed-item{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .feed-dot{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#c7d2fe,#ddd6fe);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .feed-body .t{font-size:14px;font-weight:600;margin-bottom:2px}
+  .feed-body .d{font-size:13px;color:var(--muted);line-height:1.4}
+  .feed-time{margin-left:auto;font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap;padding-top:2px}
+
+  /* ── responsive: fill viewport below 480px ── */
+  @media(max-width:479px){
+    body{display:block;background:var(--surface);padding:0}
+    .phone{width:100%;height:100vh;max-height:none;border-radius:0;padding:0;background:transparent;box-shadow:none}
+    .screen{border-radius:0}
+    .notch{display:none}
+    .sec-head{padding-top:24px}
+  }
+
+  /* ── scaffold badge ── */
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono);border:1px solid rgba(255,255,255,.15)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="notch"></div>
+
+      <div class="sections-wrap" id="sectionsWrap">
+        <div class="sections" id="sections">
+
+          <!-- 0: Home -->
+          <div class="section">
+            <div class="sec-head"><h1>Home</h1><p class="sub">Good morning</p></div>
+            <div class="stat-row">
+              <div class="stat"><div class="val">12</div><div class="lbl">Tasks</div></div>
+              <div class="stat"><div class="val">3</div><div class="lbl">Due today</div></div>
+              <div class="stat"><div class="val">87%</div><div class="lbl">Done</div></div>
+            </div>
+            <div class="card-list">
+              <div class="card"><div class="card-ico">📋</div><div class="card-body"><div class="t">Sprint review deck</div><div class="d">Due today · Design</div></div><div class="card-meta">Today</div></div>
+              <div class="card"><div class="card-ico">🔍</div><div class="card-body"><div class="t">Usability audit</div><div class="d">In progress · Research</div></div><div class="card-meta">Fri</div></div>
+              <div class="card"><div class="card-ico">📊</div><div class="card-body"><div class="t">Q2 dashboard</div><div class="d">Waiting for data</div></div><div class="card-meta">Mon</div></div>
+            </div>
+          </div>
+
+          <!-- 1: Search -->
+          <div class="section">
+            <div class="sec-head"><h1>Search</h1><p class="sub">Browse all content</p></div>
+            <div class="card-list">
+              <div class="card"><div class="card-ico">🎨</div><div class="card-body"><div class="t">Design</div><div class="d">48 items</div></div></div>
+              <div class="card"><div class="card-ico">💻</div><div class="card-body"><div class="t">Engineering</div><div class="d">124 items</div></div></div>
+              <div class="card"><div class="card-ico">📣</div><div class="card-body"><div class="t">Marketing</div><div class="d">36 items</div></div></div>
+              <div class="card"><div class="card-ico">📁</div><div class="card-body"><div class="t">Archive</div><div class="d">210 items</div></div></div>
+            </div>
+          </div>
+
+          <!-- 2: Activity -->
+          <div class="section">
+            <div class="sec-head"><h1>Activity</h1><p class="sub">Recent updates</p></div>
+            <div class="feed-item"><div class="feed-dot">💬</div><div class="feed-body"><div class="t">Alex left a comment</div><div class="d">On "Sprint review deck" — looks good, just one tweak needed</div></div><div class="feed-time">2 m</div></div>
+            <div class="feed-item"><div class="feed-dot">✅</div><div class="feed-body"><div class="t">Task completed</div><div class="d">Jess marked "API docs" as done</div></div><div class="feed-time">18 m</div></div>
+            <div class="feed-item"><div class="feed-dot">📎</div><div class="feed-body"><div class="t">File uploaded</div><div class="d">design-v4-final.fig added to Design</div></div><div class="feed-time">1 h</div></div>
+            <div class="feed-item"><div class="feed-dot">🔔</div><div class="feed-body"><div class="t">Reminder</div><div class="d">Standup in 30 minutes</div></div><div class="feed-time">2 h</div></div>
+          </div>
+
+          <!-- 3: Profile -->
+          <div class="section">
+            <div class="profile-header">
+              <div class="avatar">AK</div>
+              <div class="name">Alex Kim</div>
+              <div class="handle">@alexkim · Product</div>
+            </div>
+            <div class="profile-stats">
+              <div class="profile-stat"><div class="val">42</div><div class="lbl">Tasks done</div></div>
+              <div class="profile-stat"><div class="val">8</div><div class="lbl">Projects</div></div>
+              <div class="profile-stat"><div class="val">97%</div><div class="lbl">On time</div></div>
+            </div>
+            <div class="menu-list">
+              <div class="menu-row"><div class="menu-ico">🖊</div>Edit profile<span class="chev">›</span></div>
+              <div class="menu-row"><div class="menu-ico">🔔</div>Notifications<span class="chev">›</span></div>
+              <div class="menu-row"><div class="menu-ico">🔒</div>Privacy &amp; security<span class="chev">›</span></div>
+              <div class="menu-row"><div class="menu-ico">💡</div>Appearance<span class="chev">›</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="tabbar" id="tabbar">
+        <button class="tab active" data-idx="0">
+          <span class="tab-icon">⌂</span>
+          <span class="tab-label">Home</span>
+        </button>
+        <button class="tab" data-idx="1">
+          <span class="tab-icon">⊙</span>
+          <span class="tab-label">Search</span>
+        </button>
+        <button class="tab" data-idx="2">
+          <span class="tab-icon">◎</span>
+          <span class="tab-label">Activity</span>
+        </button>
+        <button class="tab" data-idx="3">
+          <span class="tab-icon">◉</span>
+          <span class="tab-label">Profile</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scaffold">32 · mobile-tabbar &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var activeIdx = 0;
+  var tabButtons = Array.from(document.querySelectorAll('#tabbar .tab'));
+  var sectionsEl = document.getElementById('sections');
+  var wrapEl = document.getElementById('sectionsWrap');
+
+  function goTo(idx, animate){
+    if(idx < 0 || idx > 3) return;
+    activeIdx = idx;
+    if(!animate){ sectionsEl.classList.add('no-transition'); }
+    sectionsEl.style.transform = 'translateX(' + (-25 * idx) + '%)';
+    if(!animate){ /* force reflow then re-enable */ sectionsEl.offsetWidth; sectionsEl.classList.remove('no-transition'); }
+    tabButtons.forEach(function(btn, i){
+      btn.classList.toggle('active', i === idx);
+    });
+  }
+
+  /* tab clicks */
+  document.getElementById('tabbar').addEventListener('click', function(e){
+    var btn = e.target.closest('.tab');
+    if(!btn) return;
+    goTo(Number(btn.dataset.idx), true);
+  });
+
+  /* swipe via pointer events */
+  var pStartX = 0, pStartY = 0, pTracking = false;
+  var THRESHOLD = 50;
+
+  wrapEl.addEventListener('pointerdown', function(e){
+    pStartX = e.clientX;
+    pStartY = e.clientY;
+    pTracking = true;
+  });
+
+  wrapEl.addEventListener('pointerup', function(e){
+    if(!pTracking) return;
+    pTracking = false;
+    var dx = e.clientX - pStartX;
+    var dy = e.clientY - pStartY;
+    /* only count mostly-horizontal swipes */
+    if(Math.abs(dx) < THRESHOLD || Math.abs(dy) > Math.abs(dx)) return;
+    if(dx < 0){
+      goTo(activeIdx + 1, true); /* swipe left → next */
+    } else {
+      goTo(activeIdx - 1, true); /* swipe right → prev */
+    }
+  });
+
+  wrapEl.addEventListener('pointercancel', function(){
+    pTracking = false;
+  });
+
+  goTo(0, false);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>22 · Poster / Full-Bleed — Layout scaffold</title>
+<!--
+  PATTERN    Poster / Full-Bleed Image-Led
+  NAV MODEL  Vertical scroll-snap between full-screen "posters." Each screen is
+             one designed composition — type set large over color/imagery.
+  BEST FOR   Fashion, agencies, album/film promo, bold brand statements.
+  REGIONS    .poster (full viewport)  ·  per-poster type composition  ·  side index
+  RE-SKIN    Per-poster --bg/--fg; swap the gradient "art" for real imagery.
+-->
+<style>
+  :root{
+    --sans:"Helvetica Neue",Inter,ui-sans-serif,system-ui,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+  body{font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+  .poster{height:100vh;scroll-snap-align:start;position:relative;overflow:hidden;display:grid;color:var(--fg,#fff);background:var(--bg,#111)}
+  .poster .art{position:absolute;inset:0;background:var(--art);opacity:var(--art-o,1)}
+  .poster .grain{position:absolute;inset:0;opacity:.06;background-image:radial-gradient(circle at 50% 50%,#fff 0,transparent 1px);background-size:4px 4px;mix-blend-mode:overlay}
+  .poster .inner{position:relative;z-index:2;height:100%;padding:7vw;display:flex;flex-direction:column}
+  .poster .meta{font-family:var(--mono);font-size:13px;letter-spacing:.16em;text-transform:uppercase;display:flex;justify-content:space-between}
+  .poster .huge{margin:auto 0;font-weight:800;letter-spacing:-.04em;line-height:.86;font-size:clamp(58px,15vw,220px);text-transform:uppercase}
+  .poster .foot{display:flex;justify-content:space-between;align-items:flex-end;font-size:clamp(15px,1.6vw,20px)}
+  .poster .foot .lede{max-width:34ch;opacity:.9;line-height:1.35}
+
+  /* compositions */
+  #q1{--bg:#0c0c0c;--fg:#fff;--art:radial-gradient(80% 70% at 70% 30%,#3a2cff55,transparent),radial-gradient(60% 60% at 20% 80%,#ff2c8c44,transparent)}
+  #q1 .huge{align-self:flex-start}
+  #q2{--bg:#EDE6D8;--fg:#16140f;--art:linear-gradient(120deg,transparent 40%,#16140f10 40% 42%,transparent 42%)}
+  #q2 .huge{text-align:right}
+  #q3{--bg:#E8413B;--fg:#fff;--art:radial-gradient(circle at 50% 120%,#00000055,transparent 60%)}
+  #q3 .huge{text-align:center;align-self:center}
+  #q4{--bg:#0a1f3c;--fg:#dfe8ff;--art:linear-gradient(0deg,#7cc7ff22,transparent)}
+  #q4 .huge{align-self:flex-end;text-align:right}
+  #q5{--bg:#111;--fg:#fff;--art:repeating-linear-gradient(90deg,#ffffff08 0 2px,transparent 2px 60px)}
+  #q5 .huge{align-self:flex-start}
+
+  .index{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:12px;mix-blend-mode:difference}
+  .index a{font-family:var(--mono);font-size:12px;color:#fff;opacity:.45;text-decoration:none}
+  .index a.on{opacity:1}
+
+  .scaffold{position:fixed;left:16px;bottom:16px;z-index:30;background:#fff;color:#111;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#111;opacity:.55}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <nav class="index" id="index"></nav>
+
+  <section class="poster" id="q1"><div class="art"></div><div class="grain"></div><div class="inner">
+    <div class="meta"><span>Issue 01</span><span>Full-bleed</span></div>
+    <div class="huge">Make<br>a scene</div>
+    <div class="foot"><span class="lede">Every screen is a poster. One image, one idea, type set as big as it dares.</span><span>↓ scroll</span></div>
+  </div></section>
+
+  <section class="poster" id="q2"><div class="art"></div><div class="inner">
+    <div class="meta"><span>02</span><span>Editorial</span></div>
+    <div class="huge">Quiet<br>luxury</div>
+    <div class="foot"><span>—</span><span class="lede">Swap the gradient art for real imagery; the composition holds either way.</span></div>
+  </div></section>
+
+  <section class="poster" id="q3"><div class="art"></div><div class="grain"></div><div class="inner">
+    <div class="meta"><span>03</span><span>Statement</span></div>
+    <div class="huge">Loud</div>
+    <div class="foot"><span class="lede">A single word on a full-bleed field is a perfectly good screen.</span><span>03 / 05</span></div>
+  </div></section>
+
+  <section class="poster" id="q4"><div class="art"></div><div class="inner">
+    <div class="meta"><span>04</span><span>Depth</span></div>
+    <div class="huge">After<br>hours</div>
+    <div class="foot"><span class="lede">Vertical snap turns scrolling into turning pages of a lookbook.</span><span>—</span></div>
+  </div></section>
+
+  <section class="poster" id="q5"><div class="art"></div><div class="grain"></div><div class="inner">
+    <div class="meta"><span>05</span><span>Close</span></div>
+    <div class="huge">The<br>end.</div>
+    <div class="foot"><span class="lede">Land on the wordmark or the call to action.</span><span>↑ back to top</span></div>
+  </div></section>
+
+  <div class="scaffold">22 · poster &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const posters=[...document.querySelectorAll('.poster')];
+    const idx=document.getElementById('index');
+    idx.innerHTML=posters.map((p,i)=>`<a href="#${p.id}" data-id="${p.id}">${String(i+1).padStart(2,'0')}</a>`).join('');
+    const links=[...idx.children];
+    const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('on',a.dataset.id===e.target.id));}});},{threshold:.6});
+    posters.forEach(p=>io.observe(p));
+  </script>
+</body>
+</html>

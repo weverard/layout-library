@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>12 · Sticky-Stack Chapters — Layout scaffold</title>
+<!--
+  PATTERN    Sticky-Stack Chapters
+  NAV MODEL  Each chapter pins to the top as you scroll, and the next slides up
+             and stacks over it like a deck of cards. Scroll is the only control.
+  BEST FOR   Narrative landings, feature walkthroughs, layered storytelling.
+  REGIONS    section.card (sticky)  ·  a fixed chapter counter
+  RE-SKIN    Per-card --tone; the stack offset is `top` per card.
+-->
+<style>
+  :root{
+    --ink:#14151a; --muted:#7a7e88;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:#0c0d10;color:var(--ink);-webkit-font-smoothing:antialiased}
+
+  .deck{position:relative}
+  .card{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding:0 9vw;border-top:1px solid rgba(255,255,255,.12);border-radius:28px 28px 0 0;
+    box-shadow:0 -24px 60px rgba(0,0,0,.35);color:var(--c-ink,#14151a);background:var(--c-bg,#fff)}
+  .card .k{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+  .card h2{font-size:clamp(36px,5.5vw,76px);line-height:1.02;letter-spacing:-.025em;font-weight:800;margin:14px 0;max-width:15ch}
+  .card p{font-size:clamp(17px,1.8vw,22px);max-width:44ch;opacity:.84;line-height:1.5}
+  .card .big{position:absolute;right:9vw;top:8vh;font-family:var(--mono);font-size:13px;opacity:.5}
+
+  #c1{--c-bg:#F2EDE3;top:0}
+  #c2{--c-bg:#1F6F5C;--c-ink:#EAF4F0;top:34px}
+  #c3{--c-bg:#1a1c22;--c-ink:#EDEFF4;top:68px}
+  #c4{--c-bg:#E8513C;--c-ink:#fff;top:102px}
+  #c5{--c-bg:#0c0d10;--c-ink:#EDEFF4;top:136px;box-shadow:none}
+
+  .counter{position:fixed;left:24px;bottom:24px;z-index:30;font-family:var(--mono);font-size:13px;color:#fff;mix-blend-mode:difference}
+  .scaffold{position:fixed;right:16px;top:16px;z-index:30;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="counter"><span id="cc">01</span> / 05</div>
+  <div class="deck">
+    <section class="card" id="c1" data-n="1"><span class="big">01</span><p class="k">Open</p><h2>Cards that stack as you scroll.</h2><p>Each chapter pins, then the next rises over it. The pile builds a sense of depth and progress.</p></section>
+    <section class="card" id="c2" data-n="2"><span class="big">02</span><p class="k">Build</p><h2>Layer the argument.</h2><p>A peek of the previous card stays at the top edge — context never fully leaves the frame.</p></section>
+    <section class="card" id="c3" data-n="3"><span class="big">03</span><p class="k">Turn</p><h2>Change the tone, change the beat.</h2><p>Because cards overlap, a hard color switch feels like turning a physical page.</p></section>
+    <section class="card" id="c4" data-n="4"><span class="big">04</span><p class="k">Peak</p><h2>Land the loudest one.</h2><p>The boldest card sits near the top of the stack where the eye has nowhere else to go.</p></section>
+    <section class="card" id="c5" data-n="5"><span class="big">05</span><p class="k">Close</p><h2>Rest at the bottom.</h2><p>The final card has no one stacking over it — the natural end of the descent.</p></section>
+  </div>
+
+  <div class="scaffold">12 · sticky-stack &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const cards=[...document.querySelectorAll('.card')];const cc=document.getElementById('cc');
+    function sync(){const mid=scrollY+innerHeight/2;let n=1;cards.forEach(c=>{if(c.offsetTop<=mid)n=+c.dataset.n;});cc.textContent=String(n).padStart(2,'0');}
+    addEventListener('scroll',()=>requestAnimationFrame(sync),{passive:true});sync();
+  </script>
+</body>
+</html>

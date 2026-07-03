@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>36 · Dial / Wheel Picker — Layout scaffold</title>
+<!--
+  PATTERN    Dial / Wheel Picker
+  NAV MODEL  An iOS-style rotating wheel; drag or scroll to spin through a
+             sequence, the centred item is selected (items snap; edges fade
+             back in perspective).
+  BEST FOR   Value pickers, time/date selection, mode/option select.
+  REGIONS    .wheel (3D rotated list) · .item · .selection (centre band) · .readout.
+  RE-SKIN    --accent = selection band + readout; works with wheel-scroll,
+             drag, and keyboard up/down. Scales down under ~480px.
+-->
+<style>
+  :root{
+    --bg:#F4F4F2; --surface:#fff; --ink:#16161a; --muted:#6b6f76;
+    --line:rgba(20,20,26,.12); --accent:#F59E0B;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);
+       -webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh;
+       display:flex;align-items:center;justify-content:center}
+
+  .picker-wrap{
+    background:var(--surface);border:1px solid var(--line);border-radius:24px;
+    padding:32px 40px 36px;box-shadow:0 4px 32px rgba(0,0,0,.08);
+    display:flex;flex-direction:column;align-items:center;gap:28px;
+    width:340px;
+  }
+  .picker-title{font-weight:700;font-size:18px;letter-spacing:-.02em;align-self:flex-start}
+  .picker-hint{font-size:12px;color:var(--muted);font-family:var(--mono);
+               letter-spacing:.04em;align-self:flex-start;margin-top:-20px}
+
+  /* Wheel container */
+  .wheel-outer{
+    position:relative;height:220px;width:200px;cursor:grab;
+    user-select:none;-webkit-user-select:none;outline:none;
+  }
+  .wheel-outer:active{cursor:grabbing}
+  .wheel-outer:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:6px}
+
+  /* Fade masks */
+  .wheel-outer::before,.wheel-outer::after{
+    content:'';position:absolute;left:0;right:0;z-index:2;pointer-events:none;
+  }
+  .wheel-outer::before{
+    top:0;height:70px;
+    background:linear-gradient(to bottom,var(--surface),transparent);
+  }
+  .wheel-outer::after{
+    bottom:0;height:70px;
+    background:linear-gradient(to top,var(--surface),transparent);
+  }
+
+  /* Selection band */
+  .selection{
+    position:absolute;left:-12px;right:-12px;z-index:1;pointer-events:none;
+    top:50%;transform:translateY(-50%);height:44px;
+    background:rgba(245,158,11,.12);border-top:1.5px solid var(--accent);
+    border-bottom:1.5px solid var(--accent);border-radius:8px;
+  }
+
+  /* 3-D wheel scene */
+  .wheel-scene{
+    position:absolute;inset:0;
+    perspective:400px;perspective-origin:50% 50%;
+  }
+  .wheel{
+    position:absolute;top:50%;left:0;right:0;
+    transform-style:preserve-3d;
+    /* rotated by JS */
+  }
+  .item{
+    position:absolute;left:0;right:0;height:44px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:500;
+    backface-visibility:hidden;
+    transform-origin:center center;
+    transition:opacity .05s;
+    /* each item positioned on the cylinder by JS */
+  }
+
+  /* Readout */
+  .readout{
+    font-size:28px;font-weight:700;letter-spacing:-.03em;
+    color:var(--accent);font-variant-numeric:tabular-nums;
+    min-width:6ch;text-align:center;
+  }
+  .readout-label{font-size:13px;color:var(--muted);margin-top:-6px}
+
+  @media(max-width:480px){
+    .picker-wrap{width:calc(100vw - 32px);padding:24px 20px 28px}
+    .wheel-outer{height:176px;width:170px}
+    .item{font-size:16px;height:36px}
+    .selection{height:36px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;
+             border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="picker-wrap">
+    <div class="picker-title">Select a Month</div>
+    <div class="picker-hint">DRAG · SCROLL · ↑ ↓</div>
+
+    <div class="wheel-outer" id="wheelOuter" tabindex="0" aria-label="Month picker" aria-live="polite">
+      <div class="selection"></div>
+      <div class="wheel-scene">
+        <div class="wheel" id="wheel">
+          <!-- items injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div class="readout" id="readout">January</div>
+    <div class="readout-label">Selected</div>
+  </div>
+
+  <div class="scaffold">36 · dial-picker &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var ITEMS = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+  var ITEM_H = 44;  /* px — keep in sync with CSS */
+  var RADIUS = 120; /* cylinder radius in px */
+  var UNIT = 360 / ITEMS.length; /* degrees per item */
+
+  var wheelEl = document.getElementById('wheel');
+  var outerEl = document.getElementById('wheelOuter');
+  var readoutEl = document.getElementById('readout');
+
+  var currentIndex = 0;  /* 0-based */
+  var currentAngle = 0;  /* degrees — negative spins forward */
+
+  /* Build items */
+  ITEMS.forEach(function(label, i){
+    var el = document.createElement('div');
+    el.className = 'item';
+    el.textContent = label;
+    /* angle for this item slot */
+    var ang = i * UNIT;
+    el.style.transform = 'rotateX(' + ang + 'deg) translateZ(' + RADIUS + 'px)';
+    /* top offset: centre the flat item in its cylinder slot */
+    el.style.top = (-ITEM_H / 2) + 'px';
+    wheelEl.appendChild(el);
+  });
+
+  function clampIndex(idx){
+    return Math.max(0, Math.min(ITEMS.length - 1, idx));
+  }
+
+  function angleForIndex(idx){
+    /* rotating the drum NEGATIVE pushes item[idx] to the front (camera-facing) */
+    return -idx * UNIT;
+  }
+
+  function indexForAngle(ang){
+    /* invert: which item index is closest to angle 0 (front) */
+    var raw = -ang / UNIT;
+    return Math.round(raw);
+  }
+
+  function applyAngle(ang, animated){
+    wheelEl.style.transition = animated ? 'transform .35s cubic-bezier(.25,.8,.25,1)' : 'none';
+    wheelEl.style.transform = 'rotateX(' + ang + 'deg)';
+    updateOpacities(ang);
+  }
+
+  function updateOpacities(ang){
+    var items = wheelEl.querySelectorAll('.item');
+    items.forEach(function(el, i){
+      /* angular distance from camera-facing position */
+      var itemAng = (i * UNIT + ang + 3600) % 360;
+      /* normalise to -180..180 */
+      if(itemAng > 180) itemAng -= 360;
+      var absAng = Math.abs(itemAng);
+      /* fade and hide items on the back */
+      if(absAng > 90){
+        el.style.opacity = '0';
+        el.style.visibility = 'hidden';
+      } else {
+        el.style.visibility = 'visible';
+        /* cos-curve: 1 at 0°, 0 at 90° */
+        var opac = Math.pow(Math.cos(absAng * Math.PI / 180), 0.6);
+        el.style.opacity = opac.toFixed(3);
+      }
+    });
+  }
+
+  function snapToIndex(idx){
+    currentIndex = clampIndex(idx);
+    currentAngle = angleForIndex(currentIndex);
+    applyAngle(currentAngle, true);
+    readoutEl.textContent = ITEMS[currentIndex];
+    outerEl.setAttribute('aria-label', 'Month picker — ' + ITEMS[currentIndex]);
+  }
+
+  /* Initial render */
+  applyAngle(currentAngle, false);
+  readoutEl.textContent = ITEMS[currentIndex];
+
+  /* ── Drag (mouse + touch) ── */
+  var dragStartY = 0;
+  var dragStartAngle = 0;
+  var dragging = false;
+
+  function onDragStart(clientY){
+    dragging = true;
+    dragStartY = clientY;
+    dragStartAngle = currentAngle;
+    /* kill snap transition during drag */
+    wheelEl.style.transition = 'none';
+  }
+
+  function onDragMove(clientY){
+    if(!dragging) return;
+    var deltaY = clientY - dragStartY;
+    /* map pixels → degrees: ~2px per degree */
+    var deltaAng = -(deltaY / 2);
+    var rawAng = dragStartAngle + deltaAng;
+    /* soft-clamp at ends */
+    var minAng = angleForIndex(ITEMS.length - 1);
+    var maxAng = 0;
+    if(rawAng > maxAng) rawAng = maxAng + (rawAng - maxAng) * 0.3;
+    if(rawAng < minAng) rawAng = minAng + (rawAng - minAng) * 0.3;
+    currentAngle = rawAng;
+    applyAngle(currentAngle, false);
+  }
+
+  function onDragEnd(){
+    if(!dragging) return;
+    dragging = false;
+    var idx = clampIndex(indexForAngle(currentAngle));
+    snapToIndex(idx);
+  }
+
+  outerEl.addEventListener('mousedown', function(e){
+    e.preventDefault();
+    onDragStart(e.clientY);
+  });
+  document.addEventListener('mousemove', function(e){
+    onDragMove(e.clientY);
+  });
+  document.addEventListener('mouseup', function(){
+    onDragEnd();
+  });
+
+  outerEl.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    onDragStart(e.touches[0].clientY);
+  },{passive:false});
+  outerEl.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    onDragMove(e.touches[0].clientY);
+  },{passive:false});
+  outerEl.addEventListener('touchend', function(){
+    onDragEnd();
+  });
+
+  /* ── Wheel scroll ── */
+  outerEl.addEventListener('wheel', function(e){
+    e.preventDefault();
+    var delta = e.deltaY > 0 ? 1 : -1;
+    snapToIndex(currentIndex + delta);
+  },{passive:false});
+
+  /* ── Keyboard ── */
+  outerEl.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowDown' || e.key === 'ArrowRight'){
+      e.preventDefault();
+      snapToIndex(currentIndex + 1);
+    } else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){
+      e.preventDefault();
+      snapToIndex(currentIndex - 1);
+    }
+  });
+})();
+</script>
+</body>
+</html>

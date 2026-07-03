@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11 · Horizontal Filmstrip — Layout scaffold</title>
+<!--
+  PATTERN    Horizontal Deck / Filmstrip
+  NAV MODEL  Pages move sideways with scroll-snap; arrows + a counter + dots.
+             Each panel is full-height with its own composition.
+  BEST FOR   Lookbooks, case-study reels, editorial, product tours.
+  REGIONS    .strip (snap scroller)  ·  .panel  ·  .nav (arrows/dots/counter)
+  RE-SKIN    Per-panel --tone; panels can vary width and content freely.
+-->
+<style>
+  :root{
+    --ink:#15161a; --paper:#fff; --muted:#6c7078; --line:rgba(20,20,26,.14); --accent:#E8513C;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  .strip{display:flex;height:100vh;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth}
+  .strip::-webkit-scrollbar{display:none}
+  .panel{flex:0 0 100vw;scroll-snap-align:start;height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 10vw;position:relative;color:var(--p-ink,#15161a);background:var(--p-bg,#fff)}
+  .panel .idx{position:absolute;top:48px;left:10vw;font-family:var(--mono);font-size:13px;opacity:.6}
+  .panel .k{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+  .panel h2{font-size:clamp(38px,6vw,84px);line-height:1.0;letter-spacing:-.03em;font-weight:800;margin:14px 0;max-width:14ch}
+  .panel p{font-size:clamp(17px,1.8vw,22px);max-width:42ch;opacity:.82;line-height:1.45}
+  .panel .thumbgap{position:absolute;right:10vw;top:50%;transform:translateY(-50%);width:24vw;max-width:340px;height:60vh;border-radius:18px;background:rgba(0,0,0,.08);border:1px solid currentColor;opacity:.25}
+
+  #p1{--p-bg:#15161a;--p-ink:#fff}
+  #p2{--p-bg:#EDE7DC}
+  #p3{--p-bg:#E8513C;--p-ink:#fff}
+  #p4{--p-bg:#1C3A34;--p-ink:#E9F2EF}
+  #p5{--p-bg:#fff}
+
+  .nav{position:fixed;left:0;right:0;bottom:30px;z-index:20;display:flex;align-items:center;justify-content:center;gap:18px;mix-blend-mode:difference;color:#fff}
+  .nav button{width:46px;height:46px;border-radius:50%;border:1.5px solid currentColor;background:transparent;color:inherit;font-size:18px;cursor:pointer}
+  .dots{display:flex;gap:9px}
+  .dots i{width:9px;height:9px;border-radius:50%;border:1.5px solid currentColor;cursor:pointer}
+  .dots i.on{background:currentColor}
+  .count{position:fixed;right:28px;top:40px;z-index:20;font-family:var(--mono);font-size:13px;mix-blend-mode:difference;color:#fff}
+
+  .scaffold{position:fixed;left:16px;top:16px;z-index:20;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="count"><span id="cur">01</span> / 05</div>
+  <div class="strip" id="strip">
+    <section class="panel" id="p1"><span class="idx">01 / 05</span><p class="k">Cover</p><h2>Move sideways for a change.</h2><p>A filmstrip frames each idea as its own full-height panel. Snap to the next with a flick or an arrow.</p></section>
+    <section class="panel" id="p2"><span class="idx">02 / 05</span><p class="k">Chapter</p><h2>Each panel sets its own scene.</h2><p>Vary the background, the type scale, the rhythm. Horizontal motion reads as "next," not "more."</p><div class="thumbgap"></div></section>
+    <section class="panel" id="p3"><span class="idx">03 / 05</span><p class="k">Feature</p><h2>Loud where it matters.</h2><p>A full-bleed color panel can carry the strongest beat without any image at all.</p></section>
+    <section class="panel" id="p4"><span class="idx">04 / 05</span><p class="k">Detail</p><h2>Then quiet again.</h2><p>Contrast between panels is the whole point — pace it like a reel.</p><div class="thumbgap"></div></section>
+    <section class="panel" id="p5"><span class="idx">05 / 05</span><p class="k">End</p><h2>Close on the call.</h2><p>The last frame is the action. Arrows, dots, swipe, and keys all land here.</p></section>
+  </div>
+
+  <div class="nav">
+    <button id="prev">←</button>
+    <div class="dots" id="dots"></div>
+    <button id="next">→</button>
+  </div>
+
+  <div class="scaffold">11 · filmstrip &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const strip=document.getElementById('strip');const panels=[...strip.querySelectorAll('.panel')];const N=panels.length;
+    const dots=document.getElementById('dots');panels.forEach((_,i)=>{const d=document.createElement('i');d.dataset.i=i;dots.appendChild(d);});
+    const dotEls=[...dots.children];let cur=0;
+    function go(i){cur=Math.min(N-1,Math.max(0,i));strip.scrollTo({left:cur*window.innerWidth,behavior:'smooth'});}
+    function sync(){const i=Math.round(strip.scrollLeft/window.innerWidth);cur=i;document.getElementById('cur').textContent=String(i+1).padStart(2,'0');dotEls.forEach((d,j)=>d.classList.toggle('on',j===i));}
+    strip.addEventListener('scroll',()=>{requestAnimationFrame(sync);},{passive:true});
+    document.getElementById('prev').onclick=()=>go(cur-1);
+    document.getElementById('next').onclick=()=>go(cur+1);
+    dots.addEventListener('click',e=>{const d=e.target.closest('i');if(d)go(+d.dataset.i);});
+    addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1);});
+    sync();
+  </script>
+</body>
+</html>

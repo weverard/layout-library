@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>13 · Command-Palette-First — Layout scaffold</title>
+<!--
+  PATTERN    Command-Palette-First
+  NAV MODEL  Almost no chrome. A ⌘K palette is the primary way to move — type to
+             fuzzy-filter, ↑/↓ to move, ↵ to open. The hero IS the search.
+  BEST FOR   Power-user tools, docs, dashboards, keyboard-first audiences.
+  REGIONS    .hero (prompt)  ·  .palette (overlay)  ·  .stage (opened content)
+  RE-SKIN    --accent; COMMANDS array drives the list.
+-->
+<style>
+  :root{
+    --bg:#0b0c0f; --panel:#15171d; --ink:#ECEEF3; --muted:#9498a4; --line:rgba(255,255,255,.12);
+    --accent:#5B8CFF;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+  .hero{min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px}
+  .hero .brand{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .hero h1{font-size:clamp(34px,5vw,58px);letter-spacing:-.025em;margin:14px 0 26px;max-width:18ch}
+  .fakebar{display:inline-flex;align-items:center;gap:12px;width:min(540px,90vw);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;cursor:text;text-align:left;color:var(--muted)}
+  .fakebar .kbd{margin-left:auto;font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 7px}
+
+  .stage{max-width:680px;margin:0 auto;padding:0 24px 80px;display:none}
+  .stage.show{display:block;animation:rise .3s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .stage .k{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-top:60px}
+  .stage h2{font-size:36px;letter-spacing:-.02em;margin:8px 0 14px}
+  .stage p{color:var(--muted);font-size:18px;line-height:1.6}
+  .stage .back{display:inline-block;margin-top:30px;font-family:var(--mono);font-size:13px;color:var(--accent);cursor:pointer}
+
+  /* palette overlay */
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:40;display:none}
+  .scrim.open{display:block}
+  .palette{position:fixed;top:14vh;left:50%;transform:translateX(-50%);width:min(580px,92vw);z-index:50;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;display:none}
+  .palette.open{display:block}
+  .palette input{width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--ink);font-size:18px;padding:18px 20px;outline:none;font-family:var(--sans)}
+  .results{max-height:340px;overflow:auto;padding:8px}
+  .res{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;cursor:pointer}
+  .res .ic{width:26px;height:26px;border-radius:7px;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-size:13px}
+  .res .t{font-size:15px}.res .d{font-size:12px;color:var(--muted)}
+  .res .grp{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .res.sel{background:var(--accent);color:#04122e}.res.sel .d,.res.sel .grp{color:rgba(4,18,46,.7)}
+  .empty{padding:26px;text-align:center;color:var(--muted);font-size:14px}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:60;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="hero" id="hero">
+    <div>
+      <p class="brand">Beacon</p>
+      <h1>Don't navigate. Just ask.</h1>
+      <div class="fakebar" id="open">⌕ &nbsp;Search or jump to…<span class="kbd">⌘K</span></div>
+    </div>
+  </div>
+
+  <section class="stage" id="stage"></section>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="palette" id="palette">
+    <input id="q" placeholder="Type a command or search…" autocomplete="off" />
+    <div class="results" id="results"></div>
+  </div>
+
+  <div class="scaffold">13 · command-palette &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const COMMANDS=[
+      {t:"Overview",d:"What this product is, in one screen",g:"page",ic:"◎",body:["The product","A command palette as the front door means the interface is mostly negative space — the action lives in the search."]},
+      {t:"Pricing",d:"Plans and what each includes",g:"page",ic:"$",body:["Pricing","Three tiers. The palette lets people jump straight to the one that matters without a marquee nav."]},
+      {t:"Documentation",d:"Guides, API, references",g:"page",ic:"¶",body:["Docs","Power users live in ⌘K. Surfacing docs here meets them where their hands already are."]},
+      {t:"Changelog",d:"What shipped recently",g:"page",ic:"✶",body:["Changelog","Every recent change, newest first — reachable in two keystrokes."]},
+      {t:"Toggle theme",d:"Switch light / dark",g:"action",ic:"◐",body:["Theme","Actions and destinations share the same palette — navigation and commands converge."]},
+      {t:"Contact sales",d:"Talk to a human",g:"action",ic:"✉",body:["Contact","Even the CTA is a command. One mental model for everything."]},
+      {t:"Open dashboard",d:"Go to your workspace",g:"action",ic:"▦",body:["Dashboard","The same keystroke that searches also launches — no separate menus to learn."]}
+    ];
+    const scrim=document.getElementById('scrim'),palette=document.getElementById('palette'),q=document.getElementById('q'),results=document.getElementById('results');
+    const stage=document.getElementById('stage');let sel=0,filtered=COMMANDS.slice();
+    function openP(){scrim.classList.add('open');palette.classList.add('open');q.value='';filter('');q.focus();}
+    function closeP(){scrim.classList.remove('open');palette.classList.remove('open');}
+    function filter(s){
+      s=s.toLowerCase();
+      filtered=COMMANDS.filter(c=>(c.t+' '+c.d+' '+c.g).toLowerCase().includes(s));
+      sel=0;draw();
+    }
+    function draw(){
+      results.innerHTML=filtered.length?filtered.map((c,i)=>`<div class="res ${i===sel?'sel':''}" data-i="${i}"><span class="ic">${c.ic}</span><span><span class="t">${c.t}</span><div class="d">${c.d}</div></span><span class="grp">${c.g}</span></div>`).join(''):'<div class="empty">No matches</div>';
+    }
+    function run(i){const c=filtered[i];if(!c)return;closeP();stage.innerHTML=`<p class="k">${c.g}</p><h2>${c.body[0]}</h2><p>${c.body[1]}</p><span class="back" id="back">← back to start</span>`;stage.classList.add('show');document.getElementById('hero').style.display='none';document.getElementById('back').onclick=()=>{stage.classList.remove('show');document.getElementById('hero').style.display='grid';};}
+    document.getElementById('open').onclick=openP;
+    scrim.onclick=closeP;
+    q.addEventListener('input',e=>filter(e.target.value));
+    results.addEventListener('click',e=>{const r=e.target.closest('.res');if(r)run(+r.dataset.i);});
+    addEventListener('keydown',e=>{
+      if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();palette.classList.contains('open')?closeP():openP();return;}
+      if(!palette.classList.contains('open'))return;
+      if(e.key==='Escape')closeP();
+      if(e.key==='ArrowDown'){e.preventDefault();sel=Math.min(filtered.length-1,sel+1);draw();}
+      if(e.key==='ArrowUp'){e.preventDefault();sel=Math.max(0,sel-1);draw();}
+      if(e.key==='Enter'){e.preventDefault();run(sel);}
+    });
+  </script>
+</body>
+</html>

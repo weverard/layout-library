@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>39 · Story Tap-Through — Layout scaffold</title>
+<!--
+  PATTERN    Story Tap-Through
+  NAV MODEL  Instagram-stories: tap the right half to advance, left half to go
+             back; segmented timed progress bars auto-fill and auto-advance;
+             press-and-hold pauses.
+  BEST FOR   Mobile narratives, product tours, promos, onboarding.
+  REGIONS    .story · .bars (one segment per slide) · .slide · .tapzones
+             (left/right).
+  RE-SKIN    --accent = active-segment fill; mobile-first full-bleed (centered
+             card on desktop).
+-->
+<style>
+  :root{
+    --bg:#0f0f13; --surface:#1a1a24; --ink:#ffffff; --muted:rgba(255,255,255,.55);
+    --line:rgba(255,255,255,.15); --accent:#E11D48;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);
+       -webkit-font-smoothing:antialiased;line-height:1.5;
+       display:flex;align-items:center;justify-content:center}
+
+  /* ── Story card ── */
+  .story{
+    position:relative;
+    width:100%;max-width:390px;
+    height:100svh;max-height:720px;
+    background:var(--surface);
+    overflow:hidden;
+    border-radius:0;
+    /* no border-radius on mobile-fill */
+  }
+  @media(min-width:500px){
+    .story{
+      border-radius:20px;
+      box-shadow:0 24px 80px rgba(0,0,0,.6);
+    }
+  }
+
+  /* ── Progress bars ── */
+  .bars{
+    position:absolute;top:0;left:0;right:0;z-index:10;
+    display:flex;gap:4px;padding:12px 12px 0;
+  }
+  .bar{
+    flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:99px;overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;width:0%;background:var(--ink);border-radius:99px;
+    /* width transition driven by JS rAF — no CSS transition here */
+  }
+  .bar.done .bar-fill{width:100%}
+  .bar.active .bar-fill{background:var(--ink)}
+
+  /* ── Slides ── */
+  .slides{
+    position:absolute;inset:0;
+  }
+  .slide{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;
+    align-items:flex-start;justify-content:flex-end;
+    padding:48px 28px 36px;
+    opacity:0;pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .slide.active{opacity:1;pointer-events:auto}
+
+  .slide-bg{
+    position:absolute;inset:0;z-index:0;
+  }
+  .slide-content{position:relative;z-index:1}
+  .slide-kicker{
+    font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:8px;
+  }
+  .slide-title{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:10px}
+  .slide-body{font-size:14px;color:rgba(255,255,255,.75);max-width:30ch;line-height:1.55}
+
+  /* Bottom gradient */
+  .slide::after{
+    content:'';position:absolute;inset:0;z-index:0;
+    background:linear-gradient(to top,rgba(0,0,0,.7) 0%,rgba(0,0,0,.1) 55%,transparent 80%);
+    pointer-events:none;
+  }
+
+  /* ── Tap zones ── */
+  .tapzones{
+    position:absolute;inset:0;z-index:20;display:flex;
+  }
+  .tap-left,.tap-right{
+    flex:1;height:100%;cursor:pointer;
+    /* transparent — click passes through to zones only */
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ── Username bar ── */
+  .story-header{
+    position:absolute;top:0;left:0;right:0;z-index:11;
+    display:flex;align-items:center;gap:10px;
+    padding:24px 14px 8px;
+  }
+  .avatar{
+    width:32px;height:32px;border-radius:50%;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;color:#fff;flex-shrink:0;
+    border:1.5px solid rgba(255,255,255,.3);
+  }
+  .story-meta{display:flex;flex-direction:column;gap:1px}
+  .story-name{font-size:13px;font-weight:600}
+  .story-time{font-size:11px;color:var(--muted)}
+  .story-close{
+    margin-left:auto;font-size:18px;color:rgba(255,255,255,.6);cursor:pointer;
+    appearance:none;background:none;border:0;padding:4px;font:inherit;
+    display:block;line-height:1;
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;
+             border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+  <div class="story" id="story">
+    <!-- Progress bars -->
+    <div class="bars" id="bars"></div>
+
+    <!-- Story header -->
+    <div class="story-header">
+      <div class="avatar">S</div>
+      <div class="story-meta">
+        <span class="story-name">Studio Seven</span>
+        <span class="story-time">Now</span>
+      </div>
+      <button class="story-close" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Slides -->
+    <div class="slides" id="slides"></div>
+
+    <!-- Tap zones (overlay) -->
+    <div class="tapzones">
+      <div class="tap-left" id="tapLeft"></div>
+      <div class="tap-right" id="tapRight"></div>
+    </div>
+  </div>
+
+  <div class="scaffold">39 · story-tap &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var SLIDES = [
+    {
+      kicker:'Chapter 1',
+      title:'The Work Begins Here',
+      body:'Every great project starts with a single honest question. This year, we asked harder ones.',
+      bg:'linear-gradient(160deg,#1a1040 0%,#3b1f6a 100%)'
+    },
+    {
+      kicker:'Chapter 2',
+      title:'Constraints Set You Free',
+      body:'Tight briefs and shorter timelines forced decisions. Better decisions, as it turned out.',
+      bg:'linear-gradient(160deg,#0f2a1a 0%,#145a32 100%)'
+    },
+    {
+      kicker:'Chapter 3',
+      title:'Build in Public',
+      body:'Showing work-in-progress isn\'t vulnerability — it\'s an invitation. Our best collaborators walked through that door.',
+      bg:'linear-gradient(160deg,#1a0f0a 0%,#7c2d12 100%)'
+    },
+    {
+      kicker:'Chapter 4',
+      title:'Tools Are Not Neutral',
+      body:'The tool you choose shapes what you can make. This year we changed the tools, and the work followed.',
+      bg:'linear-gradient(160deg,#0a0f1a 0%,#1e3a5f 100%)'
+    },
+    {
+      kicker:'Closing',
+      title:'What Comes Next',
+      body:'The questions we couldn\'t answer are the brief for next year. We\'re already at work.',
+      bg:'linear-gradient(160deg,#111 0%,#2d2d2d 100%)'
+    }
+  ];
+
+  var DURATION = 4000; /* ms per slide */
+  var NUM = SLIDES.length;
+
+  var barsEl = document.getElementById('bars');
+  var slidesEl = document.getElementById('slides');
+  var tapLeft = document.getElementById('tapLeft');
+  var tapRight = document.getElementById('tapRight');
+
+  var currentIdx = 0;
+  var rafId = null;
+  var startTime = null;  /* rAF start timestamp for current segment */
+  var elapsed = 0;       /* accumulated ms for the current segment */
+  var paused = false;
+
+  /* Build bar elements */
+  var barFills = [];
+  SLIDES.forEach(function(_, i){
+    var bar = document.createElement('div');
+    bar.className = 'bar';
+    var fill = document.createElement('div');
+    fill.className = 'bar-fill';
+    bar.appendChild(fill);
+    barsEl.appendChild(bar);
+    barFills.push({bar:bar, fill:fill});
+  });
+
+  /* Build slide elements */
+  var slideEls = [];
+  SLIDES.forEach(function(data, i){
+    var s = document.createElement('div');
+    s.className = 'slide';
+    s.innerHTML =
+      '<div class="slide-bg" style="background:' + data.bg + '"></div>' +
+      '<div class="slide-content">' +
+        '<div class="slide-kicker">' + data.kicker + '</div>' +
+        '<div class="slide-title">' + data.title + '</div>' +
+        '<div class="slide-body">' + data.body + '</div>' +
+      '</div>';
+    slidesEl.appendChild(s);
+    slideEls.push(s);
+  });
+
+  /* ── Timer / rAF logic ── */
+  /* Guarantee: only ONE rAF loop runs at any time. */
+  /* stopTimer() always cancels the current rAF before startTimer() creates a new one. */
+
+  function stopTimer(){
+    if(rafId !== null){
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    startTime = null;
+  }
+
+  function startTimer(){
+    /* Always cancel existing loop first — no stacking */
+    stopTimer();
+    if(paused) return;
+
+    startTime = null;
+
+    function tick(ts){
+      if(startTime === null) startTime = ts;
+      var delta = ts - startTime;
+      var totalElapsed = elapsed + delta;
+      var pct = Math.min(totalElapsed / DURATION, 1);
+
+      /* Update the active bar fill */
+      if(barFills[currentIdx]){
+        barFills[currentIdx].fill.style.width = (pct * 100) + '%';
+      }
+
+      if(pct >= 1){
+        /* Segment complete — advance */
+        rafId = null;
+        goNext();
+        return;
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function goTo(idx, direction){
+    /* Clamp */
+    if(idx < 0) idx = 0;
+    if(idx >= NUM) idx = NUM - 1;
+
+    /* Stop current timer — no stacking */
+    stopTimer();
+    elapsed = 0;
+
+    /* Update bar states */
+    barFills.forEach(function(b, i){
+      b.bar.classList.remove('done','active');
+      b.fill.style.width = '0%';
+      if(i < idx){
+        b.bar.classList.add('done');
+        b.fill.style.width = '100%';
+      } else if(i === idx){
+        b.bar.classList.add('active');
+      }
+    });
+
+    /* Update slide visibility */
+    slideEls.forEach(function(el, i){
+      el.classList.toggle('active', i === idx);
+    });
+
+    currentIdx = idx;
+
+    /* Don't auto-advance on the last slide */
+    if(currentIdx < NUM - 1){
+      startTimer();
+    } else {
+      /* Ensure last bar is full */
+      barFills[currentIdx].fill.style.width = '100%';
+    }
+  }
+
+  function goNext(){
+    if(currentIdx < NUM - 1){
+      goTo(currentIdx + 1, 'next');
+    } else {
+      /* At end — stay on last slide, ensure bar is full */
+      barFills[currentIdx].fill.style.width = '100%';
+    }
+  }
+
+  function goPrev(){
+    if(currentIdx > 0){
+      goTo(currentIdx - 1, 'prev');
+    } else {
+      /* Already first — restart current segment */
+      goTo(0, 'restart');
+    }
+  }
+
+  /* ── Tap zones ── */
+  tapRight.addEventListener('click', function(){
+    goNext();
+  });
+  tapLeft.addEventListener('click', function(){
+    goPrev();
+  });
+
+  /* ── Hold to pause ── */
+  function onHoldStart(){
+    if(paused) return;
+    paused = true;
+    /* Accumulate elapsed before stopping */
+    if(rafId !== null && startTime !== null){
+      /* estimate elapsed via rAF timestamp not available here; use Date */
+    }
+    /* Use Date.now() to measure pause start */
+    /* Simpler: freeze by stopping the rAF and storing what we've consumed so far */
+    /* We can't know the exact rAF ts here, so store elapsed via the fill width */
+    var fill = barFills[currentIdx] ? barFills[currentIdx].fill : null;
+    if(fill){
+      var pct = parseFloat(fill.style.width) / 100 || 0;
+      elapsed = pct * DURATION;
+    }
+    stopTimer();
+  }
+
+  function onHoldEnd(){
+    if(!paused) return;
+    paused = false;
+    startTimer();
+  }
+
+  var storyEl = document.getElementById('story');
+  storyEl.addEventListener('pointerdown', onHoldStart);
+  storyEl.addEventListener('pointerup', onHoldEnd);
+  storyEl.addEventListener('pointercancel', onHoldEnd);
+  storyEl.addEventListener('pointerleave', onHoldEnd);
+
+  /* ── Init ── */
+  goTo(0, null);
+})();
+</script>
+</body>
+</html>

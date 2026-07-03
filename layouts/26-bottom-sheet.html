@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>26 · Bottom-Sheet — Layout scaffold</title>
+<!--
+  PATTERN    Bottom-Sheet (mobile)
+  NAV MODEL  A backdrop (map/feed) with a draggable sheet that snaps between
+              peek / half / full. Drag the handle; content lives in the sheet.
+  BEST FOR   Mobile apps — maps, ride-hail, places, players, mobile commerce.
+  REGIONS    .phone (device frame)  ·  .backdrop  ·  .sheet (snap points)
+  RE-SKIN    --accent; SNAP points are vh fractions. Shown in a phone frame on desktop.
+-->
+<style>
+  :root{
+    --bg:#0e0f12; --card:#fff; --ink:#16161a; --muted:#71757e; --line:rgba(20,20,26,.12); --accent:#1E9E5A;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:#1a1b1f;color:var(--ink);height:100vh;display:grid;place-items:center;-webkit-font-smoothing:antialiased}
+
+  .phone{position:relative;width:390px;max-width:96vw;height:92vh;max-height:840px;background:#000;border-radius:46px;padding:10px;box-shadow:0 40px 90px rgba(0,0,0,.6)}
+  .screen{position:relative;width:100%;height:100%;border-radius:38px;overflow:hidden;background:var(--card)}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:130px;height:28px;background:#000;border-radius:0 0 16px 16px;z-index:20}
+
+  .backdrop{position:absolute;inset:0;background:
+      radial-gradient(40% 30% at 30% 35%,#cfe6d6,transparent),
+      radial-gradient(36% 30% at 72% 60%,#cfe0ee,transparent),
+      #e9ece9}
+  .backdrop::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(20,20,26,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(20,20,26,.06) 1px,transparent 1px);background-size:46px 46px}
+  .mpin{position:absolute;width:16px;height:16px;border-radius:50% 50% 50% 0;background:var(--accent);transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 4px 8px rgba(0,0,0,.3)}
+
+  .sheet{position:absolute;left:0;right:0;bottom:0;height:88%;background:var(--card);border-radius:22px 22px 0 0;
+    box-shadow:0 -12px 30px rgba(0,0,0,.18);transform:translateY(72%);transition:transform .32s cubic-bezier(.4,0,.2,1);z-index:10;display:flex;flex-direction:column}
+  .sheet.dragging{transition:none}
+  .grip{padding:12px 0 6px;display:flex;justify-content:center;cursor:grab;touch-action:none}
+  .grip::before{content:"";width:42px;height:5px;border-radius:3px;background:#d6d8dc}
+  .sheet h2{padding:6px 22px 2px;font-size:22px;letter-spacing:-.01em}
+  .sheet .sub{padding:0 22px 14px;color:var(--muted);font-size:14px;border-bottom:1px solid var(--line)}
+  .list{overflow:auto;padding:6px 0 30px}
+  .row{display:flex;gap:14px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line)}
+  .row .ic{width:42px;height:42px;border-radius:12px;background:#eef1ee;flex:0 0 42px;display:grid;place-items:center;color:var(--accent);font-weight:700}
+  .row .t{font-weight:600;font-size:15px}.row .d{font-size:13px;color:var(--muted)}
+  .row .meta{margin-left:auto;font-size:13px;color:var(--accent);font-weight:600}
+
+  .hint{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted);font-family:var(--mono);z-index:5}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:30;background:#000;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="screen">
+      <div class="notch"></div>
+      <div class="backdrop">
+        <span class="mpin" style="left:28%;top:32%"></span>
+        <span class="mpin" style="left:62%;top:50%"></span>
+        <span class="mpin" style="left:46%;top:66%"></span>
+      </div>
+      <div class="hint">drag the handle ↕</div>
+      <div class="sheet" id="sheet">
+        <div class="grip" id="grip"></div>
+        <h2>Nearby</h2>
+        <p class="sub">6 places within a 10-min walk</p>
+        <div class="list">
+          <div class="row"><div class="ic">☕</div><div><div class="t">Halcyon Coffee</div><div class="d">Cafe · open till 6</div></div><span class="meta">2 min</span></div>
+          <div class="row"><div class="ic">🍜</div><div><div class="t">Miso Lane</div><div class="d">Ramen · $$</div></div><span class="meta">5 min</span></div>
+          <div class="row"><div class="ic">📚</div><div><div class="t">Quire Books</div><div class="d">Bookshop</div></div><span class="meta">6 min</span></div>
+          <div class="row"><div class="ic">🌿</div><div><div class="t">Fern & Co</div><div class="d">Plants · home</div></div><span class="meta">8 min</span></div>
+          <div class="row"><div class="ic">🎞</div><div><div class="t">The Reel</div><div class="d">Cinema</div></div><span class="meta">9 min</span></div>
+          <div class="row"><div class="ic">🥐</div><div><div class="t">Pomme</div><div class="d">Bakery · $</div></div><span class="meta">10 min</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scaffold">26 · bottom-sheet &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const sheet=document.getElementById('sheet'),grip=document.getElementById('grip');
+    const SNAPS=[72,38,4];                 // % translateY: peek / half / full
+    let snap=0;
+    function apply(){sheet.style.transform=`translateY(${SNAPS[snap]}%)`;}
+    let startY=0,startPct=0,dragging=false,h=0;
+    grip.addEventListener('pointerdown',e=>{dragging=true;sheet.classList.add('dragging');startY=e.clientY;startPct=SNAPS[snap];h=sheet.offsetHeight;grip.setPointerCapture(e.pointerId);});
+    grip.addEventListener('pointermove',e=>{if(!dragging)return;const dyPct=((e.clientY-startY)/h)*100;let p=Math.max(0,Math.min(86,startPct+dyPct));sheet.style.transform=`translateY(${p}%)`;});
+    grip.addEventListener('pointerup',e=>{dragging=false;sheet.classList.remove('dragging');
+      const cur=parseFloat(sheet.style.transform.match(/[-\d.]+/)[0]);
+      // snap to nearest
+      let best=0,bd=1e9;SNAPS.forEach((s,i)=>{const d=Math.abs(s-cur);if(d<bd){bd=d;best=i;}});snap=best;apply();});
+    grip.addEventListener('click',()=>{snap=(snap+1)%SNAPS.length;apply();});
+    apply();
+  </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>18 · Pinboard Wall — Layout scaffold</title>
+<!--
+  PATTERN    Pinboard Wall
+  NAV MODEL  A corkboard of pinned notes/polaroids at slight angles. Scan, hover
+             to lift, click to bring one forward (modal). Spatial, informal.
+  BEST FOR   Moodboards, scrapbooks, link collections, an "about me" wall.
+  REGIONS    .board  ·  .note (rotated card)  ·  .lightbox
+  RE-SKIN    --accent; NOTES array; rotations are randomised on load.
+-->
+<style>
+  :root{
+    --board:#c99b6a; --paper:#fffdf6; --ink:#241f17; --muted:#6d6354; --accent:#C0392B;
+    --hand:"Bradley Hand","Segoe Print","Comic Sans MS",cursive;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(circle at 30% 20%,rgba(255,255,255,.08),transparent 40%),
+      repeating-linear-gradient(45deg,#c4946400 0 8px,#0000000a 8px 9px),
+      var(--board)}
+  .head{text-align:center;padding:42px 20px 8px}
+  .head .k{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#5a4631}
+  .head h1{font-family:var(--hand);font-size:40px;color:#3a2e1d}
+
+  .board{position:relative;max-width:1040px;margin:0 auto;padding:30px 24px 120px;display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:flex-start}
+  .note{position:relative;width:240px;background:var(--paper);padding:14px 14px 18px;box-shadow:0 10px 22px rgba(0,0,0,.28);cursor:pointer;transition:transform .18s,box-shadow .18s}
+  .note::before{content:"";position:absolute;left:50%;top:-9px;width:16px;height:16px;border-radius:50%;background:var(--accent);transform:translateX(-50%);box-shadow:0 2px 4px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.5)}
+  .note:hover{transform:rotate(0deg) scale(1.04) translateY(-4px)!important;box-shadow:0 18px 36px rgba(0,0,0,.34);z-index:5}
+  .note .pic{height:140px;border-radius:3px;margin-bottom:10px;background:var(--p,#ddd)}
+  .note .t{font-family:var(--hand);font-size:21px;line-height:1.05}
+  .note .d{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .note.text .pic{display:none}
+  .note.text{padding:20px;background:#fff8b0}
+  .note.text .t{font-size:24px}
+
+  .lightbox{position:fixed;inset:0;background:rgba(20,12,4,.66);display:none;place-items:center;z-index:40;padding:24px}
+  .lightbox.open{display:grid}
+  .lightbox .big{width:min(420px,92vw);background:var(--paper);padding:18px 18px 24px;box-shadow:0 30px 70px rgba(0,0,0,.5);transform:rotate(-1deg)}
+  .lightbox .big .pic{height:230px;border-radius:4px;margin-bottom:14px;background:var(--p,#ddd)}
+  .lightbox .big .t{font-family:var(--hand);font-size:30px}
+  .lightbox .big .d{color:var(--muted);margin-top:8px;line-height:1.55;font-size:15px}
+  .lightbox .close{position:fixed;top:20px;right:24px;color:#fff;font-family:var(--mono);font-size:13px;cursor:pointer}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:50;background:#241f17;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="head"><p class="k">Pinboard · 7 pins</p><h1>things worth keeping</h1></div>
+  <div class="board" id="board"></div>
+
+  <div class="lightbox" id="lightbox">
+    <span class="close" id="close">esc ✕</span>
+    <div class="big" id="big"></div>
+  </div>
+
+  <div class="scaffold">18 · pinboard &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const NOTES=[
+      {p:"linear-gradient(135deg,#f6a,#f60)",t:"Sunset run",d:"Notes pinned at angles read as personal, not corporate."},
+      {p:"linear-gradient(135deg,#5ad,#36a)",t:"Blue hour",d:"A wall invites scanning rather than reading top-to-bottom."},
+      {text:true,t:"“Keep the things that spark.”",d:""},
+      {p:"linear-gradient(135deg,#9e7,#3a7)",t:"Field notes",d:"Hover lifts a pin; click brings it forward full-size."},
+      {p:"linear-gradient(135deg,#fc6,#e83)",t:"Workshop",d:"Mix polaroids and sticky notes for texture."},
+      {text:true,t:"todo: ship the zoo",d:""},
+      {p:"linear-gradient(135deg,#b9f,#74e)",t:"Late ideas",d:"Randomised rotation makes every reload feel handmade."}
+    ];
+    const board=document.getElementById('board'),lb=document.getElementById('lightbox'),big=document.getElementById('big');
+    NOTES.forEach((n,i)=>{
+      const el=document.createElement('div');el.className='note'+(n.text?' text':'');el.dataset.i=i;
+      const rot=(Math.random()*6-3).toFixed(2);el.style.transform=`rotate(${rot}deg)`;
+      el.innerHTML=`<div class="pic" style="--p:${n.p||'#eee'}"></div><div class="t">${n.t}</div>${n.d?`<div class="d">${n.d}</div>`:''}`;
+      board.appendChild(el);
+    });
+    board.addEventListener('click',e=>{const el=e.target.closest('.note');if(!el)return;const n=NOTES[+el.dataset.i];
+      big.innerHTML=`${n.text?'':`<div class="pic" style="--p:${n.p}"></div>`}<div class="t">${n.t}</div>${n.d?`<div class="d">${n.d}</div>`:'<div class="d">A pinned note, brought to the front.</div>'}`;
+      lb.classList.add('open');});
+    document.getElementById('close').onclick=()=>lb.classList.remove('open');
+    lb.addEventListener('click',e=>{if(e.target===lb)lb.classList.remove('open');});
+    addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove('open');});
+  </script>
+</body>
+</html>

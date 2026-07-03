@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>34 · Isometric Scene — Layout scaffold</title>
+<!--
+  PATTERN    Isometric Scene
+  NAV MODEL  A 2.5D plane of tiles/buildings; hover lifts a tile, click
+             focuses/"travels" to it (camera nudges, the HUD fills, others
+             dim); arrow keys move focus between tiles.
+  BEST FOR   Playful hubs, world/level select, campus or office maps.
+  REGIONS    .scene (transformed plane) · .tile (a block/building) ·
+             .hud (focused-zone info panel).
+  RE-SKIN    --accent = focused tile + HUD accents; under ~560px the plane
+             scale shrinks and isometric skew flattens; HUD stacks below scene.
+-->
+<style>
+  :root{
+    --bg:#0f1117; --surface:#1a1d27; --ink:#ECEDF2; --muted:#7a7e94;
+    --line:rgba(255,255,255,.10); --accent:#0891B2;
+    --accent-dark:#065f7a; --accent-glow:rgba(8,145,178,.25);
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+
+  /* — Layout shell — */
+  .shell{display:flex;flex-direction:column;min-height:100vh}
+  .topbar{height:50px;background:rgba(26,29,39,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:20}
+  .topbar .brand{font-weight:700;font-size:15px}
+  .topbar .hint{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+
+  /* — Scene + HUD row — */
+  .content{flex:1 1 auto;display:flex;flex-direction:row;align-items:flex-start;padding:40px 32px 40px;gap:32px}
+
+  /* — Isometric scene — */
+  .scene-wrap{flex:1 1 auto;display:flex;justify-content:center;align-items:center;min-height:420px}
+  .scene{
+    transform: rotateX(55deg) rotateZ(45deg);
+    transform-style: preserve-3d;
+    position:relative;
+    width:400px;height:400px;
+    transition:transform .4s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* — Tiles — */
+  .tile{
+    position:absolute;
+    width:100px;height:100px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:4px;
+    cursor:pointer;
+    transition:transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, border-color .25s, opacity .25s;
+    /* pseudo-element gives the right-face depth illusion */
+  }
+  /* bottom face (right side in iso view) */
+  .tile::before{
+    content:"";position:absolute;
+    bottom:-20px;left:0;right:0;height:20px;
+    background:rgba(0,0,0,.45);
+    transform-origin:top;
+    /* skew to look like the right wall of an iso block */
+    clip-path:polygon(0 0,100% 0,100% 100%,0 100%);
+    transform:skewX(0deg) scaleY(1);
+    /* actually we use box-shadow for depth to keep it simpler */
+  }
+  .tile::after{
+    content:"";position:absolute;
+    right:-20px;top:0;bottom:0;width:20px;
+    background:rgba(0,0,0,.3);
+  }
+
+  /* Use box-shadow as a 3D side-face illusion instead of pseudo elements */
+  .tile{
+    box-shadow:
+      8px 8px 0 rgba(0,0,0,.5),
+      16px 16px 0 rgba(0,0,0,.25);
+  }
+
+  .tile:hover{
+    transform:translateZ(0) translate(-4px,-8px);
+    border-color:rgba(255,255,255,.3);
+    box-shadow:
+      8px 8px 0 rgba(0,0,0,.5),
+      16px 16px 0 rgba(0,0,0,.25),
+      0 0 0 1px rgba(255,255,255,.2),
+      0 -12px 24px var(--accent-glow);
+    z-index:5;
+  }
+  .tile.focused{
+    background:var(--accent-dark);
+    border-color:var(--accent);
+    transform:translateZ(0) translate(-4px,-12px);
+    box-shadow:
+      8px 8px 0 rgba(0,0,0,.5),
+      16px 16px 0 rgba(0,0,0,.25),
+      0 0 0 1px var(--accent),
+      0 -16px 32px var(--accent-glow);
+    z-index:10;
+  }
+  .tile.dimmed{opacity:.35}
+
+  .tile-inner{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:6px;
+    /* counter-rotate to keep label readable */
+    transform: rotateZ(-45deg) rotateX(-55deg);
+    text-align:center;padding:8px;
+  }
+  .tile-icon{font-size:22px;line-height:1}
+  .tile-name{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);line-height:1.2}
+  .tile.focused .tile-name{color:#fff}
+
+  /* — HUD panel — */
+  .hud{
+    flex:0 0 240px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:24px;
+    min-height:280px;
+  }
+  .hud-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  .hud-icon{font-size:36px;margin-bottom:12px}
+  .hud h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+  .hud p{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:16px}
+  .hud-meta{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:14px}
+  .hud-row{display:flex;justify-content:space-between;font-size:12px}
+  .hud-row .k{color:var(--muted)}
+  .hud-row .v{font-weight:600}
+  .hud-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;color:var(--muted);font-size:13px;text-align:center;gap:8px}
+  .hud-empty .arrow-hint{font-size:20px}
+
+  .key-hint{text-align:center;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  kbd{display:inline-block;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:10px;font-family:var(--mono)}
+
+  /* — Responsive — */
+  @media(max-width:800px){
+    .content{flex-direction:column;padding:24px 16px;align-items:center}
+    .hud{width:100%;max-width:400px}
+  }
+  @media(max-width:560px){
+    .scene{transform:rotateX(40deg) rotateZ(45deg) scale(.75)}
+    .scene-wrap{min-height:300px}
+    .tile-inner{transform:rotateZ(-45deg) rotateX(-40deg)}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="topbar">
+    <span class="brand">◇ District Map</span>
+    <span class="hint">click a zone · arrow keys to move</span>
+  </div>
+  <div class="content">
+    <div class="scene-wrap">
+      <div class="scene" id="scene" tabindex="0" aria-label="Isometric map, use arrow keys to navigate"></div>
+    </div>
+    <div>
+      <div class="hud" id="hud">
+        <div class="hud-empty">
+          <span class="arrow-hint">↖</span>
+          <span>Click a zone to explore</span>
+        </div>
+      </div>
+      <div class="key-hint">
+        <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> move focus
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scaffold">34 · isometric &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  /* ── Tile data — 3×3 grid ── */
+  const TILES = [
+    { id:0, col:0, row:0, icon:'🏛️', name:'Hub',     desc:'The central exchange — where all paths converge and decisions get made.',    capacity:'840 seats', status:'Active'  },
+    { id:1, col:1, row:0, icon:'📚', name:'Library',  desc:'Deep-research stacks. Quiet floors for focused individual work.',            capacity:'320 seats', status:'Open'    },
+    { id:2, col:2, row:0, icon:'🌿', name:'Garden',   desc:'Outdoor commons with shaded seating, walking paths, and event lawns.',       capacity:'Unlimited', status:'Seasonal'},
+    { id:3, col:0, row:1, icon:'🎨', name:'Studio',   desc:'Open creative floor: prototyping tables, whiteboards, material storage.',   capacity:'160 seats', status:'Active'  },
+    { id:4, col:1, row:1, icon:'🏗️', name:'Foundry',  desc:'Maker space and workshop. Laser cutters, 3D printers, hand tools.',         capacity:'80 seats',  status:'Busy'    },
+    { id:5, col:2, row:1, icon:'🏪', name:'Market',   desc:'Pop-up vendor hall. Local produce, goods, and rotating specialty shops.',   capacity:'400 visitors', status:'Open'  },
+    { id:6, col:0, row:2, icon:'🏨', name:'Tower',    desc:'Twelve floors of private offices and meeting suites with city views.',      capacity:'640 seats', status:'Active'  },
+    { id:7, col:1, row:2, icon:'🔬', name:'Lab',      desc:'Research and testing environment — controlled climate, shielded rooms.',    capacity:'120 seats', status:'Restricted'},
+    { id:8, col:2, row:2, icon:'🎭', name:'Stage',    desc:'Performing arts venue: 400-seat theatre plus rehearsal and green rooms.',   capacity:'400 seats', status:'Booking' },
+  ];
+
+  const COLS = 3, ROWS = 3;
+  const TILE_SIZE = 116; /* spacing between tile origins, slightly larger than tile */
+
+  let focusedId = null;
+  const sceneEl  = document.getElementById('scene');
+  const hudEl    = document.getElementById('hud');
+
+  /* ── Build tiles ── */
+  const tileEls = {};
+  TILES.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    el.setAttribute('role','button');
+    el.setAttribute('aria-label', t.name);
+    /* Place in grid */
+    el.style.left  = (t.col * TILE_SIZE) + 'px';
+    el.style.top   = (t.row * TILE_SIZE) + 'px';
+    el.innerHTML =
+      `<div class="tile-inner">` +
+        `<span class="tile-icon">${t.icon}</span>` +
+        `<span class="tile-name">${t.name}</span>` +
+      `</div>`;
+    el.addEventListener('click', () => focusTile(t.id));
+    sceneEl.appendChild(el);
+    tileEls[t.id] = el;
+  });
+
+  /* ── Focus logic ── */
+  function focusTile(id){
+    focusedId = id;
+    updateTileStates();
+    renderHUD();
+  }
+
+  function updateTileStates(){
+    TILES.forEach(t => {
+      const el = tileEls[t.id];
+      el.classList.remove('focused','dimmed');
+      if(focusedId !== null){
+        if(t.id === focusedId) el.classList.add('focused');
+        else el.classList.add('dimmed');
+      }
+    });
+  }
+
+  function renderHUD(){
+    const t = TILES.find(x => x.id === focusedId);
+    if(!t){
+      hudEl.innerHTML = '<div class="hud-empty"><span class="arrow-hint">↖</span><span>Click a zone to explore</span></div>';
+      return;
+    }
+    const statusColor = {Active:'#22c55e',Open:'#22c55e',Busy:'#f59e0b',Seasonal:'#a78bfa',Restricted:'#ef4444',Booking:'#0891B2'}[t.status] || '#6b7280';
+    hudEl.innerHTML =
+      `<div class="hud-eyebrow">Zone detail</div>` +
+      `<div class="hud-icon">${t.icon}</div>` +
+      `<h2>${t.name}</h2>` +
+      `<p>${t.desc}</p>` +
+      `<div class="hud-meta">` +
+        `<div class="hud-row"><span class="k">Capacity</span><span class="v">${t.capacity}</span></div>` +
+        `<div class="hud-row"><span class="k">Status</span><span class="v" style="color:${statusColor}">${t.status}</span></div>` +
+        `<div class="hud-row"><span class="k">Grid pos</span><span class="v">${t.col + 1}, ${t.row + 1}</span></div>` +
+      `</div>`;
+  }
+
+  /* ── Keyboard ── */
+  function colRowOfFocused(){
+    if(focusedId === null) return {c:0, r:0};
+    const t = TILES.find(x => x.id === focusedId);
+    return {c: t.col, r: t.row};
+  }
+  function tileAt(c, r){
+    return TILES.find(t => t.col === c && t.row === r);
+  }
+  document.addEventListener('keydown', e => {
+    const arrows = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+    if(!arrows.includes(e.key)) return;
+    e.preventDefault();
+    if(focusedId === null){ focusTile(0); return; }
+    let {c, r} = colRowOfFocused();
+    /* In isometric view: right = col+1, left = col-1, up = row-1, down = row+1 */
+    if(e.key === 'ArrowRight') c = Math.min(COLS-1, c+1);
+    if(e.key === 'ArrowLeft')  c = Math.max(0, c-1);
+    if(e.key === 'ArrowUp')    r = Math.max(0, r-1);
+    if(e.key === 'ArrowDown')  r = Math.min(ROWS-1, r+1);
+    const target = tileAt(c, r);
+    if(target) focusTile(target.id);
+  });
+
+  /* ── Click outside scene to clear ── */
+  document.addEventListener('click', e => {
+    if(!sceneEl.contains(e.target)){
+      focusedId = null;
+      updateTileStates();
+      renderHUD();
+    }
+  });
+
+  /* give scene keyboard focus on click so arrow keys work */
+  sceneEl.addEventListener('click', () => sceneEl.focus());
+})();
+</script>
+</body>
+</html>

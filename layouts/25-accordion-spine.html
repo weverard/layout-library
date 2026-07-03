@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>25 · Accordion Spine — Layout scaffold</title>
+<!--
+  PATTERN    Accordion Spine
+  NAV MODEL  A vertical list of big numbered headers; clicking one expands its
+              panel in place and collapses the rest. The spine of titles IS the nav.
+  BEST FOR   FAQs, feature lists, a process, a syllabus, sectioned long-form.
+  REGIONS    .item (.head + .panel)  ·  one open at a time
+  RE-SKIN    --accent; expand/collapse via max-height transition.
+-->
+<style>
+  :root{
+    --bg:#FBFAF8; --ink:#181715; --muted:#6f6a62; --line:rgba(24,23,21,.14); --accent:#C2410C;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.55}
+
+  .wrap{max-width:780px;margin:0 auto;padding:72px 24px 100px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-size:clamp(32px,4.5vw,48px);letter-spacing:-.02em;margin:12px 0 36px}
+
+  .item{border-top:1px solid var(--line)}
+  .item:last-child{border-bottom:1px solid var(--line)}
+  .head{display:flex;align-items:center;gap:20px;padding:26px 4px;cursor:pointer;user-select:none}
+  .head .num{font-family:var(--mono);font-size:13px;color:var(--accent);width:30px}
+  .head h2{font-size:clamp(20px,2.6vw,28px);letter-spacing:-.01em;flex:1;transition:color .15s}
+  .head .pm{font-size:24px;color:var(--muted);transition:transform .3s}
+  .item.open .head h2{color:var(--accent)}
+  .item.open .head .pm{transform:rotate(45deg)}
+  .panel{max-height:0;overflow:hidden;transition:max-height .42s cubic-bezier(.4,0,.2,1)}
+  .panel .inner{padding:0 4px 30px 70px}
+  .panel p{color:var(--muted);font-size:17px;line-height:1.65;max-width:60ch}
+  .panel p + p{margin-top:12px}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:var(--ink);color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+  @media (max-width:560px){.panel .inner{padding-left:30px}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker">Accordion spine</p>
+    <h1>One open at a time.</h1>
+    <div id="acc">
+      <div class="item open"><div class="head"><span class="num">01</span><h2>The spine is the navigation</h2><span class="pm">+</span></div><div class="panel"><div class="inner"><p>A column of titles you can scan top to bottom. Clicking a header expands its content in place and closes whatever was open — so the page never gets overwhelming.</p><p>Best when sections are peers and readers want to dip into one without losing the map of the whole.</p></div></div></div>
+      <div class="item"><div class="head"><span class="num">02</span><h2>Cheap to scan, cheap to commit</h2><span class="pm">+</span></div><div class="panel"><div class="inner"><p>Headers stay compact so the table of contents is always visible. Opening one is a small, reversible commitment — no page load, no scroll jump.</p></div></div></div>
+      <div class="item"><div class="head"><span class="num">03</span><h2>Great for FAQs and process</h2><span class="pm">+</span></div><div class="panel"><div class="inner"><p>Questions, steps, features, modules — anything that's a list of self-contained sections fits the spine. Deep-link by opening the matching item.</p></div></div></div>
+      <div class="item"><div class="head"><span class="num">04</span><h2>Animate the height, not the opacity</h2><span class="pm">+</span></div><div class="panel"><div class="inner"><p>A max-height transition gives the satisfying push-down that signals the content belongs to this header. Rotate the plus into a cross to confirm state.</p></div></div></div>
+    </div>
+  </div>
+  <div class="scaffold">25 · accordion-spine &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const items=[...document.querySelectorAll('.item')];
+    function setPanel(it,open){const p=it.querySelector('.panel');it.classList.toggle('open',open);p.style.maxHeight=open?p.querySelector('.inner').scrollHeight+'px':'0px';}
+    items.forEach(it=>{
+      it.querySelector('.head').addEventListener('click',()=>{
+        const willOpen=!it.classList.contains('open');
+        items.forEach(o=>setPanel(o,false));
+        if(willOpen)setPanel(it,true);
+      });
+    });
+    setPanel(items[0],true);
+    addEventListener('resize',()=>{const open=document.querySelector('.item.open');if(open)setPanel(open,true);});
+  </script>
+</body>
+</html>

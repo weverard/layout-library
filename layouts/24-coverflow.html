@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>24 · Cover Flow — Layout scaffold</title>
+<!--
+  PATTERN    Cover Flow (3D carousel)
+  NAV MODEL  Cards sit on a 3D stage; the centre one faces you, the rest angle
+              back in perspective. Arrows or clicking a side card brings it forward.
+  BEST FOR   Galleries, releases, "featured" reels, album/case-study browsing.
+  REGIONS    .stage (perspective)  ·  .flow  ·  .cf (card)  ·  controls
+  RE-SKIN    --accent; CARDS array. Tune spread/rotate/scale in layout().
+-->
+<style>
+  :root{
+    --bg:#0b0c10; --ink:#ECEDF2; --muted:#9aa0ad; --line:rgba(255,255,255,.14); --accent:#36E0C8;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:radial-gradient(120% 90% at 50% 30%,#15171f,#08090c);color:#ECEDF2;height:100vh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+
+  .head{text-align:center;padding:34px 20px 0}
+  .head .k{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9aa0ad}
+  .stage{flex:1;perspective:1400px;display:grid;place-items:center;position:relative}
+  .flow{position:relative;width:300px;height:300px;transform-style:preserve-3d}
+  .cf{position:absolute;left:50%;top:50%;width:260px;height:300px;border-radius:18px;overflow:hidden;
+    box-shadow:0 30px 60px rgba(0,0,0,.5);transition:transform .5s cubic-bezier(.4,0,.2,1),opacity .5s;cursor:pointer;
+    border:1px solid var(--line);display:flex;flex-direction:column;justify-content:flex-end;padding:20px;color:#fff}
+  .cf .k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+  .cf h3{font-size:23px;letter-spacing:-.01em;margin-top:4px}
+  .cf::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.55));z-index:-1}
+
+  .caption{text-align:center;padding-bottom:10px;min-height:24px}
+  .caption b{font-size:16px}.caption span{color:#9aa0ad;font-size:14px}
+  .controls{display:flex;justify-content:center;gap:14px;padding-bottom:38px}
+  .controls button{width:50px;height:50px;border-radius:50%;border:1.5px solid var(--line);background:#15171d;color:#fff;font-size:18px;cursor:pointer}
+  .controls button:hover{border-color:var(--accent)}
+
+  .scaffold{position:fixed;right:16px;top:16px;z-index:9;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="head"><p class="k">Cover Flow · click a side card</p></div>
+  <div class="stage"><div class="flow" id="flow"></div></div>
+  <div class="caption" id="caption"></div>
+  <div class="controls"><button id="prev">←</button><button id="next">→</button></div>
+  <div class="scaffold">24 · coverflow &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const CARDS=[
+      {k:"01",t:"Tidewater",bg:"linear-gradient(135deg,#36E0C8,#2b8fd6)",d:"Coastal systems study"},
+      {k:"02",t:"Magenta",bg:"linear-gradient(135deg,#ff5db1,#a855f7)",d:"Brand explorations"},
+      {k:"03",t:"Ember",bg:"linear-gradient(135deg,#ffb24d,#f9603a)",d:"Warmth & motion"},
+      {k:"04",t:"Cobalt",bg:"linear-gradient(135deg,#5b8cff,#4338ca)",d:"Deep blues"},
+      {k:"05",t:"Fern",bg:"linear-gradient(135deg,#4ade80,#10b981)",d:"Growth patterns"},
+      {k:"06",t:"Iris",bg:"linear-gradient(135deg,#c084fc,#7c3aed)",d:"Soft violets"}
+    ];
+    const flow=document.getElementById('flow'),caption=document.getElementById('caption');
+    let active=2;
+    CARDS.forEach((c,i)=>{const el=document.createElement('div');el.className='cf';el.dataset.i=i;el.style.background=c.bg;
+      el.innerHTML=`<span class="k">${c.k}</span><h3>${c.t}</h3>`;flow.appendChild(el);});
+    const cards=[...flow.children];
+    function layout(){
+      cards.forEach((el,i)=>{const o=i-active,abs=Math.abs(o);
+        const tx=o*150, tz=o===0?60:-220, ry=o===0?0:(o<0?42:-42), sc=o===0?1.06:0.84;
+        el.style.transform=`translate(-50%,-50%) translateX(${tx}px) translateZ(${tz}px) rotateY(${ry}deg) scale(${sc})`;
+        el.style.zIndex=100-abs;el.style.opacity=abs>2.2?0:1;
+      });
+      caption.innerHTML=`<b>${CARDS[active].t}</b> &nbsp;<span>${CARDS[active].d}</span>`;
+    }
+    flow.addEventListener('click',e=>{const el=e.target.closest('.cf');if(el)go(+el.dataset.i);});
+    function go(i){active=Math.max(0,Math.min(CARDS.length-1,i));layout();}
+    document.getElementById('prev').onclick=()=>go(active-1);
+    document.getElementById('next').onclick=()=>go(active+1);
+    addEventListener('keydown',e=>{if(e.key==='ArrowLeft')go(active-1);if(e.key==='ArrowRight')go(active+1);});
+    layout();
+  </script>
+</body>
+</html>

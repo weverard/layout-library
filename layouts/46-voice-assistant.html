@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>46 · Voice Assistant — Layout scaffold</title>
+<!--
+  PATTERN    Voice Assistant
+  NAV MODEL  A mic button with an animated waveform; pressing it "listens" — a
+             scripted query types into the transcript — then resolves into an
+             answer card. Press again to reset.
+  BEST FOR   Voice UIs, kiosks, accessibility demos.
+  REGIONS    .assistant  ·  .mic  ·  .wave  ·  .transcript  ·  .answer
+  RE-SKIN    --accent = mic active + waveform; centered, mobile-friendly.
+             Breakpoint: single column on all sizes.
+-->
+<style>
+  :root{
+    --bg:#F4F3FF; --surface:#fff; --ink:#16161a; --muted:#7a7f8e; --line:rgba(20,20,26,.1);
+    --accent:#7E22CE;
+    --accent-light:#F3E8FF;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:24px}
+
+  .assistant{width:100%;max-width:480px;text-align:center}
+
+  .asst-brand{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .asst-title{font-size:28px;font-weight:800;letter-spacing:-.025em;margin-bottom:40px}
+
+  /* Mic button */
+  .mic-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;margin-bottom:30px}
+  .mic-ring{position:absolute;width:88px;height:88px;border-radius:50%;border:2px solid var(--accent);opacity:0;transform:scale(1)}
+  .mic-ring.pulse{animation:ring-pulse 1.4s ease-out infinite}
+  @keyframes ring-pulse{
+    0%{opacity:.6;transform:scale(1)}
+    100%{opacity:0;transform:scale(1.7)}
+  }
+  .mic{display:block;appearance:none;background:var(--accent);border:0;border-radius:50%;width:64px;height:64px;cursor:pointer;position:relative;z-index:1;transition:background .2s,transform .1s;box-shadow:0 6px 24px rgba(126,34,206,.35)}
+  .mic:hover{transform:scale(1.06)}
+  .mic:active{transform:scale(.96)}
+  .mic.idle{background:var(--accent)}
+  .mic.listening{background:#6b21a8}
+  .mic.thinking{background:#581c87;cursor:default}
+  .mic-icon{font-size:26px;line-height:1;display:block;user-select:none}
+
+  /* Waveform */
+  .wave{display:flex;align-items:center;justify-content:center;gap:4px;height:40px;margin-bottom:26px;opacity:0;transition:opacity .3s}
+  .wave.show{opacity:1}
+  .wave-bar{width:4px;border-radius:3px;background:var(--accent);min-height:4px}
+
+  /* State label */
+  .state-label{font-size:14px;color:var(--muted);height:20px;margin-bottom:24px;transition:opacity .2s}
+
+  /* Transcript */
+  .transcript-wrap{min-height:52px;margin-bottom:24px;display:flex;align-items:center;justify-content:center}
+  .transcript{font-size:20px;font-weight:600;letter-spacing:-.01em;color:var(--ink);line-height:1.35}
+  .cursor{display:inline-block;width:2px;height:20px;background:var(--accent);vertical-align:middle;margin-left:2px;animation:blink .7s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+  /* Answer card */
+  .answer{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 24px;text-align:left;display:none;animation:rise .35s ease}
+  .answer.show{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .answer-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  .answer-main{font-size:20px;font-weight:700;letter-spacing:-.01em;margin-bottom:6px}
+  .answer-detail{font-size:14px;color:var(--muted);line-height:1.6}
+  .answer-meta{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;gap:20px}
+
+  .reset-btn{display:none;appearance:none;background:none;border:1.5px solid var(--line);border-radius:999px;color:var(--muted);font-size:13px;font-family:var(--sans);padding:8px 18px;cursor:pointer;margin-top:20px;transition:border-color .15s,color .15s}
+  .reset-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .reset-btn.show{display:inline-block}
+
+  @media(max-width:400px){.asst-title{font-size:22px}.transcript{font-size:17px}.answer-main{font-size:18px}}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="assistant">
+    <div class="asst-brand">Voice UI</div>
+    <div class="asst-title">Ask me anything.</div>
+    <div class="mic-wrap">
+      <div class="mic-ring" id="micRing"></div>
+      <button class="mic idle" id="micBtn" aria-label="Start listening"><span class="mic-icon">🎙</span></button>
+    </div>
+    <div class="wave" id="wave"></div>
+    <div class="state-label" id="stateLabel">Tap the mic to start</div>
+    <div class="transcript-wrap"><div class="transcript" id="transcript"></div></div>
+    <div class="answer" id="answer">
+      <div class="answer-label" id="answerLabel">Answer</div>
+      <div class="answer-main" id="answerMain"></div>
+      <div class="answer-detail" id="answerDetail"></div>
+      <div class="answer-meta" id="answerMeta"></div>
+    </div>
+    <button class="reset-btn" id="resetBtn">↺ Ask again</button>
+  </div>
+  <div class="scaffold">46 · voice-assistant &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var SCRIPTS = [
+    {
+      query: "What's the weather in Tokyo?",
+      answerLabel: 'Weather · Tokyo, Japan',
+      answerMain: '22°C · Partly cloudy',
+      answerDetail: 'Humidity 68%. Light winds from the east at 12 km/h. Forecast: clearing by evening with temperatures dropping to 17°C overnight.',
+      meta: [{ icon:'🌅', text:'Sunrise 04:44' }, { icon:'🌇', text:'Sunset 19:06' }, { icon:'💧', text:'Rain chance 10%' }]
+    },
+    {
+      query: "Set a timer for 10 minutes.",
+      answerLabel: 'Timer set',
+      answerMain: '10:00 remaining',
+      answerDetail: 'Your timer is counting down. You\'ll receive a notification when it ends.',
+      meta: [{ icon:'⏱', text:'Ends at 3:42 PM' }]
+    },
+    {
+      query: "Translate 'good morning' to French.",
+      answerLabel: 'Translation · French',
+      answerMain: '"Bonjour"',
+      answerDetail: 'Pronunciation: bohn-ZHOOR. Also used: "Bonjour à vous" (formal) or "Salut" (informal greeting, any time of day).',
+      meta: [{ icon:'🇫🇷', text:'French (Français)' }]
+    }
+  ];
+
+  var micBtn = document.getElementById('micBtn');
+  var micRing = document.getElementById('micRing');
+  var waveEl = document.getElementById('wave');
+  var stateLabelEl = document.getElementById('stateLabel');
+  var transcriptEl = document.getElementById('transcript');
+  var answerEl = document.getElementById('answer');
+  var answerLabelEl = document.getElementById('answerLabel');
+  var answerMainEl = document.getElementById('answerMain');
+  var answerDetailEl = document.getElementById('answerDetail');
+  var answerMetaEl = document.getElementById('answerMeta');
+  var resetBtnEl = document.getElementById('resetBtn');
+
+  // Build waveform bars
+  var BAR_COUNT = 16;
+  var bars = [];
+  for (var i = 0; i < BAR_COUNT; i++) {
+    var bar = document.createElement('div');
+    bar.className = 'wave-bar';
+    bar.style.height = '4px';
+    waveEl.appendChild(bar);
+    bars.push(bar);
+  }
+
+  // State
+  var STATE = 'idle'; // idle | listening | thinking | answered
+  var scriptIdx = 0;
+  var typeTimer = null;
+  var thinkTimer = null;
+  var rafId = null;
+
+  function clearAllTimers() {
+    if (typeTimer !== null) { clearTimeout(typeTimer); typeTimer = null; }
+    if (thinkTimer !== null) { clearTimeout(thinkTimer); thinkTimer = null; }
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  // Animated waveform via rAF
+  var waveRunning = false;
+  var wavePhase = 0;
+  function animateWave() {
+    if (!waveRunning) return;
+    wavePhase += 0.08;
+    bars.forEach(function(bar, i) {
+      var h = 6 + Math.abs(Math.sin(wavePhase + i * 0.45)) * 28;
+      bar.style.height = h.toFixed(1) + 'px';
+    });
+    rafId = requestAnimationFrame(animateWave);
+  }
+
+  function startWave() {
+    waveRunning = true;
+    waveEl.classList.add('show');
+    wavePhase = 0;
+    rafId = requestAnimationFrame(animateWave);
+  }
+
+  function stopWave() {
+    waveRunning = false;
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    bars.forEach(function(bar) { bar.style.height = '4px'; });
+    waveEl.classList.remove('show');
+  }
+
+  function typeText(text, onDone) {
+    transcriptEl.textContent = '';
+    var idx = 0;
+    var WORD_MS = 80; // ms per character
+    function step() {
+      if (idx <= text.length) {
+        transcriptEl.innerHTML = escHtml(text.slice(0, idx)) + '<span class="cursor"></span>';
+        idx++;
+        typeTimer = setTimeout(step, WORD_MS);
+      } else {
+        // remove cursor
+        transcriptEl.textContent = text;
+        typeTimer = null;
+        if (onDone) onDone();
+      }
+    }
+    step();
+  }
+
+  function setMicState(s) {
+    micBtn.className = 'mic ' + s;
+  }
+
+  function goIdle() {
+    clearAllTimers();
+    stopWave();
+    STATE = 'idle';
+    setMicState('idle');
+    micRing.classList.remove('pulse');
+    stateLabelEl.textContent = 'Tap the mic to start';
+    transcriptEl.innerHTML = '';
+    answerEl.classList.remove('show');
+    resetBtnEl.classList.remove('show');
+  }
+
+  function goListening(script) {
+    STATE = 'listening';
+    setMicState('listening');
+    micRing.classList.add('pulse');
+    stateLabelEl.textContent = 'Listening…';
+    answerEl.classList.remove('show');
+    resetBtnEl.classList.remove('show');
+    startWave();
+    // type the query word by word
+    typeText(script.query, function() {
+      goThinking(script);
+    });
+  }
+
+  function goThinking(script) {
+    STATE = 'thinking';
+    setMicState('thinking');
+    stateLabelEl.textContent = 'Processing…';
+    // keep waveform but slow it
+    thinkTimer = setTimeout(function() {
+      thinkTimer = null;
+      goAnswered(script);
+    }, 900);
+  }
+
+  function goAnswered(script) {
+    STATE = 'answered';
+    setMicState('idle');
+    micRing.classList.remove('pulse');
+    stopWave();
+    stateLabelEl.textContent = 'Here\'s what I found:';
+
+    answerLabelEl.textContent = script.answerLabel;
+    answerMainEl.textContent = script.answerMain;
+    answerDetailEl.textContent = script.answerDetail;
+    answerMetaEl.innerHTML = script.meta.map(function(m) {
+      return '<span>' + m.icon + ' ' + escHtml(m.text) + '</span>';
+    }).join('');
+
+    answerEl.classList.add('show');
+    resetBtnEl.classList.add('show');
+    // advance to next script for next tap
+    scriptIdx = (scriptIdx + 1) % SCRIPTS.length;
+  }
+
+  micBtn.addEventListener('click', function() {
+    if (STATE === 'thinking') return; // ignore taps while processing
+    if (STATE === 'idle') {
+      var script = SCRIPTS[scriptIdx];
+      goListening(script);
+    } else {
+      // listening or answered: reset
+      goIdle();
+    }
+  });
+
+  resetBtnEl.addEventListener('click', function() {
+    goIdle();
+  });
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+})();
+</script>
+</body>
+</html>

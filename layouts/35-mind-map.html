@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>35 · Mind-Map Tree — Layout scaffold</title>
+<!--
+  PATTERN    Mind-Map Tree
+  NAV MODEL  A central node with branches; click a node to expand/collapse
+             its children; the tree re-lays-out and connector lines redraw.
+             Distinct from the Radial Orbit (08) — this is a HIERARCHY, not
+             rotating peers.
+  BEST FOR   Topic maps, site/org structure, brainstorms.
+  REGIONS    .map (positioned area) · .node (.root/.branch/.leaf) ·
+             connector lines (SVG paths).
+  RE-SKIN    --accent = active node + its edges; under ~600px switches to a
+             vertical indented collapsible outline (same data, simpler layout).
+-->
+<style>
+  :root{
+    --bg:#F4F4F2; --surface:#fff; --ink:#16161a; --muted:#6b6f76;
+    --line:rgba(20,20,26,.14); --accent:#DB2777;
+    --accent-light:rgba(219,39,119,.08); --accent-border:rgba(219,39,119,.35);
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh}
+
+  /* — Top bar — */
+  .topbar{height:50px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:12px}
+  .topbar .brand{font-weight:700;font-size:15px}
+  .topbar .hint{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+
+  /* ═══════════════════════════════════
+     WIDE: positioned mind-map canvas
+     ═══════════════════════════════════ */
+  .map-shell{position:relative;overflow:auto;min-height:calc(100vh - 50px)}
+  .map-svg{position:absolute;top:0;left:0;pointer-events:none;z-index:0}
+  .map{position:relative;z-index:1}
+
+  .node{
+    position:absolute;
+    display:block;
+    background:var(--surface);
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    padding:7px 14px;
+    font-size:13px;font-weight:600;
+    cursor:pointer;
+    user-select:none;
+    white-space:nowrap;
+    transition:border-color .18s, background .18s, box-shadow .18s, transform .18s;
+    appearance:none;font:inherit;text-align:left;
+  }
+  .node:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(219,39,119,.12);transform:translateY(-1px)}
+  .node.root{
+    font-size:15px;font-weight:700;
+    background:var(--accent);color:#fff;border-color:var(--accent);
+    border-radius:10px;padding:10px 20px;
+    box-shadow:0 4px 16px rgba(219,39,119,.28);
+  }
+  .node.branch{border-color:var(--accent-border)}
+  .node.branch.expanded{background:var(--accent-light)}
+  .node.leaf{font-size:12px;font-weight:500;color:var(--muted);border-style:dashed}
+  .node.leaf:hover{color:var(--ink);border-style:solid}
+
+  /* toggle indicator */
+  .node::after{content:'';display:none}
+  .node.branch::after{
+    content:'';display:inline-block;
+    width:7px;height:7px;border-radius:50%;
+    background:var(--accent);
+    margin-left:8px;vertical-align:middle;opacity:.5;
+    transition:opacity .15s;
+  }
+  .node.branch.expanded::after{opacity:1}
+
+  /* ═══════════════════════════════════
+     NARROW: collapsible outline
+     ═══════════════════════════════════ */
+  .outline-shell{display:none;padding:20px;min-height:calc(100vh - 50px)}
+  .outline{list-style:none}
+  .outline li{border-left:2px solid var(--line);padding-left:12px;margin-left:12px;margin-top:4px}
+  .outline li:first-child{margin-top:0}
+  .ol-btn{
+    appearance:none;background:none;border:0;padding:4px 8px;font:inherit;cursor:pointer;
+    display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink);border-radius:5px;
+    transition:background .15s;width:100%;text-align:left;
+  }
+  .ol-btn:hover{background:rgba(219,39,119,.07)}
+  .ol-btn.ol-root{font-size:16px;font-weight:700;color:var(--accent)}
+  .ol-btn.ol-branch{font-weight:600}
+  .ol-btn.ol-leaf{color:var(--muted);font-size:13px}
+  .ol-caret{font-size:10px;flex:0 0 auto;transition:transform .2s;color:var(--accent)}
+  .ol-caret.open{transform:rotate(90deg)}
+  .ol-children{margin-top:2px}
+  .ol-children.hidden{display:none}
+
+  /* ═══════════════════════════════════
+     Responsive switch
+     ═══════════════════════════════════ */
+  @media(max-width:600px){
+    .map-shell{display:none}
+    .outline-shell{display:block}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">◇ Knowledge Map</span>
+  <span class="hint">click any node to expand / collapse</span>
+</div>
+
+<!-- WIDE: canvas mind-map -->
+<div class="map-shell" id="mapShell">
+  <svg class="map-svg" id="mapSvg"></svg>
+  <div class="map" id="map"></div>
+</div>
+
+<!-- NARROW: collapsible outline -->
+<div class="outline-shell" id="outlineShell">
+  <ul class="outline" id="outline"></ul>
+</div>
+
+<div class="scaffold">35 · mind-map &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  /* ── Tree data ── */
+  const TREE = {
+    id:'root', label:'Knowledge', kind:'root', expanded:true,
+    children:[
+      { id:'science', label:'Science', kind:'branch', expanded:true, children:[
+        { id:'physics',   label:'Physics',    kind:'branch', expanded:false, children:[
+          { id:'quantum', label:'Quantum Mechanics', kind:'leaf' },
+          { id:'thermo',  label:'Thermodynamics',    kind:'leaf' },
+          { id:'optics',  label:'Optics',            kind:'leaf' },
+        ]},
+        { id:'biology',   label:'Biology',    kind:'branch', expanded:false, children:[
+          { id:'ecology',  label:'Ecology',     kind:'leaf' },
+          { id:'genetics', label:'Genetics',    kind:'leaf' },
+        ]},
+        { id:'chemistry', label:'Chemistry',  kind:'leaf' },
+      ]},
+      { id:'art', label:'Art', kind:'branch', expanded:true, children:[
+        { id:'visual',    label:'Visual Arts', kind:'branch', expanded:false, children:[
+          { id:'painting', label:'Painting',    kind:'leaf' },
+          { id:'sculpture',label:'Sculpture',   kind:'leaf' },
+          { id:'design',   label:'Design',      kind:'leaf' },
+        ]},
+        { id:'music',     label:'Music',       kind:'branch', expanded:false, children:[
+          { id:'theory',   label:'Music Theory', kind:'leaf' },
+          { id:'comp',     label:'Composition',  kind:'leaf' },
+        ]},
+        { id:'literature',label:'Literature',  kind:'leaf' },
+      ]},
+      { id:'history', label:'History', kind:'branch', expanded:false, children:[
+        { id:'ancient',  label:'Ancient',      kind:'branch', expanded:false, children:[
+          { id:'egypt',   label:'Egypt',        kind:'leaf' },
+          { id:'greece',  label:'Greece',       kind:'leaf' },
+        ]},
+        { id:'modern',   label:'Modern Era',   kind:'leaf' },
+        { id:'contemp',  label:'Contemporary', kind:'leaf' },
+      ]},
+      { id:'tech', label:'Technology', kind:'branch', expanded:false, children:[
+        { id:'computing', label:'Computing',   kind:'branch', expanded:false, children:[
+          { id:'ai',       label:'AI / ML',     kind:'leaf' },
+          { id:'systems',  label:'Systems',     kind:'leaf' },
+        ]},
+        { id:'networks', label:'Networks',     kind:'leaf' },
+        { id:'hci',      label:'HCI',          kind:'leaf' },
+      ]},
+    ]
+  };
+
+  /* ── node size estimates (used for layout before DOM) ── */
+  const NODE_W = { root:140, branch:110, leaf:100 };
+  const NODE_H = { root:44,  branch:34,  leaf:30  };
+  const PAD_X = 56;  /* horizontal gap between columns */
+  const PAD_Y = 14;  /* vertical gap between siblings */
+
+  /* ── Layout algorithm ──
+     Root at center-left; branches fan out to the right.
+     Each branch's children stack vertically beside it.
+     We compute positions recursively. */
+
+  function subtreeHeight(node){
+    const h = NODE_H[node.kind] || 32;
+    if(!node.expanded || !node.children || !node.children.length) return h;
+    const childrenH = node.children.reduce((acc, c) => acc + subtreeHeight(c), 0) +
+                      (node.children.length - 1) * PAD_Y;
+    return Math.max(h, childrenH);
+  }
+
+  function layoutNode(node, x, y){
+    /* node's own position: center of its subtree height */
+    const sh = subtreeHeight(node);
+    const nw = NODE_W[node.kind] || 110;
+    const nh = NODE_H[node.kind] || 32;
+    node._x = x;
+    node._y = y + (sh - nh) / 2;
+    node._w = nw;
+    node._h = nh;
+
+    if(node.expanded && node.children && node.children.length){
+      let cy = y;
+      const childX = x + nw + PAD_X;
+      node.children.forEach(child => {
+        const csh = subtreeHeight(child);
+        layoutNode(child, childX, cy);
+        cy += csh + PAD_Y;
+      });
+    }
+  }
+
+  function totalWidth(node){
+    if(!node.expanded || !node.children || !node.children.length) return NODE_W[node.kind] || 110;
+    return (NODE_W[node.kind] || 110) + PAD_X +
+      Math.max(...node.children.map(c => totalWidth(c)));
+  }
+
+  /* ── Render wide map ── */
+  const mapEl   = document.getElementById('map');
+  const svgEl   = document.getElementById('mapSvg');
+  const shellEl = document.getElementById('mapShell');
+
+  let domNodes = {};   /* id → DOM el */
+
+  function renderMap(){
+    /* Layout pass */
+    const MARGIN = 48;
+    const totalH = subtreeHeight(TREE);
+    const viewH  = Math.max(totalH + MARGIN * 2, shellEl.clientHeight || 600);
+    const startY = (viewH - totalH) / 2;
+    layoutNode(TREE, MARGIN, startY);
+
+    const totalW = totalWidth(TREE) + MARGIN * 2;
+    const viewW  = Math.max(totalW, shellEl.clientWidth || 900);
+
+    /* Resize canvas */
+    mapEl.style.width  = viewW + 'px';
+    mapEl.style.height = viewH + 'px';
+    svgEl.setAttribute('width',  viewW);
+    svgEl.setAttribute('height', viewH);
+
+    /* Collect only VISIBLE nodes (stop at collapsed branches) so the DOM/
+       layout/edges stay in sync — collapsed descendants are not rendered. */
+    const flat = [];
+    function collect(n){ flat.push(n); if(n.expanded && n.children) n.children.forEach(collect); }
+    collect(TREE);
+
+    /* Sync DOM nodes */
+    const seen = new Set();
+    flat.forEach(n => {
+      seen.add(n.id);
+      let el = domNodes[n.id];
+      if(!el){
+        el = document.createElement('button');
+        el.className = 'node ' + n.kind;
+        el.textContent = n.label;
+        el.addEventListener('click', () => toggleNode(n));
+        mapEl.appendChild(el);
+        domNodes[n.id] = el;
+      }
+      /* Update class (expanded state may have changed) */
+      el.className = 'node ' + n.kind + (n.expanded ? ' expanded' : '');
+      el.style.left = n._x + 'px';
+      el.style.top  = n._y + 'px';
+      el.style.width = n._w + 'px';
+      el.style.lineHeight = n._h + 'px';
+      el.style.height = n._h + 'px';
+    });
+    /* Remove stale nodes */
+    Object.keys(domNodes).forEach(id => {
+      if(!seen.has(id)){
+        domNodes[id].remove();
+        delete domNodes[id];
+      }
+    });
+
+    /* Draw SVG connectors */
+    const lines = [];
+    function drawEdges(n){
+      if(!n.expanded || !n.children) return;
+      n.children.forEach(c => {
+        const x1 = n._x + n._w;
+        const y1 = n._y + n._h / 2;
+        const x2 = c._x;
+        const y2 = c._y + c._h / 2;
+        const cx1 = x1 + (x2 - x1) * 0.45;
+        const cx2 = x2 - (x2 - x1) * 0.45;
+        lines.push(`<path d="M${x1},${y1} C${cx1},${y1} ${cx2},${y2} ${x2},${y2}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-opacity="0.4"/>`);
+        drawEdges(c);
+      });
+    }
+    drawEdges(TREE);
+    svgEl.innerHTML = lines.join('');
+  }
+
+  function toggleNode(node){
+    if(node.kind === 'leaf') return;
+    node.expanded = !node.expanded;
+    renderMap();
+  }
+
+  /* ── Render narrow outline ── */
+  const outlineEl = document.getElementById('outline');
+
+  function renderOutline(){
+    outlineEl.innerHTML = '';
+    function renderItem(node, parentUl){
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'ol-btn ol-' + node.kind;
+      const hasKids = node.children && node.children.length;
+      if(hasKids && node.kind !== 'leaf'){
+        const caret = document.createElement('span');
+        caret.className = 'ol-caret' + (node.expanded ? ' open' : '');
+        caret.textContent = '›';
+        btn.appendChild(caret);
+      }
+      btn.appendChild(document.createTextNode(node.label));
+      li.appendChild(btn);
+
+      if(hasKids){
+        const childUl = document.createElement('ul');
+        childUl.className = 'outline ol-children' + (node.expanded ? '' : ' hidden');
+        node.children.forEach(c => renderItem(c, childUl));
+        li.appendChild(childUl);
+        btn.addEventListener('click', () => {
+          node.expanded = !node.expanded;
+          /* update caret and children visibility without full re-render */
+          const caretEl = btn.querySelector('.ol-caret');
+          if(caretEl) caretEl.classList.toggle('open', node.expanded);
+          childUl.classList.toggle('hidden', !node.expanded);
+        });
+      }
+      parentUl.appendChild(li);
+    }
+    renderItem(TREE, outlineEl);
+  }
+
+  /* ── Boot ── */
+  renderMap();
+  renderOutline();
+
+  /* Re-render map on window resize (layout is size-dependent) */
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderMap, 150);
+  });
+})();
+</script>
+</body>
+</html>

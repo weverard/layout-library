@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>07 · Zettelkasten Panes — Layout scaffold</title>
+<!--
+  PATTERN    Stacking Panes (Zettelkasten / Matuschak notes)
+  NAV MODEL  Clicking a link opens the target note as a NEW column to the right;
+             previous notes pin to the left edge so the trail stays visible.
+  BEST FOR   Interconnected notes, wikis, docs with heavy cross-linking.
+  REGIONS    .stack (horizontal scroller)  ·  .note (a sticky column)
+  RE-SKIN    --accent. Notes are sticky with a per-index left offset (JS).
+-->
+<style>
+  :root{
+    --bg:#EFEDE7; --surface:#FBFAF7; --ink:#1d1b16; --muted:#736f64;
+    --line:rgba(29,27,22,.14); --accent:#A33A2B;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--serif);background:var(--bg);color:var(--ink);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+
+  .stack{display:flex;height:100vh;overflow-x:auto;overflow-y:hidden}
+  .note{flex:0 0 400px;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--line);
+    position:sticky;box-shadow:-8px 0 24px rgba(0,0,0,.05);padding:30px 30px 60px}
+  .note .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;justify-content:space-between}
+  .note h1{font-size:26px;line-height:1.15;letter-spacing:-.01em;margin-bottom:14px}
+  .note p{font-size:16px;line-height:1.65;margin:12px 0;color:#2b281f}
+  .note a.link{color:var(--accent);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}
+  .note .refs{margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+  .note .refs p{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+  .note .refs a{display:block;font-family:var(--sans);font-size:14px;color:var(--accent);cursor:pointer;padding:4px 0}
+
+  .hint{position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:20;font-family:var(--mono);font-size:12px;color:var(--muted);background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:999px;padding:7px 14px;pointer-events:none}
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:var(--ink);color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+  @media (max-width:560px){.note{flex-basis:88vw}}
+</style>
+</head>
+<body>
+  <div class="hint">click a link → it opens to the right</div>
+  <div class="stack" id="stack"></div>
+  <div class="scaffold">07 · zettelkasten &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const NOTES={
+      home:{t:"On thinking in notes",b:`A note should hold <em>one</em> idea, titled as a claim. The power is not the note — it is the <a class="link" data-n="links">links between notes</a>. Start here, then follow a thread: <a class="link" data-n="atomic">atomic notes</a> or <a class="link" data-n="panes">why panes</a>.`,r:["links","atomic","panes"]},
+      links:{t:"Links are the unit of thought",b:`When notes link densely, structure <em>emerges</em> instead of being imposed. Each link is a small argument that two ideas belong together. See <a class="link" data-n="atomic">atomic notes</a> and <a class="link" data-n="emerge">emergent structure</a>.`,r:["atomic","emerge"]},
+      atomic:{t:"Keep notes atomic",b:`One idea per note makes links precise and reuse easy. An atomic note can be cited from anywhere without dragging in unrelated context. Contrast with <a class="link" data-n="emerge">emergent structure</a>.`,r:["emerge"]},
+      emerge:{t:"Structure emerges",b:`You don't decide the outline up front. You write notes, link them, and the clusters tell you what the outline <em>is</em>. This is why a fixed nav can feel wrong for knowledge.`,r:[]},
+      panes:{t:"Why sliding panes",b:`Opening a link as a new column — instead of replacing the page — keeps your <em>trail</em> visible. You can glance back at where you came from while reading where you went. Try <a class="link" data-n="links">links</a> again from here.`,r:["links"]}
+    };
+    const stack=document.getElementById('stack');
+    function render(){
+      [...stack.querySelectorAll('.note')].forEach((n,i,arr)=>{
+        n.style.left=(i*46)+'px';
+        n.style.zIndex=i+1;
+      });
+    }
+    function openNote(id,fromIndex){
+      // truncate panes after the originating one
+      const panes=[...stack.querySelectorAll('.note')];
+      panes.slice(fromIndex+1).forEach(p=>p.remove());
+      const d=NOTES[id];if(!d)return;
+      const el=document.createElement('article');el.className='note';el.dataset.id=id;
+      el.innerHTML=`<div class="crumb"><span>${id}.note</span><span>${String(fromIndex+2).padStart(2,'0')}</span></div>
+        <h1>${d.t}</h1><p>${d.b}</p>`+
+        (d.r.length?`<div class="refs"><p>links to</p>${d.r.map(r=>`<a class="link" data-n="${r}">${NOTES[r].t} →</a>`).join('')}</div>`:'');
+      stack.appendChild(el);render();
+      requestAnimationFrame(()=>el.scrollIntoView({behavior:'smooth',inline:'end',block:'nearest'}));
+    }
+    stack.addEventListener('click',e=>{
+      const a=e.target.closest('[data-n]');if(!a)return;
+      const idx=[...stack.querySelectorAll('.note')].indexOf(a.closest('.note'));
+      openNote(a.dataset.n,idx);
+    });
+    // seed first note
+    (function(){const d=NOTES.home;const el=document.createElement('article');el.className='note';el.dataset.id='home';
+      el.innerHTML=`<div class="crumb"><span>home.note</span><span>01</span></div><h1>${d.t}</h1><p>${d.b}</p>`+
+      `<div class="refs"><p>links to</p>${d.r.map(r=>`<a class="link" data-n="${r}">${NOTES[r].t} →</a>`).join('')}</div>`;
+      stack.appendChild(el);render();})();
+  </script>
+</body>
+</html>

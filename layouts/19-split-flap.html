@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>19 · Split-Flap Board — Layout scaffold</title>
+<!--
+  PATTERN    Split-Flap Departure Board
+  NAV MODEL  Content is a rows-of-cells board (the airport aesthetic). Filter
+             buttons re-"flip" the rows; click a row for detail. Index with character.
+  BEST FOR   Listings, schedules, indexes, leaderboards, "now showing".
+  REGIONS    .board (rows of flap cells)  ·  filters  ·  detail line
+  RE-SKIN    --accent; ROWS array + categories drive the flips.
+-->
+<style>
+  :root{
+    --bg:#0a0a0c; --board:#111114; --cell:#1b1b20; --ink:#f4f4f2; --muted:#8a8a92;
+    --line:rgba(255,255,255,.10); --accent:#FFD23F;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:40px 20px 80px}
+
+  .top{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+  .top h1{font-family:var(--mono);font-size:22px;letter-spacing:.04em}
+  .clock{font-family:var(--mono);color:var(--accent);font-size:20px}
+  .filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+  .filters button{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--cell);border:1px solid var(--line);border-radius:7px;padding:7px 13px;cursor:pointer}
+  .filters button:hover{color:var(--ink)}
+  .filters button.on{color:#1a1500;background:var(--accent);border-color:var(--accent)}
+
+  .board{background:var(--board);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .hrow,.row{display:grid;grid-template-columns:64px 1fr 120px 90px;gap:10px;align-items:center;padding:11px 16px}
+  .hrow{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+  .row{border-bottom:1px solid var(--line);cursor:pointer}
+  .row:last-child{border-bottom:0}
+  .row:hover{background:rgba(255,255,255,.03)}
+  .flap{font-family:var(--mono);letter-spacing:.06em;display:inline-flex;gap:2px}
+  .flap span{background:var(--cell);border-radius:3px;padding:6px 4px;min-width:16px;text-align:center;font-size:14px;position:relative;
+    box-shadow:inset 0 -1px 0 rgba(0,0,0,.6);animation:flip .5s ease both}
+  @keyframes flip{0%{transform:rotateX(-90deg);opacity:0}60%{transform:rotateX(8deg)}100%{transform:rotateX(0);opacity:1}}
+  .row .code span{color:var(--accent)}
+  .row .status{font-family:var(--mono);font-size:12px}
+  .status.go{color:#39d98a}.status.wait{color:var(--accent)}.status.gone{color:var(--muted)}
+  .gate{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right}
+
+  .detail{margin-top:16px;font-family:var(--mono);font-size:13px;color:var(--muted);min-height:20px}
+  .detail b{color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:var(--accent);opacity:.7}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top"><h1>DEPARTURES</h1><div class="clock" id="clock">--:--</div></div>
+    <div class="filters" id="filters"></div>
+    <div class="board"><div class="hrow"><span>Code</span><span>Destination</span><span>Status</span><span>Gate</span></div><div id="rows"></div></div>
+    <div class="detail" id="detail">select a row →</div>
+  </div>
+  <div class="scaffold">19 · split-flap &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const ROWS=[
+      {c:"PRJ01",dest:"Atlas — spatial index",cat:"work",s:"BOARDING",sc:"go",g:"A4",d:"A pannable canvas of every project, placed by theme."},
+      {c:"PRJ02",dest:"Beacon — command docs",cat:"work",s:"ON TIME",sc:"go",g:"B1",d:"Keyboard-first documentation behind a ⌘K palette."},
+      {c:"WRT09",dest:"On centered reading",cat:"writing",s:"DELAYED",sc:"wait",g:"C7",d:"Why the single column still wins for long-form."},
+      {c:"WRT12",dest:"The layout zoo",cat:"writing",s:"BOARDING",sc:"go",g:"C2",d:"Notes on building twenty navigation patterns."},
+      {c:"TLK03",dest:"Designing with motion",cat:"talks",s:"DEPARTED",sc:"gone",g:"—",d:"A talk on choreography over decoration."},
+      {c:"TLK05",dest:"Spatial interfaces",cat:"talks",s:"ON TIME",sc:"go",g:"D3",d:"Maps, canvases, and why place beats pages."}
+    ];
+    const CATS=["all","work","writing","talks"];
+    const rowsEl=document.getElementById('rows'),detail=document.getElementById('detail');
+    let filter="all";
+    function flap(text){return `<span class="flap">${text.split('').map(ch=>`<span style="animation-delay:${Math.random()*0.25}s">${ch===' '?'&nbsp;':ch}</span>`).join('')}</span>`;}
+    function render(){
+      const list=ROWS.filter(r=>filter==='all'||r.cat===filter);
+      rowsEl.innerHTML=list.map((r,i)=>`<div class="row" data-i="${ROWS.indexOf(r)}">
+        <span class="code">${flap(r.c)}</span>
+        <span>${flap(r.dest.toUpperCase())}</span>
+        <span class="status ${r.sc}">${r.s}</span>
+        <span class="gate">${r.g}</span></div>`).join('');
+    }
+    document.getElementById('filters').innerHTML=CATS.map(c=>`<button class="${c==='all'?'on':''}" data-c="${c}">${c}</button>`).join('');
+    document.getElementById('filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;filter=b.dataset.c;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));render();});
+    rowsEl.addEventListener('click',e=>{const row=e.target.closest('.row');if(!row)return;const r=ROWS[+row.dataset.i];detail.innerHTML=`<b>${r.c}</b> · ${r.dest} — ${r.d}`;});
+    function clock(){const d=new Date();document.getElementById('clock').textContent=d.toTimeString().slice(0,5);}
+    clock();setInterval(clock,10000);
+    render();
+  </script>
+</body>
+</html>

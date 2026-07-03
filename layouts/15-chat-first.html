@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>15 · Chat-First — Layout scaffold</title>
+<!--
+  PATTERN    Conversational / Chat-First
+  NAV MODEL  The interface is a conversation. Ask (or tap a suggestion) and the
+             assistant renders content blocks inline. No menus — intent drives it.
+  BEST FOR   AI-native products, guided help, onboarding, support.
+  REGIONS    .thread (messages)  ·  .composer (input + suggestions)  ·  rendered blocks
+  RE-SKIN    --accent; REPLIES map question intents → rendered blocks.
+-->
+<style>
+  :root{
+    --bg:#0c0d11; --ink:#ECEDF1; --muted:#9498a4; --line:rgba(255,255,255,.12);
+    --accent:#8B7BFF; --bot:#171a22; --user:#2a2150;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+
+  .top{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .top .mk{width:26px;height:26px;border-radius:8px;background:var(--accent)}
+  .top b{font-size:15px}.top span{font-size:12px;color:var(--muted)}
+
+  .thread{flex:1;overflow:auto;padding:26px 0}
+  .wrap{max-width:680px;margin:0 auto;padding:0 20px}
+  .msg{display:flex;gap:12px;margin-bottom:20px;animation:rise .3s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .msg .av{width:30px;height:30px;border-radius:50%;flex:0 0 30px;margin-top:2px}
+  .msg.bot .av{background:var(--accent)}
+  .msg.user{flex-direction:row-reverse}
+  .msg.user .av{background:#3a3550}
+  .bubble{background:var(--bot);border:1px solid var(--line);border-radius:14px;padding:14px 16px;max-width:80%;line-height:1.55;font-size:15px}
+  .msg.user .bubble{background:var(--user);border-color:transparent}
+  .bubble.block{width:80%;max-width:none}
+  .bubble h3{font-size:16px;margin-bottom:8px}
+  .bubble .card{border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-top:10px;background:rgba(255,255,255,.02)}
+  .bubble .card .t{font-weight:600;font-size:14px}.bubble .card .d{font-size:13px;color:var(--muted);margin-top:2px}
+  .bubble ul{margin:8px 0 0 18px}.bubble li{margin:4px 0;font-size:14px}
+  .typing{display:inline-flex;gap:4px}.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:bln 1s infinite}
+  .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+  @keyframes bln{0%,60%,100%{opacity:.3}30%{opacity:1}}
+
+  .composer{border-top:1px solid var(--line);padding:14px 0 20px;background:var(--bg)}
+  .sugg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .sugg button{font-size:13px;color:var(--ink);background:var(--bot);border:1px solid var(--line);border-radius:999px;padding:8px 13px;cursor:pointer}
+  .sugg button:hover{border-color:var(--accent)}
+  .inbar{display:flex;gap:10px;align-items:center;background:var(--bot);border:1px solid var(--line);border-radius:13px;padding:8px 8px 8px 16px}
+  .inbar input{flex:1;background:transparent;border:0;outline:none;color:var(--ink);font-size:15px;font-family:var(--sans)}
+  .inbar button{width:36px;height:36px;border-radius:10px;border:0;background:var(--accent);color:#0c0d11;font-size:16px;cursor:pointer}
+
+  .scaffold{position:fixed;right:16px;top:14px;z-index:9;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="top"><span class="mk"></span><b>Beacon</b><span>· ask anything to navigate</span></div>
+  <div class="thread" id="thread"><div class="wrap" id="wrap"></div></div>
+  <div class="composer"><div class="wrap">
+    <div class="sugg" id="sugg"></div>
+    <form class="inbar" id="form"><input id="input" placeholder="Ask to see something…" autocomplete="off" /><button>↑</button></form>
+  </div></div>
+  <div class="scaffold">15 · chat-first &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const wrap=document.getElementById('wrap'),thread=document.getElementById('thread');
+    const REPLIES=[
+      {q:"What is this?",k:["what","this","about"],html:`<h3>Chat as the whole interface</h3>Instead of a menu, you tell it what you want and it renders the answer right here — pages become responses.`},
+      {q:"Show me pricing",k:["pricing","price","cost","plan"],html:`<h3>Plans</h3><div class="card"><div class="t">Starter · free</div><div class="d">Solo, the essentials.</div></div><div class="card"><div class="t">Team · $12/seat</div><div class="d">Collaboration + history.</div></div><div class="card"><div class="t">Scale · talk to us</div><div class="d">SSO, audit, support.</div></div>`},
+      {q:"What can it do?",k:["features","do","capab"],html:`<h3>Capabilities</h3><ul><li>Render content blocks from intent</li><li>Remember the thread as context</li><li>Hand off to a human anytime</li></ul>`},
+      {q:"How do I get started?",k:["start","begin","sign","get"],html:`<h3>Three steps</h3><ul><li>Ask a question (you're doing it)</li><li>Pick a suggested action</li><li>Create an account when ready</li></ul>`}
+    ];
+    function add(role,html,block){const m=document.createElement('div');m.className='msg '+role;m.innerHTML=`<div class="av"></div><div class="bubble ${block?'block':''}">${html}</div>`;wrap.appendChild(m);thread.scrollTop=thread.scrollHeight;return m;}
+    function match(text){const t=text.toLowerCase();let best=REPLIES[0],score=0;REPLIES.forEach(r=>{const s=r.k.reduce((a,k)=>a+(t.includes(k)?1:0),0);if(s>score){score=s;best=r;}});return best;}
+    function ask(text){
+      add('user',text);
+      const typing=add('bot','<span class="typing"><i></i><i></i><i></i></span>');
+      setTimeout(()=>{typing.remove();const r=match(text);add('bot',r.html,true);},650);
+    }
+    document.getElementById('form').addEventListener('submit',e=>{e.preventDefault();const v=document.getElementById('input').value.trim();if(v){ask(v);document.getElementById('input').value='';}});
+    const sugg=document.getElementById('sugg');sugg.innerHTML=REPLIES.map(r=>`<button>${r.q}</button>`).join('');
+    sugg.addEventListener('click',e=>{const b=e.target.closest('button');if(b)ask(b.textContent);});
+    // greeting
+    add('bot',`<h3>Hi — what are you looking for?</h3>Tap a suggestion below, or type your own question.`);
+  </script>
+</body>
+</html>

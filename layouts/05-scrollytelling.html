@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05 · Scrollytelling — Layout scaffold</title>
+<!--
+  PATTERN    Scrollytelling / Stacked Sections
+  NAV MODEL  Scroll IS the navigation. A minimal top bar plus a fixed vertical
+             dot rail show progress and allow jumps; sections snap full-bleed.
+  BEST FOR   Narrative landing pages, product stories, pitch sites, manifestos.
+  REGIONS    .topbar (minimal)  |  .dots (progress nav)  |  section.scene (full-bleed)
+  RE-SKIN    Change the per-scene --tone. Dots hide < 760px; sections still stack.
+-->
+<style>
+  :root{
+    --ink:#0E0E12; --paper:#fff; --muted:#7a7d86;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;justify-content:space-between;
+    padding:18px 28px;mix-blend-mode:difference;color:#fff}
+  .topbar .brand{font-weight:700;letter-spacing:-.01em}
+  .topbar nav{display:flex;gap:22px;font-size:14px}
+
+  /* Progress dot rail */
+  .dots{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:14px}
+  .dots a{width:11px;height:11px;border-radius:50%;border:2px solid currentColor;opacity:.5;position:relative}
+  .dots a.active{opacity:1;background:currentColor}
+  .dots a span{position:absolute;right:20px;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:12px;font-family:var(--mono);opacity:0;transition:opacity .15s;pointer-events:none}
+  .dots a:hover span{opacity:.8}
+
+  .scene{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:120px 8vw 100px;color:var(--scene-ink,#0E0E12)}
+  .scene .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+  .scene h2{font-size:clamp(40px,7vw,92px);line-height:.98;letter-spacing:-.03em;font-weight:800;margin:16px 0;max-width:16ch}
+  .scene p{font-size:clamp(18px,2vw,24px);max-width:46ch;opacity:.82;line-height:1.45}
+  .scene .num{position:absolute;font-family:var(--mono);font-size:13px;opacity:.5;top:120px}
+
+  /* per-scene tones */
+  #s1{background:#0E0E12;--scene-ink:#fff}
+  #s2{background:#ECE7DE}
+  #s3{background:#1B3A4B;--scene-ink:#EAF2F5}
+  #s4{background:#E11D48;--scene-ink:#fff}
+  #s5{background:#0E0E12;--scene-ink:#fff;color:#fff}
+  #s1 .dots,#s3,#s4{}
+
+  .scene .cta{display:inline-flex;align-items:center;gap:10px;margin-top:30px;align-self:flex-start;
+    border:2px solid currentColor;border-radius:999px;padding:13px 24px;font-weight:600;font-size:16px}
+
+  @media (max-width:760px){
+    .dots{display:none}
+    .scene{padding:100px 26px 80px}
+  }
+
+  .scaffold{position:fixed;left:16px;bottom:16px;z-index:99;background:#fff;color:#0E0E12;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .scaffold a{color:#0E0E12;opacity:.55}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Vantage</div>
+    <nav><a href="#s2">Story</a><a href="#s4">Proof</a><a href="#s5">Start</a></nav>
+  </header>
+
+  <nav class="dots" aria-label="Progress">
+    <a href="#s1" class="active" data-s="s1"><span>Open</span></a>
+    <a href="#s2" data-s="s2"><span>The shift</span></a>
+    <a href="#s3" data-s="s3"><span>How</span></a>
+    <a href="#s4" data-s="s4"><span>Proof</span></a>
+    <a href="#s5" data-s="s5"><span>Start</span></a>
+  </nav>
+
+  <main>
+    <section class="scene" id="s1">
+      <span class="num">01 / 05</span>
+      <p class="eyebrow">A scroll-driven narrative</p>
+      <h2>Tell it one scene at a time.</h2>
+      <p>Each section is full-bleed and earns the next. Scrolling is the only control the reader needs.</p>
+      <a class="cta" href="#s2">Begin ↓</a>
+    </section>
+    <section class="scene" id="s2">
+      <span class="num">02 / 05</span>
+      <p class="eyebrow">The shift</p>
+      <h2>Set the tension.</h2>
+      <p>State the change in the world that makes your point matter. Big type, one idea, lots of air.</p>
+    </section>
+    <section class="scene" id="s3">
+      <span class="num">03 / 05</span>
+      <p class="eyebrow">How it works</p>
+      <h2>Show the mechanism.</h2>
+      <p>A change of tone signals a change of beat. The dot rail tracks progress and lets readers jump.</p>
+    </section>
+    <section class="scene" id="s4">
+      <span class="num">04 / 05</span>
+      <p class="eyebrow">Proof</p>
+      <h2>Land the evidence.</h2>
+      <p>The loudest scene carries the strongest claim. Color does the emphasis so the words can stay spare.</p>
+    </section>
+    <section class="scene" id="s5">
+      <span class="num">05 / 05</span>
+      <p class="eyebrow">Start</p>
+      <h2>Close with one action.</h2>
+      <p>End the descent on a single, unmissable call to act.</p>
+      <a class="cta" href="#">Get started →</a>
+    </section>
+  </main>
+
+  <div class="scaffold">05 · scrollytelling &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    var dots=[...document.querySelectorAll('.dots a')];
+    var scenes=dots.map(d=>document.getElementById(d.dataset.s));
+    function spy(){var y=scrollY+innerHeight/2,cur=0;scenes.forEach(function(s,i){if(s.offsetTop<=y)cur=i;});
+      dots.forEach((d,i)=>d.classList.toggle('active',i===cur));
+      // tint dots to contrast the current scene
+      document.querySelector('.dots').style.color=getComputedStyle(scenes[cur]).getPropertyValue('--scene-ink')||'#0E0E12';
+    }
+    addEventListener('scroll',spy,{passive:true});spy();
+  </script>
+</body>
+</html>

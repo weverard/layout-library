@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>20 · Z-Axis Fly-Through — Layout scaffold</title>
+<!--
+  PATTERN    Z-Axis Fly-Through
+  NAV MODEL  Scroll drives a "camera" forward through layers stacked in depth.
+             Each layer scales up and fades as it passes you. Scroll = throttle.
+  BEST FOR   Immersive product reveals, intros, cinematic landing sequences.
+  REGIONS    .scroller (tall, drives progress)  ·  .stage (fixed)  ·  .layer
+  RE-SKIN    Per-layer --tone; tune ENTER/EXIT depth windows.
+-->
+<style>
+  :root{
+    --ink:#fff; --muted:#9aa0b0;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:#05060a;color:var(--ink);-webkit-font-smoothing:antialiased}
+
+  .stage{position:fixed;inset:0;overflow:hidden;perspective:1000px;background:radial-gradient(120% 90% at 50% 50%,#0c1020,#05060a 70%)}
+  .starfield{position:absolute;inset:0;opacity:.5;background-image:radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 60%,#fff,transparent),radial-gradient(1px 1px at 40% 80%,#bcd,transparent),radial-gradient(1px 1px at 85% 20%,#fff,transparent),radial-gradient(1px 1px at 55% 45%,#9ad,transparent);background-size:100% 100%}
+  .layer{position:absolute;top:50%;left:50%;width:min(620px,86vw);transform:translate(-50%,-50%);text-align:center;will-change:transform,opacity}
+  .layer .k{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--l-accent,#7cf)}
+  .layer h2{font-size:clamp(40px,7vw,92px);line-height:.98;letter-spacing:-.03em;font-weight:800;margin:14px 0}
+  .layer p{font-size:clamp(17px,2vw,22px);color:var(--muted);max-width:36ch;margin:0 auto;line-height:1.45}
+  .layer .ring{width:120px;height:120px;border:2px solid var(--l-accent,#7cf);border-radius:50%;margin:0 auto 24px;opacity:.6}
+
+  .scroller{position:relative;z-index:2}
+  .spacer{height:100vh}
+  .progress{position:fixed;left:0;top:0;height:3px;background:#7cf;width:0;z-index:10}
+  .hint{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);font-family:var(--mono);font-size:12px;color:var(--muted);z-index:10}
+
+  .scaffold{position:fixed;right:16px;top:16px;z-index:11;background:#000;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="starfield" id="stars"></div>
+    <div class="layer" id="L0" style="--l-accent:#7cf"><div class="ring"></div><p class="k">Approach</p><h2>Fly into it.</h2><p>Scroll, and the camera moves forward through layers stacked in depth.</p></div>
+    <div class="layer" id="L1" style="--l-accent:#9a7bff"><p class="k">Layer 02</p><h2>Depth as story.</h2><p>Each plane rushes toward you, grows, and passes — sequence with z, not just y.</p></div>
+    <div class="layer" id="L2" style="--l-accent:#5ee6a8"><p class="k">Layer 03</p><h2>Momentum.</h2><p>Scrolling is the throttle. Stop, and you hang in space between planes.</p></div>
+    <div class="layer" id="L3" style="--l-accent:#ff7aa8"><p class="k">Layer 04</p><h2>Arrive.</h2><p>The last plane settles in front of you — the end of the flight.</p></div>
+  </div>
+
+  <div class="progress" id="bar"></div>
+  <div class="hint" id="hint">scroll to fly ↓</div>
+
+  <div class="scroller">
+    <div class="spacer"></div><div class="spacer"></div><div class="spacer"></div><div class="spacer"></div><div class="spacer"></div>
+  </div>
+
+  <div class="scaffold">20 · zaxis-flythrough &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const layers=[...document.querySelectorAll('.layer')];const N=layers.length;const bar=document.getElementById('bar');
+    function frame(){
+      const max=document.body.scrollHeight-innerHeight;
+      const t=Math.min(1,Math.max(0,scrollY/max));      // 0..1 overall
+      bar.style.width=(t*100)+'%';
+      const pos=t*(N-1);                                 // current floating layer index
+      layers.forEach((el,i)=>{
+        const d=i-pos;                                   // distance from camera (-back .. +front)
+        // map distance to translateZ + scale + opacity
+        const z=-d*-600;                                 // closer layers nearer 0
+        const scale=Math.max(0.2,1.4-Math.abs(d)*0.9);
+        let op=1-Math.abs(d)*0.85;
+        if(d<-0.05)op=Math.max(0,1+d*1.6);               // fade out as it passes behind
+        el.style.transform=`translate(-50%,-50%) translateZ(${(-Math.abs(d))*240}px) scale(${scale})`;
+        el.style.opacity=Math.max(0,op).toFixed(3);
+        el.style.zIndex=Math.round(100-Math.abs(d)*10);
+        el.style.filter=`blur(${Math.min(6,Math.abs(d)*4)}px)`;
+      });
+      if(t>0.02)document.getElementById('hint').style.opacity=0;
+    }
+    addEventListener('scroll',()=>requestAnimationFrame(frame),{passive:true});
+    addEventListener('resize',frame);frame();
+  </script>
+</body>
+</html>

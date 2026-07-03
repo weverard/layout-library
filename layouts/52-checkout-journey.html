@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>52 · Agentic Checkout Journey — Layout scaffold</title>
+<!--
+  PATTERN    Agentic Checkout Journey
+  NAV MODEL  A full-screen STEP DECK that walks through an agentic shopping
+             conversation scene by scene, inside a phone. Advance with the on-screen
+             CTA, the Next/Prev arrows, or ←/→ keys; a "N / 6" progress indicator +
+             segmented bar track position.
+  BEST FOR   guided demos, pitch walkthroughs, onboarding a commerce flow.
+  REGIONS    .deck (phone) · .scene (one per step) · .progress (segments + counter)
+             · .nav (prev/next).
+  RE-SKIN    --accent = active segment + CTA + chrome; phone centers ≥480px,
+             full-bleed below.
+-->
+<style>
+  :root{
+    --bg:#1a1025; --surface:#fff; --ink:#16161a; --muted:#6b7280; --line:rgba(20,20,26,.1);
+    --accent:#8B5CF6; --accent-lt:#ede9fe; --accent-dk:#7c3aed;
+    --bot-bg:#f5f3ff; --user-bg:#8B5CF6;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--sans);background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased;min-height:100vh;
+    display:grid;place-items:center;
+  }
+
+  /* ── phone frame ── */
+  .phone{
+    position:relative;
+    width:390px;max-width:100vw;
+    height:92vh;max-height:844px;
+    background:#0a0708;
+    border-radius:50px;
+    padding:12px;
+    box-shadow:0 40px 100px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.12);
+  }
+  .screen{
+    position:relative;
+    width:100%;height:100%;
+    border-radius:40px;
+    overflow:hidden;
+    background:var(--surface);
+    display:flex;flex-direction:column;
+  }
+  .notch{
+    position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:126px;height:34px;background:#0a0708;
+    border-radius:0 0 20px 20px;z-index:20;
+  }
+
+  /* ── app header ── */
+  .app-header{
+    flex-shrink:0;
+    padding:40px 18px 10px;
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    position:relative;z-index:10;
+  }
+  .brand{font-size:15px;font-weight:700;color:var(--accent);letter-spacing:-.01em}
+  .brand-sub{font-size:11px;color:var(--muted);margin-top:1px}
+  .agent-dot{
+    width:8px;height:8px;border-radius:50%;background:#22c55e;
+    box-shadow:0 0 0 2px rgba(34,197,94,.25);
+    display:inline-block;margin-right:5px;vertical-align:middle;
+  }
+
+  /* ── progress ── */
+  .progress-wrap{
+    flex-shrink:0;padding:10px 18px 8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .progress-segs{
+    flex:1;display:flex;gap:4px;
+  }
+  .seg{
+    flex:1;height:3px;border-radius:2px;
+    background:#e5e7eb;
+    transition:background .25s;
+  }
+  .seg.done{background:var(--accent)}
+  .seg.active{background:var(--accent)}
+  .progress-counter{
+    font-size:12px;font-weight:600;font-family:var(--mono);
+    color:var(--muted);white-space:nowrap;
+  }
+
+  /* ── deck (scene container) ── */
+  .deck-wrap{
+    flex:1;overflow:hidden;position:relative;
+  }
+  .deck{
+    display:flex;width:600%;height:100%;
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+  }
+  .deck.no-transition{transition:none}
+
+  .scene{
+    width:calc(100% / 6);height:100%;
+    overflow-y:auto;flex-shrink:0;
+    display:flex;flex-direction:column;
+    padding:16px 18px 12px;
+    gap:12px;
+  }
+
+  /* ── scene shared elements ── */
+
+  /* role label */
+  .role-label{
+    font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:2px;
+  }
+
+  /* chat bubbles */
+  .bubble{
+    border-radius:16px;padding:12px 14px;
+    font-size:14px;line-height:1.5;max-width:85%;
+  }
+  .bubble.bot{
+    background:var(--bot-bg);color:var(--ink);
+    border-bottom-left-radius:4px;
+    align-self:flex-start;
+  }
+  .bubble.user{
+    background:var(--user-bg);color:#fff;
+    border-bottom-right-radius:4px;
+    align-self:flex-end;
+  }
+
+  /* category chips */
+  .cat-chips{
+    display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;
+  }
+  .cat-chip{
+    display:inline-block;
+    background:var(--accent-lt);color:var(--accent);
+    border:1px solid rgba(139,92,246,.3);
+    border-radius:999px;padding:7px 13px;
+    font-size:13px;font-weight:500;
+    cursor:default;
+  }
+
+  /* product cards (vertical stack, tappable) */
+  .product-card{
+    background:#fff;border:1.5px solid #ede9fe;border-radius:14px;
+    padding:10px 12px;
+    display:flex;align-items:center;gap:10px;
+    box-shadow:0 1px 4px rgba(0,0,0,.05);
+    cursor:pointer;
+    transition:border-color .15s,box-shadow .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .product-card:hover,.product-card:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(139,92,246,.12);
+    outline:none;
+  }
+  .product-card.selected{
+    border-color:var(--accent);
+    background:var(--accent-lt);
+  }
+  .product-swatch{
+    width:44px;height:44px;border-radius:10px;flex-shrink:0;
+  }
+  .product-info{flex:1;min-width:0}
+  .product-name{font-size:13px;font-weight:600;color:var(--ink)}
+  .product-sub{font-size:11px;color:var(--muted);margin-top:1px}
+  .product-price{font-size:13px;font-weight:700;color:var(--accent);margin-top:3px}
+  .product-check{font-size:18px;color:var(--accent);flex-shrink:0}
+
+  /* selected card (scene 4) */
+  .focused-card{
+    background:var(--accent-lt);border:2px solid var(--accent);border-radius:16px;
+    padding:16px;display:flex;gap:14px;align-items:center;
+  }
+  .focused-swatch{
+    width:64px;height:64px;border-radius:14px;flex-shrink:0;
+  }
+  .focused-info .name{font-size:15px;font-weight:700;color:var(--ink)}
+  .focused-info .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .focused-info .price{font-size:16px;font-weight:800;color:var(--accent);margin-top:6px}
+
+  /* order summary rows */
+  .summary-rows{
+    background:#f9fafb;border-radius:14px;overflow:hidden;border:1px solid var(--line);
+  }
+  .summary-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:11px 14px;border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .summary-row:last-child{border-bottom:0}
+  .summary-row .lbl{color:var(--muted)}
+  .summary-row .val{font-weight:600;color:var(--ink)}
+  .summary-row.total .lbl{font-weight:700;color:var(--ink);font-size:14px}
+  .summary-row.total .val{font-size:16px;color:var(--accent);font-weight:800}
+
+  /* biometric / face id mock */
+  .biometric-modal{
+    background:#fff;border:1px solid var(--line);border-radius:20px;
+    padding:24px 18px 18px;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.1);
+  }
+  .face-ring{
+    width:72px;height:72px;border-radius:50%;
+    border:3px solid var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;
+    position:relative;
+  }
+  .face-ring.scanning::before{
+    content:'';
+    position:absolute;inset:-4px;border-radius:50%;
+    border:2px solid var(--accent);opacity:.35;
+    animation:pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.12);opacity:.1}}
+  .face-ring.success{border-color:#22c55e}
+  .biometric-title{font-size:14px;font-weight:600;color:var(--ink)}
+  .biometric-sub{font-size:12px;color:var(--muted);text-align:center}
+
+  /* success screen */
+  .success-wrap{
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    text-align:center;
+  }
+  .success-check{
+    width:72px;height:72px;border-radius:50%;
+    background:#22c55e;
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;color:#fff;
+    animation:pop .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  .success-title{font-size:18px;font-weight:700;color:var(--ink);margin-top:4px}
+  .success-sub{font-size:13px;color:var(--muted);line-height:1.5;max-width:220px}
+  .order-ref{
+    font-size:11px;font-family:var(--mono);color:var(--muted);
+    background:#f3f4f6;border-radius:8px;padding:6px 12px;margin-top:4px;
+  }
+
+  /* ── CTA button ── */
+  .cta-btn{
+    display:block;
+    appearance:none;background:var(--accent);border:0;padding:0;font:inherit;cursor:pointer;
+    width:100%;padding:13px;
+    color:#fff;font-size:15px;font-weight:700;
+    border-radius:14px;text-align:center;
+    transition:background .15s,transform .1s;
+    -webkit-tap-highlight-color:transparent;
+    margin-top:auto;
+  }
+  .cta-btn:active{transform:scale(.97);background:var(--accent-dk)}
+
+  /* ── bottom nav (prev/next) ── */
+  .deck-nav{
+    flex-shrink:0;
+    padding:8px 18px 12px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-top:1px solid var(--line);
+  }
+  .nav-arrow{
+    display:flex;
+    appearance:none;background:none;border:0;padding:0;font:inherit;cursor:pointer;
+    width:40px;height:40px;border-radius:50%;
+    background:#f3f4f6;color:var(--ink);font-size:18px;
+    align-items:center;justify-content:center;
+    transition:background .15s,opacity .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .nav-arrow:disabled{opacity:.25;cursor:default}
+  .nav-arrow:not(:disabled):active{background:#e5e7eb}
+
+  /* ── responsive: full-bleed below 480px ── */
+  @media(max-width:479px){
+    body{display:block;background:var(--surface);padding:0}
+    .phone{width:100%;height:100vh;max-height:none;border-radius:0;padding:0;background:transparent;box-shadow:none}
+    .screen{border-radius:0}
+    .notch{display:none}
+    .app-header{padding-top:20px}
+  }
+
+  /* ── scaffold badge ── */
+  .scaffold{
+    position:fixed;right:16px;bottom:16px;z-index:99;
+    background:#000;color:#fff;border-radius:999px;
+    padding:8px 14px;font-size:12px;font-family:var(--mono);
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="notch"></div>
+
+      <!-- header -->
+      <div class="app-header">
+        <div>
+          <div class="brand"><span class="agent-dot"></span>Lumen Agent</div>
+          <div class="brand-sub">Agentic checkout</div>
+        </div>
+      </div>
+
+      <!-- progress -->
+      <div class="progress-wrap">
+        <div class="progress-segs" id="progressSegs">
+          <div class="seg"></div>
+          <div class="seg"></div>
+          <div class="seg"></div>
+          <div class="seg"></div>
+          <div class="seg"></div>
+          <div class="seg"></div>
+        </div>
+        <div class="progress-counter" id="progressCounter">1 / 6</div>
+      </div>
+
+      <!-- deck -->
+      <div class="deck-wrap">
+        <div class="deck" id="deck">
+
+          <!-- Scene 1: Greeting + category chips -->
+          <div class="scene" id="scene-0">
+            <div class="role-label">Aria</div>
+            <div class="bubble bot">
+              Hi! I&#8217;m Aria, your Lumen shopping assistant. What are you looking for today?
+            </div>
+            <div class="cat-chips">
+              <span class="cat-chip">👟 Running shoes</span>
+              <span class="cat-chip">🎒 Bags &amp; packs</span>
+              <span class="cat-chip">🧢 Accessories</span>
+              <span class="cat-chip">🎁 Gifts</span>
+            </div>
+            <button class="cta-btn" data-cta="1">Let&#8217;s find a bag →</button>
+          </div>
+
+          <!-- Scene 2: User query bubble -->
+          <div class="scene" id="scene-1">
+            <div class="role-label">You</div>
+            <div class="bubble user">
+              I need a lightweight daypack under $120
+            </div>
+            <div style="height:8px"></div>
+            <div class="role-label">Aria</div>
+            <div class="bubble bot">
+              Got it — lightweight daypacks under $120. I found three great options for you:
+            </div>
+            <button class="cta-btn" data-cta="2">See results →</button>
+          </div>
+
+          <!-- Scene 3: Product results -->
+          <div class="scene" id="scene-2">
+            <div class="role-label">Aria · 3 results</div>
+            <div class="bubble bot" style="font-size:13px">Tap a bag to select it.</div>
+            <div
+              class="product-card" tabindex="0" role="button"
+              data-pid="b1" data-name="Trek Ultra 18L" data-price="$89"
+              data-swatch="linear-gradient(135deg,#0ea5e9,#38bdf8)"
+            >
+              <div class="product-swatch" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8)"></div>
+              <div class="product-info">
+                <div class="product-name">Trek Ultra 18L</div>
+                <div class="product-sub">430 g · waterproof base</div>
+                <div class="product-price">$89</div>
+              </div>
+            </div>
+            <div
+              class="product-card" tabindex="0" role="button"
+              data-pid="b2" data-name="Nomad Slim 22L" data-price="$104"
+              data-swatch="linear-gradient(135deg,#f97316,#fb923c)"
+            >
+              <div class="product-swatch" style="background:linear-gradient(135deg,#f97316,#fb923c)"></div>
+              <div class="product-info">
+                <div class="product-name">Nomad Slim 22L</div>
+                <div class="product-sub">510 g · laptop sleeve</div>
+                <div class="product-price">$104</div>
+              </div>
+            </div>
+            <div
+              class="product-card" tabindex="0" role="button"
+              data-pid="b3" data-name="Apex Day 20L" data-price="$116"
+              data-swatch="linear-gradient(135deg,#8b5cf6,#a78bfa)"
+            >
+              <div class="product-swatch" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa)"></div>
+              <div class="product-info">
+                <div class="product-name">Apex Day 20L</div>
+                <div class="product-sub">480 g · padded back panel</div>
+                <div class="product-price">$116</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scene 4: Selection confirmation -->
+          <div class="scene" id="scene-3">
+            <div class="role-label">Aria</div>
+            <div class="bubble bot">Great choice! Here&#8217;s a summary before we add to cart:</div>
+            <div class="focused-card" id="focusedCard">
+              <div class="focused-swatch" id="focusedSwatch" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8)"></div>
+              <div class="focused-info">
+                <div class="name" id="focusedName">Trek Ultra 18L</div>
+                <div class="sub">In stock · Free shipping</div>
+                <div class="price" id="focusedPrice">$89</div>
+              </div>
+            </div>
+            <div class="bubble bot" style="font-size:13px">
+              Added to your cart. Want to continue to checkout?
+            </div>
+            <button class="cta-btn" data-cta="4">Looks good — checkout →</button>
+          </div>
+
+          <!-- Scene 5: Order summary -->
+          <div class="scene" id="scene-4">
+            <div class="role-label">Order summary</div>
+            <div class="summary-rows">
+              <div class="summary-row">
+                <span class="lbl" id="summaryItem">Trek Ultra 18L</span>
+                <span class="val" id="summaryItemPrice">$89</span>
+              </div>
+              <div class="summary-row">
+                <span class="lbl">Shipping</span>
+                <span class="val" style="color:#22c55e">Free</span>
+              </div>
+              <div class="summary-row">
+                <span class="lbl">Tax (8%)</span>
+                <span class="val" id="summaryTax">$7.12</span>
+              </div>
+              <div class="summary-row total">
+                <span class="lbl">Total</span>
+                <span class="val" id="summaryTotal">$96.12</span>
+              </div>
+            </div>
+            <div class="bubble bot" style="font-size:13px;margin-top:4px">
+              Lumen Pay is ready. Authenticate to complete your order.
+            </div>
+            <button class="cta-btn" data-cta="5">Pay now →</button>
+          </div>
+
+          <!-- Scene 6: Payment / Face ID + success -->
+          <div class="scene" id="scene-5">
+            <div class="biometric-modal" id="biometricModal">
+              <div class="face-ring scanning" id="faceRing">🫥</div>
+              <div class="biometric-title">Face ID</div>
+              <div class="biometric-sub">Authenticate with Lumen Pay to complete your purchase</div>
+            </div>
+            <div class="success-wrap" id="successWrap" style="display:none">
+              <div class="success-check">✓</div>
+              <div class="success-title">Order placed!</div>
+              <div class="success-sub">Your order is confirmed and will ship within 2 business days.</div>
+              <div class="order-ref" id="orderRef">ORDER #LM-89241</div>
+            </div>
+            <button class="cta-btn" id="startOverBtn" style="display:none" data-action="reset">Start over</button>
+          </div>
+
+        </div><!-- /.deck -->
+      </div><!-- /.deck-wrap -->
+
+      <!-- bottom nav -->
+      <div class="deck-nav">
+        <button class="nav-arrow" id="prevBtn" disabled aria-label="Previous">←</button>
+        <button class="nav-arrow" id="nextBtn" aria-label="Next">→</button>
+      </div>
+
+    </div><!-- /.screen -->
+  </div><!-- /.phone -->
+
+  <div class="scaffold">52 · checkout-journey &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var TOTAL_SCENES = 6;
+  var currentScene = 0;
+
+  var deckEl        = document.getElementById('deck');
+  var segsEl        = document.getElementById('progressSegs');
+  var counterEl     = document.getElementById('progressCounter');
+  var prevBtn       = document.getElementById('prevBtn');
+  var nextBtn       = document.getElementById('nextBtn');
+  var startOverBtn  = document.getElementById('startOverBtn');
+
+  /* selected product state */
+  var selectedPid   = 'b1';
+  var selectedName  = 'Trek Ultra 18L';
+  var selectedPrice = '$89';
+  var selectedSwatch = 'linear-gradient(135deg,#0ea5e9,#38bdf8)';
+
+  /* biometric state */
+  var biometricDone = false;
+  var biometricTid  = null;
+
+  /* ── Render ── */
+  function renderScene(idx, animate){
+    if(!animate){
+      deckEl.classList.add('no-transition');
+    }
+    deckEl.style.transform = 'translateX(' + (-(100/6) * idx) + '%)';
+    if(!animate){
+      void deckEl.offsetWidth; /* force reflow */
+      deckEl.classList.remove('no-transition');
+    }
+
+    /* update segments */
+    var segs = segsEl.querySelectorAll('.seg');
+    segs.forEach(function(seg, i){
+      seg.classList.remove('done','active');
+      if(i < idx){ seg.classList.add('done'); }
+      else if(i === idx){ seg.classList.add('active'); }
+    });
+
+    counterEl.textContent = (idx + 1) + ' / ' + TOTAL_SCENES;
+    prevBtn.disabled = (idx === 0);
+    nextBtn.disabled = (idx === TOTAL_SCENES - 1);
+
+    /* last scene: show/hide start over */
+    if(idx === TOTAL_SCENES - 1){
+      nextBtn.disabled = true;
+      startOverBtn.style.display = 'block';
+      triggerBiometric();
+    } else {
+      startOverBtn.style.display = 'none';
+      if(biometricTid !== null){ clearTimeout(biometricTid); biometricTid = null; }
+    }
+  }
+
+  function goTo(idx){
+    if(idx < 0 || idx >= TOTAL_SCENES) return;
+    currentScene = idx;
+    renderScene(currentScene, true);
+  }
+
+  /* ── Biometric mock ── */
+  function triggerBiometric(){
+    if(biometricDone) return;
+    var faceRing    = document.getElementById('faceRing');
+    var modal       = document.getElementById('biometricModal');
+    var successWrap = document.getElementById('successWrap');
+    faceRing.className = 'face-ring scanning';
+    faceRing.textContent = '🫥';
+    modal.style.display = '';
+    successWrap.style.display = 'none';
+    biometricTid = setTimeout(function(){
+      biometricTid = null;
+      if(currentScene !== TOTAL_SCENES - 1) return;
+      faceRing.className = 'face-ring success';
+      faceRing.textContent = '🙂';
+      biometricTid = setTimeout(function(){
+        biometricTid = null;
+        if(currentScene !== TOTAL_SCENES - 1) return;
+        modal.style.display = 'none';
+        successWrap.style.display = 'flex';
+        biometricDone = true;
+      }, 600);
+    }, 1600);
+  }
+
+  /* ── Product selection (scene 3) ── */
+  var deckWrap = document.querySelector('.deck-wrap');
+  deckWrap.addEventListener('click', function(e){
+    var card = e.target.closest('.product-card');
+    if(!card) return;
+    if(currentScene !== 2) return; /* only in scene 3 (idx 2) */
+
+    selectedPid    = card.getAttribute('data-pid');
+    selectedName   = card.getAttribute('data-name');
+    selectedPrice  = card.getAttribute('data-price');
+    selectedSwatch = card.getAttribute('data-swatch');
+
+    /* update focused card in scene 4 */
+    document.getElementById('focusedSwatch').style.background = selectedSwatch;
+    document.getElementById('focusedName').textContent = selectedName;
+    document.getElementById('focusedPrice').textContent = selectedPrice;
+
+    /* update summary in scene 5 */
+    document.getElementById('summaryItem').textContent = selectedName;
+    document.getElementById('summaryItemPrice').textContent = selectedPrice;
+    var numeric = parseFloat(selectedPrice.replace('$',''));
+    var tax = (numeric * 0.08).toFixed(2);
+    var total = (numeric + parseFloat(tax)).toFixed(2);
+    document.getElementById('summaryTax').textContent = '$' + tax;
+    document.getElementById('summaryTotal').textContent = '$' + total;
+
+    /* visual feedback */
+    var allCards = deckWrap.querySelectorAll('.product-card');
+    allCards.forEach(function(c){ c.classList.remove('selected'); });
+    card.classList.add('selected');
+
+    /* advance to scene 4 */
+    goTo(3);
+  });
+
+  /* keyboard events (arrow keys) */
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft'){  goTo(currentScene - 1); }
+    if(e.key === 'ArrowRight'){ goTo(currentScene + 1); }
+  });
+
+  /* ── CTA buttons ── */
+  deckWrap.addEventListener('click', function(e){
+    var btn = e.target.closest('.cta-btn[data-cta]');
+    if(!btn) return;
+    var target = parseInt(btn.getAttribute('data-cta'), 10);
+    goTo(target);
+  });
+
+  /* Prev / Next arrows */
+  prevBtn.addEventListener('click', function(){ goTo(currentScene - 1); });
+  nextBtn.addEventListener('click', function(){ goTo(currentScene + 1); });
+
+  /* Start over */
+  startOverBtn.addEventListener('click', function(){
+    /* reset biometric */
+    biometricDone = false;
+    if(biometricTid !== null){ clearTimeout(biometricTid); biometricTid = null; }
+    var modal = document.getElementById('biometricModal');
+    var successWrap = document.getElementById('successWrap');
+    if(modal){ modal.style.display = ''; }
+    if(successWrap){ successWrap.style.display = 'none'; }
+
+    /* reset selection */
+    var allCards = deckWrap.querySelectorAll('.product-card');
+    allCards.forEach(function(c){ c.classList.remove('selected'); });
+
+    /* reset focused card to defaults */
+    document.getElementById('focusedSwatch').style.background = 'linear-gradient(135deg,#0ea5e9,#38bdf8)';
+    document.getElementById('focusedName').textContent = 'Trek Ultra 18L';
+    document.getElementById('focusedPrice').textContent = '$89';
+    document.getElementById('summaryItem').textContent = 'Trek Ultra 18L';
+    document.getElementById('summaryItemPrice').textContent = '$89';
+    document.getElementById('summaryTax').textContent = '$7.12';
+    document.getElementById('summaryTotal').textContent = '$96.12';
+
+    goTo(0);
+  });
+
+  /* ── Init ── */
+  renderScene(0, false);
+
+})();
+</script>
+</body>
+</html>

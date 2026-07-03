@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>43 · Keyboard Inbox — Layout scaffold</title>
+<!--
+  PATTERN    Keyboard Inbox
+  NAV MODEL  Superhuman-style list driven by keys: j/k move the selection,
+             Enter opens the reader, e archives the selected row, ? toggles a
+             shortcut cheatsheet. Mouse click also selects.
+  BEST FOR   Power-user mail/tasks, triage tools.
+  REGIONS    .list (.row, .sel)  ·  .reader  ·  .cheats (overlay)
+  RE-SKIN    --accent = selected row + cheats key chips; under ~720px the
+             reader becomes a full overlay.
+-->
+<style>
+  :root{
+    --bg:#F7F7F5; --surface:#fff; --ink:#16161a; --muted:#6b6f76; --line:rgba(20,20,26,.1);
+    --accent:#4F46E5;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;overflow:hidden}
+
+  .top{display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
+  .top .brand{font-weight:700;font-size:15px}
+  .top .count{font-size:13px;color:var(--muted);margin-left:6px}
+  .top .hint{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .top .hint span{border:1px solid var(--line);border-radius:4px;padding:1px 5px;background:var(--bg)}
+
+  .main{flex:1;display:flex;min-height:0}
+
+  .list{flex:0 0 340px;border-right:1px solid var(--line);overflow-y:auto;background:var(--surface)}
+
+  .row{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s}
+  .row:hover{background:#f0f0fd}
+  .row.sel{background:var(--accent);color:#fff}
+  .row .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 7px;margin-top:6px;transition:background .12s}
+  .row.sel .dot{background:#fff}
+  .row.read .dot{background:transparent;border:1px solid var(--muted)}
+  .row.sel.read .dot{border-color:rgba(255,255,255,.5);background:transparent}
+  .row-body{flex:1;min-width:0}
+  .row-top{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+  .row-sender{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+  .row-time{font-size:11px;color:var(--muted);flex:0 0 auto;font-family:var(--mono)}
+  .row.sel .row-time{color:rgba(255,255,255,.7)}
+  .row-subject{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+  .row-snippet{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row.sel .row-snippet{color:rgba(255,255,255,.75)}
+
+  .reader{flex:1;overflow-y:auto;padding:36px 40px;display:none}
+  .reader.show{display:block;animation:rise .25s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .reader-back{display:none;font-size:13px;color:var(--accent);cursor:pointer;margin-bottom:20px;font-family:var(--mono)}
+  .reader h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+  .reader .r-meta{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7}
+  .reader .r-meta strong{color:var(--ink)}
+  .reader .r-body{font-size:15px;line-height:1.75;color:#2a2a2e;max-width:580px}
+  .reader .r-body p+p{margin-top:14px}
+
+  .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:15px;display:none}
+  .empty.show{display:flex}
+
+  /* cheats overlay */
+  .cheats{position:fixed;inset:0;background:rgba(22,22,26,.55);z-index:50;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+  .cheats.show{display:flex}
+  .cheats-panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px 32px;min-width:320px;box-shadow:0 20px 50px rgba(0,0,0,.18)}
+  .cheats-title{font-weight:700;font-size:16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+  .cheats-close{font-size:18px;color:var(--muted);cursor:pointer;line-height:1}
+  .cheats-close:hover{color:var(--ink)}
+  .cheat-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:14px}
+  .cheat-row:last-child{margin-bottom:0}
+  .cheat-key{display:inline-block;background:var(--accent);color:#fff;border-radius:6px;padding:3px 9px;font-family:var(--mono);font-size:12px;font-weight:700;flex:0 0 auto}
+
+  @media(max-width:720px){
+    .list{flex:1;border-right:0}
+    .reader{position:fixed;inset:0;background:var(--surface);padding:20px;z-index:20;overflow-y:auto}
+    .reader-back{display:block}
+    .top .hint{display:none}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="top">
+    <span class="brand">Inbox</span>
+    <span class="count" id="count"></span>
+    <span class="hint"><span>j</span>&nbsp;/<span>k</span> move &nbsp;<span>↵</span> open &nbsp;<span>e</span> archive &nbsp;<span>?</span> help</span>
+  </div>
+  <div class="main">
+    <div class="list" id="list"></div>
+    <div class="reader" id="reader">
+      <div class="reader-back" id="readerBack">← Back to inbox</div>
+      <div id="readerContent"></div>
+    </div>
+    <div class="empty" id="empty">Inbox zero 🎉</div>
+  </div>
+  <div class="cheats" id="cheats">
+    <div class="cheats-panel">
+      <div class="cheats-title">Keyboard shortcuts <span class="cheats-close" id="cheatsClose">✕</span></div>
+      <div class="cheat-row"><span class="cheat-key">j</span> Move selection down</div>
+      <div class="cheat-row"><span class="cheat-key">k</span> Move selection up</div>
+      <div class="cheat-row"><span class="cheat-key">↵</span> Open selected message</div>
+      <div class="cheat-row"><span class="cheat-key">e</span> Archive selected</div>
+      <div class="cheat-row"><span class="cheat-key">?</span> Toggle this cheatsheet</div>
+    </div>
+  </div>
+  <div class="scaffold">43 · keyboard-inbox &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var MESSAGES = [
+    { id:1, sender:'Alice Nguyen', subject:'Q3 recap ready for review', snippet:'I finished the slides last night — let me know if you want any changes before the presentation.', time:'9:12 AM', body:'<p>Hi,</p><p>I finished the slides last night. The summary looks strong — revenue is up 18% QoQ and we hit every KPI except the NPS score, which I\'ve flagged in red on slide 4.</p><p>Let me know if you want any changes before the Thursday presentation. Happy to jump on a call this afternoon.</p>' },
+    { id:2, sender:'Procurement Team', subject:'Invoice #4821 requires approval', snippet:'Please approve or reject by end of day Friday to avoid a payment delay.', time:'8:45 AM', body:'<p>The invoice from Meridian Supplies (#4821, $3,240) is awaiting your approval in the finance portal.</p><p>Please action by end of day Friday to avoid a payment delay. If you have questions, reach out to procurement@company.io.</p>' },
+    { id:3, sender:'Marcus Lee', subject:'Onboarding call scheduled — Thursday 2pm', snippet:'Looking forward to it! I\'ve sent a calendar invite to the address on file.', time:'Yesterday', body:'<p>Hi there,</p><p>Your onboarding call has been scheduled for Thursday at 2:00 PM (Eastern). I\'ve sent a calendar invite to the address on file.</p><p>We\'ll cover the basics of the platform, your team configuration, and answer any open questions. See you then!</p>' },
+    { id:4, sender:'GitHub', subject:'[layout-library] Pull request #12 opened', snippet:'weverard opened pull request: Add Command & Conversation scaffolds (41–46)', time:'Yesterday', body:'<p><strong>weverard</strong> opened a pull request in <strong>layout-library</strong>.</p><p><strong>Add Command &amp; Conversation scaffolds (41–46)</strong></p><p>Adds six new HTML layout scaffolds for the Command &amp; Conversation gallery category: conversational form, notebook cells, keyboard inbox, slash editor, live filter search, and voice assistant.</p>' },
+    { id:5, sender:'Dana Park', subject:'Re: Brand guidelines update', snippet:'Totally agree — the new type scale is much cleaner. Want me to update the Figma library too?', time:'Mon', body:'<p>Totally agree — the new type scale is much cleaner and should hold up better at small sizes.</p><p>Want me to update the Figma component library too, or are you handling that side? I can carve out time Wednesday morning.</p>' },
+    { id:6, sender:'Stripe', subject:'Your payout of $1,840.00 is on the way', snippet:'Estimated arrival: 1–2 business days. View the breakdown in your dashboard.', time:'Mon', body:'<p>Your payout of <strong>$1,840.00</strong> has been initiated and should arrive within 1–2 business days to the bank account ending in 4821.</p><p>You can view the full breakdown and transaction history in your Stripe dashboard.</p>' },
+    { id:7, sender:'Jess Torres', subject:'Quick question about the API rate limits', snippet:'Are we capped at 500 requests/min on the current plan, or is that just the free tier?', time:'Sun', body:'<p>Hey — quick one: are we capped at 500 requests per minute on the current plan, or is that only the free tier?</p><p>We\'re hitting the limit during peak hours and I want to know if upgrading would fix it before I escalate to the platform team.</p>' },
+    { id:8, sender:'Newsletter', subject:'5 layout patterns worth stealing this week', snippet:'From bento grids to conversational forms — our weekly roundup is live.', time:'Sat', body:'<p>This week\'s roundup covers five layout patterns that are gaining traction across product teams:</p><p>1. Bento grids as homepages · 2. Typeform-style conversational onboarding · 3. Keyboard-first inboxes · 4. Slash-command editors · 5. Live filter search with facets.</p><p>Full write-up on the site.</p>' },
+    { id:9, sender:'Ops Bot', subject:'Scheduled maintenance window tonight 23:00–01:00', snippet:'Expect brief service interruptions during the maintenance window. No action needed.', time:'Fri', body:'<p>A scheduled maintenance window is planned for tonight from 23:00 to 01:00 UTC.</p><p>You may experience brief service interruptions during this time. No action is required on your part. If the window overruns, we will send a follow-up.</p>' },
+    { id:10, sender:'Camille Osei', subject:'Design handoff for the new onboarding flow', snippet:'Figma file is linked in the Notion doc — everything\'s annotated and export-ready.', time:'Thu', body:'<p>The design handoff for the new onboarding flow is ready.</p><p>Figma file is linked in the Notion doc under "Q3 / Onboarding v2". Everything is annotated and the assets are export-ready at 1× and 2×. Let me know if you need any adjustments before dev picks it up.</p>' }
+  ];
+
+  var msgs = MESSAGES.slice();
+  var selIdx = 0;
+  var listEl = document.getElementById('list');
+  var readerEl = document.getElementById('reader');
+  var readerContentEl = document.getElementById('readerContent');
+  var cheatsEl = document.getElementById('cheats');
+  var emptyEl = document.getElementById('empty');
+  var countEl = document.getElementById('count');
+
+  function updateCount() {
+    countEl.textContent = msgs.length + ' message' + (msgs.length !== 1 ? 's' : '');
+  }
+
+  function render() {
+    listEl.innerHTML = '';
+    msgs.forEach(function(m, i) {
+      var div = document.createElement('div');
+      div.className = 'row' + (i === selIdx ? ' sel' : '') + (m.read ? ' read' : '');
+      div.dataset.idx = i;
+      div.innerHTML =
+        '<div class="dot"></div>' +
+        '<div class="row-body">' +
+          '<div class="row-top"><span class="row-sender">' + escHtml(m.sender) + '</span><span class="row-time">' + escHtml(m.time) + '</span></div>' +
+          '<div class="row-subject">' + escHtml(m.subject) + '</div>' +
+          '<div class="row-snippet">' + escHtml(m.snippet) + '</div>' +
+        '</div>';
+      div.addEventListener('click', function() {
+        selIdx = i;
+        render();
+        openReader(i);
+      });
+      listEl.appendChild(div);
+    });
+    // scroll selected into view
+    var selEl = listEl.querySelector('.sel');
+    if (selEl) selEl.scrollIntoView({ block: 'nearest' });
+    updateCount();
+    if (msgs.length === 0) {
+      emptyEl.classList.add('show');
+      listEl.style.display = 'none';
+    } else {
+      emptyEl.classList.remove('show');
+      listEl.style.display = '';
+    }
+  }
+
+  function openReader(i) {
+    if (i < 0 || i >= msgs.length) return;
+    var m = msgs[i];
+    m.read = true;
+    readerContentEl.innerHTML =
+      '<h2>' + escHtml(m.subject) + '</h2>' +
+      '<div class="r-meta">From: <strong>' + escHtml(m.sender) + '</strong> &nbsp;·&nbsp; ' + escHtml(m.time) + '</div>' +
+      '<div class="r-body">' + m.body + '</div>';
+    readerEl.classList.add('show');
+    render();
+  }
+
+  function closeReader() {
+    readerEl.classList.remove('show');
+  }
+
+  document.getElementById('readerBack').addEventListener('click', closeReader);
+
+  document.getElementById('cheatsClose').addEventListener('click', function() {
+    cheatsEl.classList.remove('show');
+  });
+  cheatsEl.addEventListener('click', function(e) {
+    if (e.target === cheatsEl) cheatsEl.classList.remove('show');
+  });
+
+  document.addEventListener('keydown', function(e) {
+    var tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    if (e.key === '?') {
+      e.preventDefault();
+      cheatsEl.classList.toggle('show');
+      return;
+    }
+    if (cheatsEl.classList.contains('show')) {
+      if (e.key === 'Escape') cheatsEl.classList.remove('show');
+      return;
+    }
+    if (e.key === 'j') {
+      e.preventDefault();
+      if (msgs.length === 0) return;
+      selIdx = Math.min(msgs.length - 1, selIdx + 1);
+      render();
+      return;
+    }
+    if (e.key === 'k') {
+      e.preventDefault();
+      if (msgs.length === 0) return;
+      selIdx = Math.max(0, selIdx - 1);
+      render();
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      openReader(selIdx);
+      return;
+    }
+    if (e.key === 'e') {
+      e.preventDefault();
+      if (msgs.length === 0) return;
+      msgs.splice(selIdx, 1);
+      if (selIdx >= msgs.length) selIdx = msgs.length - 1;
+      if (selIdx < 0) selIdx = 0;
+      closeReader();
+      render();
+      return;
+    }
+    if (e.key === 'Escape') {
+      closeReader();
+    }
+  });
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Layout Scaffolds — gallery</title>
+<!--
+  A library of reusable, standalone layout + navigation scaffolds. Each file is
+  self-contained (inline CSS/JS, no build, no deps) and neutrally themed with
+  CSS variables at :root — fork one as the basis for a new build. 60 scaffolds
+  across 7 categories of navigation paradigm.
+-->
+<style>
+  :root{
+    --bg:#FAFAF8; --surface:#fff; --ink:#15161A; --muted:#6b6f76;
+    --line:rgba(20,20,26,.12); --accent:#4F46E5;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.55}
+  a{color:inherit;text-decoration:none}
+
+  .wrap{max-width:1140px;margin:0 auto;padding:72px 28px 110px}
+  header.intro{max-width:62ch;margin-bottom:40px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-size:clamp(34px,5vw,54px);line-height:1.04;letter-spacing:-.025em;margin:12px 0 16px}
+  header.intro p{color:var(--muted);font-size:18px;max-width:56ch}
+  header.intro code{font-family:var(--mono);font-size:.85em;background:#eceaf6;color:var(--accent);padding:.1em .4em;border-radius:4px}
+
+  .cat{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    margin:44px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media (max-width:880px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.grid{grid-template-columns:1fr}}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:15px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,transform .15s,box-shadow .15s}
+  .card:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.07)}
+  .thumb{position:relative;height:128px;border-bottom:1px solid var(--line);background:#F1F2F4;overflow:hidden}
+  .b{padding:14px 16px 16px}
+  .b .n{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .b h3{font-size:16px;letter-spacing:-.01em;margin:3px 0 6px}
+  .b .nav{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.4}
+  .b .nav b{color:var(--ink);font-weight:600}
+  .tags{display:flex;flex-wrap:wrap;gap:5px}
+  .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+
+  /* ---------- mini wireframe thumbnails (pure CSS) ---------- */
+  .tw{position:absolute;inset:14px;display:flex;gap:5px}
+  .tw .b2{background:#fff;border:1px solid var(--line);border-radius:5px;flex:1}
+  .tw .fill{background:var(--accent);border:0}
+  .tw .soft{background:#dfe1e6;border:0}
+  .tw .lines{padding:8px;display:flex;flex-direction:column;gap:4px}
+  .tw .lines i{height:5px;border-radius:3px;background:#d8dade;display:block}
+  .tw .lines i.s{width:50%}.tw .lines i.m{width:78%}
+  .col{flex-direction:column}
+  .dot{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--accent)}
+
+  /* compositions */
+  .t-split .fill{flex:0 0 38%}
+  .t-doc{flex-direction:column;align-items:center}.t-doc .bar{height:14px;width:100%;flex:none}.t-doc .colm{width:60%;flex:1;margin-top:6px}
+  .t-side .rail{flex:0 0 24%;background:#23262b;border:0}.t-side .colx{flex:1;display:flex;flex-direction:column;gap:5px}.t-side .top{height:14px;flex:none}.t-side .g2{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:5px}
+  .t-three .rail{flex:0 0 12%;background:#23262b;border:0}.t-three .list{flex:0 0 34%}
+  .t-scroll{flex-direction:column;gap:4px}.t-scroll .band{flex:1;border-radius:5px}
+  .t-canvas{background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:20px 20px;display:block}
+  .t-canvas .nd{position:absolute;width:30px;height:20px;background:#fff;border:1px solid var(--line);border-radius:4px}
+  .t-zettel{gap:6px}.t-zettel .b2{flex:0 0 32%}
+  .t-ring{display:block}
+  .t-ring .ring{position:absolute;inset:14px;border:2px dashed var(--accent);border-radius:50%;opacity:.6}
+  .t-ring .o{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--accent)}
+  .t-map{display:block;background:radial-gradient(50% 60% at 35% 45%,#cfd8de,transparent),radial-gradient(40% 50% at 75% 65%,#cfd8de,transparent),#e7eaee}
+  .t-timeline{display:block}
+  .t-timeline .ln{position:absolute;left:10px;right:10px;top:50%;height:2px;background:#cfd2d8}
+  .t-timeline .th{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--accent);transform:translateY(-50%)}
+  .t-strip .b2:nth-child(2){background:var(--accent)}
+  .t-stack{display:block}
+  .t-stack .c{position:absolute;left:18%;right:18%;height:34%;border-radius:7px;border:1px solid var(--line);background:#fff}
+  .t-pin .c{background:var(--accent);border:0;opacity:.9}
+  .t-palette{display:block;background:#15171d}
+  .t-palette .bar{position:absolute;left:18%;right:18%;top:30%;height:16px;border-radius:6px;background:#2a2d36}
+  .t-palette .r{position:absolute;left:22%;right:22%;height:6px;border-radius:3px;background:var(--accent);opacity:.8}
+  .t-term{display:block;background:#0c100e}
+  .t-term .ln{position:absolute;height:5px;border-radius:3px;background:#2c5f44}
+  .t-term .ln.a{background:var(--accent)}
+  .t-chat{display:block}
+  .t-chat .bub{position:absolute;height:20px;border-radius:9px}
+  .t-chat .bub.l{left:14px;width:46%;background:#dfe1e6}
+  .t-chat .bub.r{right:14px;width:40%;background:var(--accent);opacity:.85}
+  .t-desktop{display:block;background:linear-gradient(135deg,#dfe3ff,#f3e2fb)}
+  .t-desktop .win{position:absolute;left:22%;top:18%;width:56%;height:52%;background:#fff;border:1px solid var(--line);border-radius:6px}
+  .t-desktop .win::before{content:"";position:absolute;top:0;left:0;right:0;height:8px;background:#eceef2;border-radius:6px 6px 0 0}
+  .t-desktop .dock{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);width:42%;height:14px;border-radius:8px;background:rgba(255,255,255,.6)}
+  .t-flap{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:12px;gap:3px;background:#101014;padding:14px;inset:14px}
+  .t-flap i{background:#26262d;border-radius:2px}
+  .t-flap i.a{background:var(--accent)}
+  .t-zaxis{display:block}
+  .t-zaxis .r{position:absolute;border:2px solid var(--accent);border-radius:5px;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .t-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;align-content:start}
+  .t-grid i{border-radius:4px;background:var(--accent);opacity:.85}
+  .t-poster{display:block;background:var(--accent)}
+  .t-poster .big{position:absolute;left:14px;bottom:14px;width:54%;height:26px;border-radius:4px;background:rgba(255,255,255,.85)}
+
+  .t-bento{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:4px}
+  .t-bento i{border-radius:4px;background:#dfe1e6}
+  .t-bento i.a{background:var(--accent);grid-column:span 2;grid-row:span 2}
+  .t-cover .c{position:absolute;top:50%;left:50%;width:32%;height:62%;border-radius:6px;background:#dfe1e6;transform:translate(-50%,-50%)}
+  .t-cover .c.mid{background:var(--accent);z-index:2}
+  .t-cover .c.l{transform:translate(-120%,-50%) scale(.8);opacity:.7}
+  .t-cover .c.r{transform:translate(20%,-50%) scale(.8);opacity:.7}
+  .t-acc{flex-direction:column;gap:5px}
+  .t-acc .b2{flex:none;height:11px}
+  .t-acc .b2.open{height:40px;background:var(--accent);border-color:transparent}
+  .t-sheet{display:block;background:linear-gradient(160deg,#e8efe9,#e4ecf3);border-radius:8px}
+  .t-sheet .sh{position:absolute;left:8%;right:8%;bottom:0;height:42%;background:#fff;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0}
+  .t-sheet .sh::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);width:22px;height:4px;border-radius:2px;background:var(--accent)}
+  .t-elev{gap:6px}
+  .t-elev .floors{flex:1;display:flex;flex-direction:column;gap:4px}
+  .t-elev .floors i{flex:1;border-radius:4px;background:#dfe1e6}
+  .t-elev .floors i.a{background:var(--accent)}
+  .t-elev .panel{flex:0 0 14px;display:flex;flex-direction:column;gap:3px;justify-content:center}
+  .t-elev .panel i{height:6px;border-radius:2px;background:#cfd2d8}
+  .t-elev .panel i.a{background:var(--accent)}
+  .t-rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+  .t-rooms i{border-radius:4px;background:#dfe1e6}
+  .t-rooms i.a{background:var(--accent)}
+  .t-marq i{position:absolute;height:12px;border-radius:3px;background:var(--accent)}
+  .t-spot{display:block}
+  .t-spot::after{content:"";position:absolute;left:50%;top:50%;width:64%;height:84%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,var(--accent),transparent 68%);opacity:.75}
+  .t-tabs{flex-direction:column;gap:0}
+  .t-tabs .row{display:flex;gap:4px;flex:none;height:15px}
+  .t-tabs .row i{flex:1;border-radius:5px 5px 0 0;background:#dfe1e6;display:block}
+  .t-tabs .row i.a{background:var(--accent)}
+  .t-tabs .pane{flex:1;background:#fff;border:1px solid var(--line);border-radius:0 6px 6px 6px;margin-top:-1px}
+  .t-phone{display:block}
+  .t-phone .scr{position:absolute;left:50%;top:8px;bottom:8px;transform:translateX(-50%);width:48%;background:#fff;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  .t-phone .bar{position:absolute;left:0;right:0;bottom:0;height:15px;background:#f0f0ee;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;padding:0 8px}
+  .t-phone .bar span{width:6px;height:6px;border-radius:50%;background:#cfd2d8;display:block}
+  .t-phone .bar span.a{background:var(--accent)}
+  .t-cols{gap:4px}
+  .t-cols .b2{flex:1;padding:8px 6px;display:flex;flex-direction:column;gap:5px}
+  .t-cols .b2 i{height:5px;border-radius:3px;background:#d8dade;display:block}
+  .t-cols .b2 i.a{background:var(--accent)}
+  .t-iso{display:block;perspective:300px}
+  .t-iso .plane{position:absolute;inset:24px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:6px;transform:rotateX(52deg) rotateZ(45deg)}
+  .t-iso .plane i{background:#dfe1e6;border-radius:3px;display:block;box-shadow:0 3px 0 #c4c6cc}
+  .t-iso .plane i.a{background:var(--accent);box-shadow:0 3px 0 rgba(0,0,0,.18)}
+  .t-tree{display:block}
+  .t-tree .tree-svg{position:absolute;inset:0;width:100%;height:100%;stroke:var(--accent);stroke-width:1.5;fill:none;opacity:.55}
+  .t-tree .root{position:absolute;left:9%;top:50%;transform:translateY(-50%);width:26px;height:16px;border-radius:5px;background:var(--accent)}
+  .t-tree .kid{position:absolute;left:54%;width:28px;height:12px;border-radius:4px;background:#fff;border:1px solid var(--line);display:block}
+  .t-wheel{flex-direction:column;gap:5px;justify-content:center}
+  .t-wheel i{height:8px;border-radius:4px;background:#d2d4d9;display:block;width:60%;margin:0 auto;opacity:.5}
+  .t-wheel i:nth-child(2),.t-wheel i:nth-child(4){opacity:.8;width:74%}
+  .t-wheel i.a{background:var(--accent);opacity:1;width:88%;height:11px}
+  .t-step{align-items:center;gap:0;padding:0 18px}
+  .t-step .nd{width:14px;height:14px;border-radius:50%;background:#d8dade;flex:0 0 auto;display:block}
+  .t-step .nd.a{background:var(--accent)}
+  .t-step .ln{flex:1;height:2px;background:#d8dade;display:block}
+  .t-step .ln.a{background:var(--accent)}
+  .t-book{justify-content:center;align-items:center;gap:0;perspective:340px}
+  .t-book .pg{width:32%;height:62%;background:#fff;border:1px solid var(--line);display:block}
+  .t-book .pg.l{border-radius:4px 0 0 4px;border-right:0}
+  .t-book .pg.r{border-radius:0 4px 4px 0;background:linear-gradient(90deg,#fff,#eeeae4)}
+  .t-book .pg.turn{transform-origin:left center;transform:rotateY(-42deg);background:var(--accent);opacity:.9;border-color:transparent}
+  .t-story{flex-direction:column;gap:0;background:#16161a;border-radius:8px;padding:10px;inset:14px}
+  .t-story .segs{display:flex;gap:3px;margin-bottom:8px}
+  .t-story .segs i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.3);display:block}
+  .t-story .segs i.a{background:var(--accent)}
+  .t-story .segs i.done{background:#fff}
+  .t-story .body{flex:1;border-radius:5px;background:linear-gradient(160deg,#3a1730,#1a1040)}
+  .t-carousel{flex-direction:column;gap:7px;align-items:center;justify-content:center}
+  .t-carousel .pane{width:80%;height:52%;border-radius:6px;background:var(--accent);opacity:.9;display:block}
+  .t-carousel .dots{display:flex;gap:5px}
+  .t-carousel .dots i{width:5px;height:5px;border-radius:50%;background:#cfd2d8;display:block}
+  .t-carousel .dots i.a{background:var(--accent)}
+  .t-form{flex-direction:column;gap:9px;justify-content:center;padding:0 18px}
+  .t-form .prog{height:5px;border-radius:3px;background:#e2e3e7;display:block;position:relative;overflow:hidden}
+  .t-form .prog::after{content:"";position:absolute;left:0;top:0;bottom:0;width:45%;background:var(--accent);border-radius:3px}
+  .t-form .ql{height:9px;width:70%;border-radius:4px;background:#cfd2d8;display:block}
+  .t-form .inp{height:26px;border-radius:6px;border:1.5px solid var(--accent);background:#fff;display:block}
+  .t-cells{flex-direction:column;gap:7px;justify-content:center;padding:0 14px}
+  .t-cells .cell{display:flex;gap:6px;align-items:stretch}
+  .t-cells .cell .run{width:9px;border-radius:3px;background:var(--accent);flex:0 0 auto;display:block}
+  .t-cells .cell .code{flex:1;height:18px;border-radius:4px;background:#23262b;display:block}
+  .t-cells .out{height:9px;width:46%;border-radius:3px;background:#d8dade;margin-left:15px;display:block}
+  .t-inbox{flex-direction:column;gap:5px;justify-content:center;padding:0 14px}
+  .t-inbox .row{height:14px;border-radius:4px;background:#eceef1;display:block}
+  .t-inbox .row.sel{background:var(--accent);opacity:.92}
+  .t-slash{flex-direction:column;gap:6px;padding:0 14px;justify-content:center;position:relative}
+  .t-slash .ln{height:7px;border-radius:3px;background:#d8dade;display:block}
+  .t-slash .ln.s{width:38%}
+  .t-slash .menu{position:absolute;left:32%;top:38%;width:48%;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 16px rgba(0,0,0,.14);padding:5px;display:flex;flex-direction:column;gap:4px}
+  .t-slash .menu i{height:6px;border-radius:2px;background:#d8dade;display:block}
+  .t-slash .menu i.a{background:var(--accent)}
+  .t-filter{flex-direction:column;gap:6px;padding:0 14px;justify-content:center}
+  .t-filter .search{height:18px;border-radius:6px;border:1.5px solid var(--accent);background:#fff;display:block}
+  .t-filter .chips{display:flex;gap:4px}
+  .t-filter .chips i{height:9px;width:22px;border-radius:999px;background:#e2e3e7;display:block}
+  .t-filter .chips i.a{background:var(--accent)}
+  .t-filter .res{height:8px;border-radius:3px;background:#d8dade;display:block}
+  .t-filter .res.s{width:60%}
+  .t-voice{align-items:center;justify-content:center;gap:9px;flex-direction:column;background:#fbf7ff}
+  .t-voice .miccircle{width:34px;height:34px;border-radius:50%;background:var(--accent);display:block;box-shadow:0 0 0 6px rgba(126,34,206,.15)}
+  .t-voice .wave{display:flex;align-items:center;gap:3px;height:18px}
+  .t-voice .wave i{width:3px;border-radius:2px;background:var(--accent);display:block}
+  .t-voice .wave i:nth-child(1){height:8px}.t-voice .wave i:nth-child(2){height:16px}.t-voice .wave i:nth-child(3){height:11px}.t-voice .wave i:nth-child(4){height:18px}.t-voice .wave i:nth-child(5){height:7px}.t-voice .wave i:nth-child(6){height:13px}
+  .t-kanban{gap:5px}
+  .t-kanban .col{flex:1;display:flex;flex-direction:column;gap:4px}
+  .t-kanban .col .h{height:6px;border-radius:3px;background:var(--accent);display:block}
+  .t-kanban .col i{height:14px;border-radius:4px;background:#fff;border:1px solid var(--line);display:block}
+  .t-masonry{display:block;column-count:3;column-gap:5px}
+  .t-masonry i{display:block;width:100%;border-radius:4px;background:#dfe1e6;margin-bottom:5px;break-inside:avoid}
+  .t-masonry i:nth-child(3n+1){height:26px}.t-masonry i:nth-child(3n+2){height:38px}.t-masonry i:nth-child(3n){height:20px}
+  .t-masonry i.a{background:var(--accent)}
+  .t-wallet{display:block}
+  .t-wallet .p{position:absolute;left:50%;width:54%;height:34%;border-radius:8px;border:1px solid var(--line);background:#fff;display:block;transform:translateX(-50%)}
+  .t-wallet .p:nth-child(1){top:12%;transform:translateX(-50%) scale(.86);background:#e7e7ea}
+  .t-wallet .p:nth-child(2){top:26%;transform:translateX(-50%) scale(.93);background:#f0f0f2}
+  .t-wallet .p:nth-child(3){top:46%;background:var(--accent);border-color:transparent}
+  .t-table{flex-direction:column;gap:0;padding:0}
+  .t-table .hr{height:13px;background:var(--accent);border-radius:5px 5px 0 0;display:block;opacity:.92}
+  .t-table .r{height:11px;display:block;border-bottom:1px solid var(--line);background-color:#fff;background-image:linear-gradient(90deg,transparent 37%,var(--line) 37%,var(--line) 37.6%,transparent 37.6%,transparent 67%,var(--line) 67%,var(--line) 67.6%,transparent 67.6%)}
+  .t-table .r:nth-child(even){background-color:#f5f6f8}
+  .t-shopchat{display:block}
+  .t-shopchat .scr{position:absolute;left:50%;top:8px;bottom:8px;transform:translateX(-50%);width:50%;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;padding:7px;display:flex;flex-direction:column;gap:5px}
+  .t-shopchat .b{height:8px;border-radius:4px;background:#e7e9ec;width:62%;display:block}
+  .t-shopchat .b.u{align-self:flex-end;background:var(--accent);width:44%}
+  .t-shopchat .pc{margin-top:auto;height:22px;border-radius:5px;border:1px solid var(--line);display:flex;align-items:center;gap:5px;padding:4px}
+  .t-shopchat .pc::before{content:"";width:16px;align-self:stretch;border-radius:3px;background:linear-gradient(135deg,#7cc4f5,#4a9fe0);display:block}
+  .t-shopchat .pc i{width:18px;height:8px;border-radius:3px;background:var(--accent);display:block;margin-left:auto}
+  .t-journey{display:block}
+  .t-journey .scr{position:absolute;left:50%;top:8px;bottom:8px;transform:translateX(-50%);width:50%;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;padding:8px;display:flex;flex-direction:column;gap:6px}
+  .t-journey .segs{display:flex;gap:3px}
+  .t-journey .segs i{flex:1;height:3px;border-radius:2px;background:#e2e3e7;display:block}
+  .t-journey .segs i.a{background:var(--accent)}
+  .t-journey .body{flex:1;border-radius:6px;background:#f3f0fb;display:block}
+  .t-journey .cta{height:13px;border-radius:6px;background:var(--accent);display:block}
+  .t-trace{flex-direction:column;gap:5px;padding:0 14px;justify-content:center}
+  .t-trace .u{align-self:flex-end;height:9px;width:44%;border-radius:5px;background:#e7e9ec;display:block}
+  .t-trace .tc{height:11px;border-radius:4px;background:#ecfdf5;border:1px solid rgba(5,150,105,.3);display:flex;align-items:center;padding:0 5px;gap:4px}
+  .t-trace .tc::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--accent);display:block;flex:0 0 auto}
+  .t-trace .tc i{height:4px;border-radius:2px;background:var(--accent);opacity:.5;display:block;flex:1}
+  .t-trace .ans{height:14px;border-radius:5px;background:var(--accent);opacity:.85;display:block}
+  .t-handoff{flex-direction:column;gap:6px;padding:0 14px;justify-content:center}
+  .t-handoff .bar{display:flex;gap:5px}
+  .t-handoff .bar i{width:18px;height:10px;border-radius:5px;background:#e7e9ec;display:block}
+  .t-handoff .bar i.a{background:var(--accent)}
+  .t-handoff .m{height:9px;border-radius:5px;background:#eceef1;width:64%;display:block}
+  .t-handoff .hand{height:7px;width:50%;align-self:center;border-radius:4px;background:var(--accent);opacity:.35;display:block}
+  .t-handoff .m2{height:9px;border-radius:5px;background:rgba(244,63,94,.18);width:58%;align-self:flex-end;display:block}
+  .t-gpt{gap:0}
+  .t-gpt .side{flex:0 0 26%;background:#f7f7f5;border-right:1px solid var(--line);border-radius:5px 0 0 5px;display:flex;flex-direction:column;gap:4px;padding:7px 5px}
+  .t-gpt .side i{height:5px;border-radius:2px;background:#dcdcd8;display:block}
+  .t-gpt .side i.a{background:var(--accent);opacity:.5}
+  .t-gpt .main{flex:1;display:flex;flex-direction:column;gap:5px;padding:7px}
+  .t-gpt .main .l{height:7px;border-radius:3px;background:#e7e9ec;display:block}
+  .t-gpt .main .l.s{width:55%}
+  .t-gpt .main .buy{height:13px;width:40%;border-radius:5px;background:var(--accent);display:block;margin-top:auto}
+  .t-parallax{display:block;overflow:hidden}
+  .t-parallax i{position:absolute;border-radius:8px;display:block}
+  .t-parallax i:nth-child(1){left:8%;top:20%;width:42%;height:52%;background:#cfe8ff;opacity:.75}
+  .t-parallax i:nth-child(2){left:42%;top:34%;width:46%;height:48%;background:var(--accent);opacity:.85}
+  .t-parallax i:nth-child(3){left:26%;top:12%;width:24%;height:24%;background:#fff;border:1px solid var(--line)}
+  .t-diag{display:block;overflow:hidden;background:#f0f0ee}
+  .t-diag .band{position:absolute;left:-12%;right:-12%;height:40%;display:block;transform:skewY(-9deg)}
+  .t-diag .band.a{background:var(--accent);top:8%}
+  .t-diag .band.b{background:#16161a;top:56%}
+  .t-diag .ttl{position:absolute;left:14%;top:32%;width:52%;height:10px;background:#fff;display:block;transform:rotate(-9deg);border-radius:3px;z-index:1}
+  .t-stars{display:block;background:#0b1020;border-radius:8px;inset:14px;overflow:hidden}
+  .t-stars .s{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;display:block}
+  .t-stars .s.a{background:var(--accent);width:4px;height:4px}
+  .t-stars .ttl{position:absolute;left:18%;top:44%;width:64%;height:11px;border-radius:4px;background:var(--accent);display:block;opacity:.9}
+  .t-mask{display:block;overflow:hidden;background:linear-gradient(135deg,#fde2e2,#fecaca)}
+  .t-mask .under{position:absolute;inset:0;background:#15161a;display:block;-webkit-mask-image:radial-gradient(34px at 64% 56%,#000 33px,transparent 34px);mask-image:radial-gradient(34px at 64% 56%,#000 33px,transparent 34px)}
+  .t-mask .cur{position:absolute;left:64%;top:56%;width:9px;height:9px;border-radius:50%;background:var(--accent);transform:translate(-50%,-50%);display:block;box-shadow:0 0 0 2px #fff}
+  .t-gptm{display:block}
+  .t-gptm .scr{position:absolute;left:50%;top:8px;bottom:8px;transform:translateX(-50%);width:50%;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;padding:7px;display:flex;flex-direction:column;gap:5px}
+  .t-gptm .bar{height:7px;width:52%;border-radius:3px;background:#e7e9ec;display:block}
+  .t-gptm .pc{border:1px solid var(--line);border-radius:6px;padding:4px;display:flex;flex-direction:column;gap:3px}
+  .t-gptm .pc .img{height:15px;border-radius:3px;background:#d6f2ea;display:block}
+  .t-gptm .pc .ln{height:4px;width:60%;border-radius:2px;background:#d8dade;display:block}
+  .t-gptm .pc .buy{height:8px;border-radius:3px;background:var(--accent);display:block}
+  .t-gptm .composer{margin-top:auto;height:11px;border-radius:7px;background:#f0f0ee;border:1px solid var(--line);display:block}
+
+  footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
+  footer code{font-family:var(--mono)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="intro">
+      <p class="kicker">Reusable scaffolds · 60 layouts</p>
+      <h1>Sixty ways to navigate.</h1>
+      <p>Standalone HTML templates — self-contained, no build, neutral tokens in
+      <code>:root</code>. Fork one as a starting point. Each file opens with a comment
+      describing its pattern, nav model, and regions; the <code>.scaffold</code> badge is safe to delete.</p>
+    </header>
+
+    <p class="cat">Foundations — app & document shells</p>
+    <div class="grid">
+      <a class="card" href="01-split-panel.html" style="--accent:#4F46E5"><div class="thumb"><div class="tw t-split"><div class="b2 fill"></div><div class="b2 lines"><i class="m"></i><i class="s"></i><i class="m"></i></div></div></div><div class="b"><p class="n">01</p><h3>Split Panel</h3><p class="nav">Nav in a <b>fixed identity panel</b>; content scrolls beside it.</p><div class="tags"><span class="tag">landing</span><span class="tag">portfolio</span></div></div></a>
+      <a class="card" href="02-centered-doc.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-doc"><div class="b2 bar soft"></div><div class="b2 colm lines"><i class="m"></i><i></i><i class="s"></i></div></div></div><div class="b"><p class="n">02</p><h3>Centered Document</h3><p class="nav"><b>Sticky top bar</b> + in-page anchors; centered column.</p><div class="tags"><span class="tag">docs</span><span class="tag">blog</span></div></div></a>
+      <a class="card" href="03-sidebar-app.html" style="--accent:#0D9488"><div class="thumb"><div class="tw t-side"><div class="b2 rail"></div><div class="colx"><div class="b2 top soft"></div><div class="g2"><div class="b2"></div><div class="b2"></div></div></div></div></div><div class="b"><p class="n">03</p><h3>Sidebar App Shell</h3><p class="nav"><b>Persistent sidebar</b> + topbar; the app workhorse.</p><div class="tags"><span class="tag">dashboard</span><span class="tag">SaaS</span></div></div></a>
+      <a class="card" href="04-three-pane.html" style="--accent:#2563EB"><div class="thumb"><div class="tw t-three"><div class="b2 rail"></div><div class="b2 list lines"><i class="m"></i><i class="s"></i></div><div class="b2 lines"><i class="m"></i><i></i><i class="s"></i></div></div></div><div class="b"><p class="n">04</p><h3>Three-Pane</h3><p class="nav"><b>Rail → list → detail</b>; master/detail data.</p><div class="tags"><span class="tag">inbox</span><span class="tag">IDE / CRM</span></div></div></a>
+      <a class="card" href="23-bento.html" style="--accent:#5B5BD6"><div class="thumb"><div class="tw t-bento"><i class="a"></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">23</p><h3>Bento Grid</h3><p class="nav"><b>Modular tiles</b> of mixed sizes are the homepage.</p><div class="tags"><span class="tag">hub</span><span class="tag">dashboard</span></div></div></a>
+      <a class="card" href="25-accordion-spine.html" style="--accent:#C2410C"><div class="thumb"><div class="tw t-acc"><div class="b2"></div><div class="b2 open"></div><div class="b2"></div><div class="b2"></div></div></div><div class="b"><p class="n">25</p><h3>Accordion Spine</h3><p class="nav"><b>Expand one section</b> in place; others collapse.</p><div class="tags"><span class="tag">FAQ</span><span class="tag">features</span></div></div></a>
+      <a class="card" href="26-bottom-sheet.html" style="--accent:#1E9E5A"><div class="thumb"><div class="tw t-sheet"><span class="sh"></span></div></div><div class="b"><p class="n">26</p><h3>Bottom-Sheet</h3><p class="nav"><b>Draggable sheet</b> over a map; snaps peek/half/full.</p><div class="tags"><span class="tag">mobile</span><span class="tag">maps</span></div></div></a>
+      <a class="card" href="31-tabbed-workspace.html" style="--accent:#4338CA"><div class="thumb"><div class="tw t-tabs"><div class="row"><i class="a"></i><i></i><i></i></div><div class="pane"></div></div></div><div class="b"><p class="n">31</p><h3>Tabbed Workspace</h3><p class="nav"><b>Switch tabs</b> — browser-style; close, add, drag to reorder.</p><div class="tags"><span class="tag">editor</span><span class="tag">multi-doc</span></div></div></a>
+      <a class="card" href="32-mobile-tabbar.html" style="--accent:#0EA5A4"><div class="thumb"><div class="tw t-phone"><div class="scr"><div class="bar"><span class="a"></span><span></span><span></span><span></span></div></div></div></div><div class="b"><p class="n">32</p><h3>Mobile Tab-Bar Shell</h3><p class="nav"><b>Bottom tabs</b> — tap or swipe between four sections.</p><div class="tags"><span class="tag">mobile</span><span class="tag">app</span></div></div></a>
+    </div>
+
+    <p class="cat">Spatial — navigate through space</p>
+    <div class="grid">
+      <a class="card" href="06-infinite-canvas.html" style="--accent:#7C5CFF"><div class="thumb"><div class="tw t-canvas"><span class="nd" style="left:8%;top:18%"></span><span class="nd" style="left:54%;top:34%"></span><span class="nd" style="left:30%;top:64%"></span></div></div><div class="b"><p class="n">06</p><h3>Infinite Canvas</h3><p class="nav"><b>Pan + zoom</b> a plane of nodes; semantic zoom.</p><div class="tags"><span class="tag">knowledge map</span><span class="tag">diagram</span></div></div></a>
+      <a class="card" href="07-zettelkasten.html" style="--accent:#A33A2B"><div class="thumb"><div class="tw t-zettel"><div class="b2 lines"><i class="m"></i><i class="s"></i></div><div class="b2 lines"><i class="m"></i><i></i></div><div class="b2 soft"></div></div></div><div class="b"><p class="n">07</p><h3>Zettelkasten Panes</h3><p class="nav">Links open as <b>new sliding columns</b>; the trail stays.</p><div class="tags"><span class="tag">wiki</span><span class="tag">notes</span></div></div></a>
+      <a class="card" href="08-radial-orbit.html" style="--accent:#2DD4BF"><div class="thumb"><div class="tw t-ring"><span class="ring"></span><span class="o" style="left:50%;top:14px;margin-left:-5px"></span><span class="o" style="left:80%;top:42%"></span><span class="o" style="left:12%;top:50%"></span><span class="o" style="left:50%;bottom:14px;margin-left:-5px"></span></div></div><div class="b"><p class="n">08</p><h3>Radial Orbit</h3><p class="nav">Peers <b>orbit a hub</b>; click to rotate one to the top.</p><div class="tags"><span class="tag">index</span><span class="tag">modes</span></div></div></a>
+      <a class="card" href="09-map-pinned.html" style="--accent:#FF7A45"><div class="thumb"><div class="tw t-map"><span class="dot" style="left:24%;top:30%"></span><span class="dot" style="left:62%;top:56%"></span><span class="dot" style="left:78%;top:24%"></span></div></div><div class="b"><p class="n">09</p><h3>Map-Pinned</h3><p class="nav">Content at <b>coordinates</b>; click a pin for its brief.</p><div class="tags"><span class="tag">geography</span><span class="tag">world map</span></div></div></a>
+      <a class="card" href="27-elevator.html" style="--accent:#D97706"><div class="thumb"><div class="tw t-elev"><div class="floors"><i></i><i class="a"></i><i></i></div><div class="panel"><i></i><i class="a"></i><i></i></div></div></div><div class="b"><p class="n">27</p><h3>Elevator Floors</h3><p class="nav"><b>Ride between floors</b> via an elevator panel.</p><div class="tags"><span class="tag">playful</span><span class="tag">one-pager</span></div></div></a>
+      <a class="card" href="28-rooms.html" style="--accent:#6D28D9"><div class="thumb"><div class="tw t-rooms"><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">28</p><h3>Arrow Rooms</h3><p class="nav"><b>Walk a 2D grid</b> of rooms with arrow keys.</p><div class="tags"><span class="tag">game-like</span><span class="tag">explore</span></div></div></a>
+      <a class="card" href="33-column-view.html" style="--accent:#9333EA"><div class="thumb"><div class="tw t-cols"><div class="b2"><i></i><i class="a"></i><i></i></div><div class="b2"><i class="a"></i><i></i><i></i></div><div class="b2"><i></i><i></i></div></div></div><div class="b"><p class="n">33</p><h3>Folder Column-View</h3><p class="nav"><b>Drill into columns</b> — selecting cascades children to the right.</p><div class="tags"><span class="tag">files</span><span class="tag">taxonomy</span></div></div></a>
+      <a class="card" href="34-isometric.html" style="--accent:#0891B2"><div class="thumb"><div class="tw t-iso"><div class="plane"><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">34</p><h3>Isometric Scene</h3><p class="nav"><b>Travel a 2.5D plane</b> — click a zone; arrow keys move focus.</p><div class="tags"><span class="tag">world-select</span><span class="tag">playful</span></div></div></a>
+      <a class="card" href="35-mind-map.html" style="--accent:#DB2777"><div class="thumb"><div class="tw t-tree"><svg class="tree-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M24,50 C42,50 46,24 60,24"/><path d="M24,50 H60"/><path d="M24,50 C42,50 46,76 60,76"/></svg><span class="root"></span><span class="kid" style="top:18%"></span><span class="kid" style="top:50%;transform:translateY(-50%)"></span><span class="kid" style="bottom:18%"></span></div></div><div class="b"><p class="n">35</p><h3>Mind-Map Tree</h3><p class="nav"><b>Expand branches</b> — click a node to grow its children.</p><div class="tags"><span class="tag">topics</span><span class="tag">structure</span></div></div></a>
+    </div>
+
+    <p class="cat">Sequence & story — the axis is the nav</p>
+    <div class="grid">
+      <a class="card" href="05-scrollytelling.html" style="--accent:#E11D48"><div class="thumb"><div class="tw t-scroll"><div class="band" style="background:#15161A"></div><div class="band soft"></div><div class="band fill"></div></div></div><div class="b"><p class="n">05</p><h3>Scrollytelling</h3><p class="nav"><b>Scroll-driven</b> full-bleed scenes + progress dots.</p><div class="tags"><span class="tag">narrative</span><span class="tag">pitch</span></div></div></a>
+      <a class="card" href="10-timeline-scrubber.html" style="--accent:#FFC34D"><div class="thumb"><div class="tw t-timeline"><span class="ln"></span><span class="dot" style="left:18%;top:50%;transform:translateY(-50%)"></span><span class="dot" style="left:46%;top:50%;transform:translateY(-50%)"></span><span class="dot" style="left:74%;top:50%;transform:translateY(-50%)"></span><span class="th" style="left:46%"></span></div></div><div class="b"><p class="n">10</p><h3>Timeline Scrubber</h3><p class="nav">A <b>draggable time axis</b> reveals events as you scrub.</p><div class="tags"><span class="tag">roadmap</span><span class="tag">history</span></div></div></a>
+      <a class="card" href="11-filmstrip.html" style="--accent:#E8513C"><div class="thumb"><div class="tw t-strip"><div class="b2"></div><div class="b2"></div><div class="b2"></div></div></div><div class="b"><p class="n">11</p><h3>Horizontal Filmstrip</h3><p class="nav"><b>Sideways snap</b> between full-height panels.</p><div class="tags"><span class="tag">lookbook</span><span class="tag">case studies</span></div></div></a>
+      <a class="card" href="12-sticky-stack.html" style="--accent:#1F6F5C"><div class="thumb"><div class="tw t-stack"><span class="c" style="top:16%"></span><span class="c" style="top:33%"></span><span class="c" style="top:50%"></span></div></div><div class="b"><p class="n">12</p><h3>Sticky-Stack Chapters</h3><p class="nav">Chapters <b>pin and stack</b> over each other on scroll.</p><div class="tags"><span class="tag">narrative</span><span class="tag">walkthrough</span></div></div></a>
+      <a class="card" href="36-dial-picker.html" style="--accent:#F59E0B"><div class="thumb"><div class="tw t-wheel"><i></i><i></i><i class="a"></i><i></i><i></i></div></div><div class="b"><p class="n">36</p><h3>Dial / Wheel Picker</h3><p class="nav"><b>Spin a wheel</b> — drag or scroll; the centred item is selected.</p><div class="tags"><span class="tag">picker</span><span class="tag">time/date</span></div></div></a>
+      <a class="card" href="37-stepper.html" style="--accent:#2563EB"><div class="thumb"><div class="tw t-step"><span class="nd a"></span><span class="ln a"></span><span class="nd a"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span></div></div><div class="b"><p class="n">37</p><h3>Stepper / Wizard</h3><p class="nav"><b>Advance steps</b> — a progress rail; jump back to done steps.</p><div class="tags"><span class="tag">checkout</span><span class="tag">onboarding</span></div></div></a>
+      <a class="card" href="38-page-turn.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-book"><span class="pg l"></span><span class="pg turn"></span><span class="pg r"></span></div></div><div class="b"><p class="n">38</p><h3>Page-Turn Book</h3><p class="nav"><b>Flip pages</b> — click an edge or arrows; spreads fold over.</p><div class="tags"><span class="tag">lookbook</span><span class="tag">report</span></div></div></a>
+      <a class="card" href="39-story-tap.html" style="--accent:#E11D48"><div class="thumb"><div class="tw t-story"><div class="segs"><i class="done"></i><i class="a"></i><i></i><i></i></div><div class="body"></div></div></div><div class="b"><p class="n">39</p><h3>Story Tap-Through</h3><p class="nav"><b>Tap to advance</b> — timed segments; hold to pause.</p><div class="tags"><span class="tag">mobile</span><span class="tag">tour</span></div></div></a>
+      <a class="card" href="40-carousel.html" style="--accent:#7C3AED"><div class="thumb"><div class="tw t-carousel"><span class="pane"></span><span class="dots"><i></i><i class="a"></i><i></i><i></i></span></div></div><div class="b"><p class="n">40</p><h3>Carousel / Slideshow</h3><p class="nav"><b>Page slides</b> — arrows, dots, autoplay that pauses on hover.</p><div class="tags"><span class="tag">hero</span><span class="tag">gallery</span></div></div></a>
+    </div>
+
+    <p class="cat">Command & conversation — type, don't click</p>
+    <div class="grid">
+      <a class="card" href="13-command-palette.html" style="--accent:#5B8CFF"><div class="thumb"><div class="tw t-palette"><span class="bar"></span><span class="r" style="top:54%"></span><span class="r" style="top:68%;opacity:.5"></span></div></div><div class="b"><p class="n">13</p><h3>Command-Palette-First</h3><p class="nav">A <b>⌘K palette</b> is the primary way to move.</p><div class="tags"><span class="tag">power-user</span><span class="tag">docs</span></div></div></a>
+      <a class="card" href="14-terminal.html" style="--accent:#39d98a"><div class="thumb"><div class="tw t-term"><span class="ln a" style="left:14px;top:24%;width:30%"></span><span class="ln" style="left:14px;top:42%;width:60%"></span><span class="ln" style="left:14px;top:60%;width:44%"></span><span class="ln a" style="left:14px;top:78%;width:16%"></span></div></div><div class="b"><p class="n">14</p><h3>Terminal / CLI</h3><p class="nav">The site is a <b>command line</b>; output scrolls.</p><div class="tags"><span class="tag">dev portfolio</span><span class="tag">playful</span></div></div></a>
+      <a class="card" href="15-chat-first.html" style="--accent:#8B7BFF"><div class="thumb"><div class="tw t-chat"><span class="bub l" style="top:22%"></span><span class="bub r" style="top:48%"></span><span class="bub l" style="top:74%;width:36%"></span></div></div><div class="b"><p class="n">15</p><h3>Chat-First</h3><p class="nav"><b>Ask</b>, and content blocks render inline.</p><div class="tags"><span class="tag">AI-native</span><span class="tag">support</span></div></div></a>
+      <a class="card" href="41-conversational-form.html" style="--accent:#10B981"><div class="thumb"><div class="tw t-form"><span class="prog"></span><span class="ql"></span><span class="inp"></span></div></div><div class="b"><p class="n">41</p><h3>Conversational Form</h3><p class="nav"><b>One question at a time</b> — Enter advances; progress fills.</p><div class="tags"><span class="tag">survey</span><span class="tag">onboarding</span></div></div></a>
+      <a class="card" href="42-notebook-cells.html" style="--accent:#EA580C"><div class="thumb"><div class="tw t-cells"><div class="cell"><span class="run"></span><span class="code"></span></div><span class="out"></span><div class="cell"><span class="run"></span><span class="code"></span></div></div></div><div class="b"><p class="n">42</p><h3>Notebook / REPL Cells</h3><p class="nav"><b>Run a cell</b> — ⇧⏎ renders output below; add cells.</p><div class="tags"><span class="tag">data</span><span class="tag">tutorial</span></div></div></a>
+      <a class="card" href="43-keyboard-inbox.html" style="--accent:#4F46E5"><div class="thumb"><div class="tw t-inbox"><span class="row"></span><span class="row sel"></span><span class="row"></span><span class="row"></span><span class="row"></span></div></div><div class="b"><p class="n">43</p><h3>Keyboard Inbox</h3><p class="nav"><b>j / k / Enter / e</b> — drive a list entirely by keys.</p><div class="tags"><span class="tag">power-user</span><span class="tag">triage</span></div></div></a>
+      <a class="card" href="44-slash-editor.html" style="--accent:#0D9488"><div class="thumb"><div class="tw t-slash"><span class="ln"></span><span class="ln s"></span><div class="menu"><i class="a"></i><i></i><i></i></div><span class="ln"></span></div></div><div class="b"><p class="n">44</p><h3>Slash-Command Editor</h3><p class="nav">Type <b>/</b> to summon a block menu inline.</p><div class="tags"><span class="tag">editor</span><span class="tag">CMS</span></div></div></a>
+      <a class="card" href="45-filter-search.html" style="--accent:#0284C7"><div class="thumb"><div class="tw t-filter"><span class="search"></span><span class="chips"><i class="a"></i><i></i><i></i></span><span class="res"></span><span class="res s"></span></div></div><div class="b"><p class="n">45</p><h3>Live Filter Search</h3><p class="nav"><b>Search as you type</b> — facet chips filter instantly.</p><div class="tags"><span class="tag">directory</span><span class="tag">catalog</span></div></div></a>
+      <a class="card" href="46-voice-assistant.html" style="--accent:#7E22CE"><div class="thumb"><div class="tw t-voice"><span class="miccircle"></span><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i></span></div></div><div class="b"><p class="n">46</p><h3>Voice Assistant</h3><p class="nav"><b>Tap the mic</b> — query transcribes, then an answer card.</p><div class="tags"><span class="tag">voice</span><span class="tag">kiosk</span></div></div></a>
+    </div>
+
+    <p class="cat">Objects & cards — the content is a thing</p>
+    <div class="grid">
+      <a class="card" href="16-desktop-os.html" style="--accent:#3B82F6"><div class="thumb"><div class="tw t-desktop" style="inset:0"><span class="win"></span><span class="dock"></span></div></div><div class="b"><p class="n">16</p><h3>Desktop OS</h3><p class="nav"><b>Draggable windows</b> from a dock; a site as an OS.</p><div class="tags"><span class="tag">personal</span><span class="tag">playful</span></div></div></a>
+      <a class="card" href="17-card-deck.html" style="--accent:#FF5D8F"><div class="thumb"><div class="tw t-stack t-pin"><span class="c" style="top:20%;transform:scale(.92)"></span><span class="c" style="top:34%;transform:scale(.96)"></span><span class="c" style="top:48%"></span></div></div><div class="b"><p class="n">17</p><h3>Card-Deck Swipe</h3><p class="nav"><b>Flick</b> through a stack; the top card is focus.</p><div class="tags"><span class="tag">mobile</span><span class="tag">onboarding</span></div></div></a>
+      <a class="card" href="18-pinboard.html" style="--accent:#C0392B"><div class="thumb"><div class="tw t-stack t-pin" style="inset:14px"><span class="c" style="left:10%;top:14%;width:34%;height:42%;transform:rotate(-6deg)"></span><span class="c" style="left:52%;top:22%;width:34%;height:42%;transform:rotate(5deg)"></span><span class="c" style="left:30%;top:52%;width:34%;height:40%;transform:rotate(-3deg)"></span></div></div><div class="b"><p class="n">18</p><h3>Pinboard Wall</h3><p class="nav"><b>Pinned notes</b> at angles; scan, lift, open.</p><div class="tags"><span class="tag">moodboard</span><span class="tag">scrapbook</span></div></div></a>
+      <a class="card" href="19-split-flap.html" style="--accent:#FFD23F"><div class="thumb"><div class="tw t-flap" style="inset:0"><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i></div></div><div class="b"><p class="n">19</p><h3>Split-Flap Board</h3><p class="nav">A <b>departure board</b>; filters re-flip the rows.</p><div class="tags"><span class="tag">listings</span><span class="tag">schedule</span></div></div></a>
+      <a class="card" href="24-coverflow.html" style="--accent:#1FB6A6"><div class="thumb"><div class="tw t-cover"><span class="c l"></span><span class="c r"></span><span class="c mid"></span></div></div><div class="b"><p class="n">24</p><h3>Cover Flow</h3><p class="nav"><b>3D carousel</b>; side cards angle back in perspective.</p><div class="tags"><span class="tag">gallery</span><span class="tag">featured</span></div></div></a>
+      <a class="card" href="47-kanban.html" style="--accent:#EA580C"><div class="thumb"><div class="tw t-kanban"><div class="col"><span class="h"></span><i></i><i></i></div><div class="col"><span class="h"></span><i></i><i></i><i></i></div><div class="col"><span class="h"></span><i></i></div></div></div><div class="b"><p class="n">47</p><h3>Kanban Board</h3><p class="nav"><b>Drag cards</b> across To-do / Doing / Done columns.</p><div class="tags"><span class="tag">tasks</span><span class="tag">pipeline</span></div></div></a>
+      <a class="card" href="48-masonry.html" style="--accent:#DB2777"><div class="thumb"><div class="tw t-masonry"><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">48</p><h3>Masonry Gallery</h3><p class="nav"><b>Staggered grid</b> → click a tile to open a lightbox.</p><div class="tags"><span class="tag">gallery</span><span class="tag">moodboard</span></div></div></a>
+      <a class="card" href="49-card-wallet.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-wallet"><span class="p"></span><span class="p"></span><span class="p"></span></div></div><div class="b"><p class="n">49</p><h3>Card Wallet</h3><p class="nav"><b>Tap a pass</b> to raise it, tap again to flip for detail.</p><div class="tags"><span class="tag">passes</span><span class="tag">loyalty</span></div></div></a>
+      <a class="card" href="50-data-table.html" style="--accent:#475569"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span></div></div><div class="b"><p class="n">50</p><h3>Data Table</h3><p class="nav"><b>Sort columns</b>, click a row for a detail drawer.</p><div class="tags"><span class="tag">admin</span><span class="tag">records</span></div></div></a>
+    </div>
+
+    <p class="cat">Immersive — cinematic</p>
+    <div class="grid">
+      <a class="card" href="20-zaxis-flythrough.html" style="--accent:#22D3EE"><div class="thumb" style="background:#0b1020"><div class="tw t-zaxis"><span class="r" style="width:70%;height:70%;opacity:.3"></span><span class="r" style="width:50%;height:50%;opacity:.55"></span><span class="r" style="width:30%;height:30%"></span></div></div><div class="b"><p class="n">20</p><h3>Z-Axis Fly-Through</h3><p class="nav"><b>Scroll = camera</b> moving forward through depth.</p><div class="tags"><span class="tag">reveal</span><span class="tag">cinematic</span></div></div></a>
+      <a class="card" href="21-grid-morph.html" style="--accent:#22D3EE"><div class="thumb"><div class="tw t-grid"><i style="height:34px"></i><i style="height:48px"></i><i style="height:30px"></i><i style="height:44px"></i><i style="height:30px"></i><i style="height:40px"></i></div></div><div class="b"><p class="n">21</p><h3>Grid-to-Detail Morph</h3><p class="nav">A tile <b>expands in place</b> into a full page.</p><div class="tags"><span class="tag">gallery</span><span class="tag">portfolio</span></div></div></a>
+      <a class="card" href="22-poster.html" style="--accent:#E8413B"><div class="thumb"><div class="tw t-poster" style="inset:0"><span class="big"></span></div></div><div class="b"><p class="n">22</p><h3>Poster / Full-Bleed</h3><p class="nav"><b>Vertical snap</b> between full-screen posters.</p><div class="tags"><span class="tag">fashion</span><span class="tag">agency</span></div></div></a>
+      <a class="card" href="29-marquee.html" style="--accent:#65A30D"><div class="thumb"><div class="tw t-marq"><i style="left:6%;top:22%;width:72%"></i><i style="left:22%;top:45%;width:66%;opacity:.55"></i><i style="left:2%;top:68%;width:80%"></i></div></div><div class="b"><p class="n">29</p><h3>Marquee Index</h3><p class="nav"><b>Auto-scrolling type</b> rows; hover pauses, click opens.</p><div class="tags"><span class="tag">kinetic</span><span class="tag">editorial</span></div></div></a>
+      <a class="card" href="30-spotlight.html" style="--accent:#FF4D4D"><div class="thumb" style="background:#0c0c0d"><div class="tw t-spot"></div></div><div class="b"><p class="n">30</p><h3>Spotlight Scroll</h3><p class="nav"><b>A spotlight follows</b> the cursor; the rest goes dark.</p><div class="tags"><span class="tag">cinematic</span><span class="tag">finale</span></div></div></a>
+      <a class="card" href="56-parallax-hero.html" style="--accent:#22D3EE"><div class="thumb"><div class="tw t-parallax"><i></i><i></i><i></i></div></div><div class="b"><p class="n">56</p><h3>Parallax Mouse Hero</h3><p class="nav"><b>Layers shift with the cursor</b> — depth that follows your mouse.</p><div class="tags"><span class="tag">hero</span><span class="tag">landing</span></div></div></a>
+      <a class="card" href="57-diagonal-editorial.html" style="--accent:#F97316"><div class="thumb"><div class="tw t-diag"><span class="band a"></span><span class="band b"></span><span class="ttl"></span></div></div><div class="b"><p class="n">57</p><h3>Diagonal / Skewed Editorial</h3><p class="nav"><b>Skewed sections</b> + rotated type reveal on scroll.</p><div class="tags"><span class="tag">editorial</span><span class="tag">fashion</span></div></div></a>
+      <a class="card" href="58-starfield.html" style="--accent:#6366F1"><div class="thumb" style="background:#0b1020"><div class="tw t-stars"><span class="s" style="left:14%;top:22%"></span><span class="s a" style="left:62%;top:30%"></span><span class="s" style="left:80%;top:18%"></span><span class="s" style="left:30%;top:66%"></span><span class="s a" style="left:74%;top:70%"></span><span class="s" style="left:48%;top:14%"></span><span class="ttl"></span></div></div><div class="b"><p class="n">58</p><h3>Particle Starfield Hero</h3><p class="nav"><b>Animated star field</b> drifts behind bold type.</p><div class="tags"><span class="tag">tech</span><span class="tag">launch</span></div></div></a>
+      <a class="card" href="59-cursor-mask.html" style="--accent:#EF4444"><div class="thumb"><div class="tw t-mask"><span class="under"></span><span class="cur"></span></div></div><div class="b"><p class="n">59</p><h3>Cursor-Mask Reveal</h3><p class="nav"><b>A mask follows the cursor</b>, revealing a different layer beneath.</p><div class="tags"><span class="tag">before/after</span><span class="tag">teaser</span></div></div></a>
+    </div>
+
+    <p class="cat">Agentic commerce — chat that buys</p>
+    <div class="grid">
+      <a class="card" href="51-shop-chat.html" style="--accent:#0EA5E9"><div class="thumb" style="background:#1a1b20"><div class="tw t-shopchat"><div class="scr"><span class="b"></span><span class="b u"></span><span class="b"></span><span class="pc"><i></i></span></div></div></div><div class="b"><p class="n">51</p><h3>Mobile Shopping Chat</h3><p class="nav"><b>Chat to shop</b> — assistant replies with product cards you add to a cart.</p><div class="tags"><span class="tag">concierge</span><span class="tag">mobile</span></div></div></a>
+      <a class="card" href="52-checkout-journey.html" style="--accent:#8B5CF6"><div class="thumb" style="background:#17171c"><div class="tw t-journey"><div class="scr"><span class="segs"><i class="a"></i><i class="a"></i><i></i><i></i></span><span class="body"></span><span class="cta"></span></div></div></div><div class="b"><p class="n">52</p><h3>Agentic Checkout Journey</h3><p class="nav"><b>Step deck</b> through a buy flow — arrows, keys, progress.</p><div class="tags"><span class="tag">demo</span><span class="tag">walkthrough</span></div></div></a>
+      <a class="card" href="53-agent-trace.html" style="--accent:#059669"><div class="thumb"><div class="tw t-trace"><span class="u"></span><span class="tc"><i></i></span><span class="tc"><i></i></span><span class="tc"><i></i></span><span class="ans"></span></div></div><div class="b"><p class="n">53</p><h3>Streaming Agent Trace</h3><p class="nav"><b>Watch the agent work</b> — reasoning + tool calls, then the answer.</p><div class="tags"><span class="tag">transparency</span><span class="tag">tool-calls</span></div></div></a>
+      <a class="card" href="54-agent-handoff.html" style="--accent:#F43F5E"><div class="thumb"><div class="tw t-handoff"><span class="bar"><i></i><i class="a"></i><i></i></span><span class="m"></span><span class="hand"></span><span class="m2"></span></div></div><div class="b"><p class="n">54</p><h3>Multi-Agent Handoff</h3><p class="nav"><b>Agents hand off</b> — shopper → payments → fulfilment.</p><div class="tags"><span class="tag">orchestration</span><span class="tag">workflow</span></div></div></a>
+      <a class="card" href="55-chatgpt-commerce.html" style="--accent:#10A37F"><div class="thumb"><div class="tw t-gpt"><div class="side"><i class="a"></i><i></i><i></i><i></i></div><div class="main"><span class="l"></span><span class="l s"></span><span class="l"></span><span class="buy"></span></div></div></div><div class="b"><p class="n">55</p><h3>ChatGPT Agentic Commerce</h3><p class="nav"><b>Research → buy in chat</b> — buyer's guide, then inline checkout.</p><div class="tags"><span class="tag">ChatGPT-style</span><span class="tag">instant checkout</span></div></div></a>
+      <a class="card" href="60-chatgpt-mobile.html" style="--accent:#10A37F"><div class="thumb" style="background:#17171c"><div class="tw t-gptm"><div class="scr"><span class="bar"></span><div class="pc"><span class="img"></span><span class="ln"></span><span class="buy"></span></div><span class="composer"></span></div></div></div><div class="b"><p class="n">60</p><h3>ChatGPT Mobile Commerce</h3><p class="nav"><b>Buy in the chat</b> — mobile ChatGPT; checkout slides up as a sheet.</p><div class="tags"><span class="tag">mobile</span><span class="tag">instant checkout</span></div></div></a>
+    </div>
+
+    <footer>
+      Every layout re-skins from the variables in <code>:root</code> (start with <code>--accent</code>).
+      Serve locally with <code>python3 -m http.server</code>, or just open a file.
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>56 · Parallax Mouse Hero — Layout scaffold</title>
+<!--
+  PATTERN    Parallax Mouse Hero
+  NAV MODEL  A layered hero whose foreground / mid / back layers shift at
+             different rates with the cursor (depth illusion); scrolling
+             continues the parallax down the page and reveals content sections.
+  BEST FOR   Landing heroes, product reveals, agency sites.
+  REGIONS    .hero · .layer (data-depth) · .content (headline + CTA).
+  RE-SKIN    --accent = headline/CTA colour. Pointer-parallax is disabled on
+             touch devices and under prefers-reduced-motion (renders layered
+             and static). Breakpoint: under 640px motion is suppressed and
+             layer offsets are removed for legibility.
+-->
+<style>
+  :root{
+    --bg:#0d0d10; --surface:#16161c; --ink:#f4f4f2; --muted:#7e7e8a;
+    --line:rgba(255,255,255,.08); --accent:#22D3EE;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+
+  /* ── Hero ───────────────────────────────────────────── */
+  .hero{position:relative;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
+
+  /* Layers stack absolutely; each shifts at its own depth rate via transform */
+  .layer{position:absolute;inset:0;will-change:transform;transition:transform .04s linear}
+
+  /* Layer 0 — deep background gradient */
+  .layer-bg{background:radial-gradient(ellipse 90% 70% at 50% 40%, #1a1a3a 0%, #0d0d10 100%)}
+
+  /* Layer 1 — mid: floating orbs */
+  .layer-mid{display:flex;align-items:center;justify-content:center}
+  .orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.35}
+  .orb-a{width:520px;height:520px;background:var(--accent);top:10%;left:20%}
+  .orb-b{width:380px;height:380px;background:#6366f1;bottom:15%;right:18%}
+  .orb-c{width:260px;height:260px;background:#f97316;top:40%;left:60%}
+
+  /* Layer 2 — grid lines */
+  .layer-grid{
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),
+                     linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:72px 72px;
+    opacity:.5
+  }
+
+  /* Layer 3 — foreground shape */
+  .layer-fg{display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .ring{width:600px;height:600px;border-radius:50%;border:1px solid rgba(34,211,238,.18);position:relative;flex-shrink:0}
+  .ring::before{content:"";position:absolute;inset:40px;border-radius:50%;border:1px solid rgba(34,211,238,.1)}
+  .ring::after{content:"";position:absolute;inset:100px;border-radius:50%;border:1px solid rgba(34,211,238,.06)}
+
+  /* Content sits above all layers */
+  .content{position:relative;z-index:4;text-align:center;padding:24px;max-width:780px}
+  .content .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+  .content h1{font-size:clamp(42px,8vw,112px);font-weight:800;letter-spacing:-.04em;line-height:.95;margin-bottom:28px}
+  .content h1 em{font-style:normal;color:var(--accent)}
+  .content p{font-size:clamp(16px,2vw,20px);color:var(--muted);max-width:44ch;margin:0 auto 36px;line-height:1.6}
+  .cta{display:inline-block;padding:14px 36px;border:1.5px solid var(--accent);border-radius:999px;font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.03em;transition:background .2s,color .2s}
+  .cta:hover{background:var(--accent);color:#0d0d10}
+
+  /* scroll cue */
+  .scroll-cue{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase}
+  .scroll-cue span{width:1px;height:48px;background:linear-gradient(to bottom,transparent,var(--muted))}
+
+  /* ── Sections below ──────────────────────────────────── */
+  .sections{background:var(--bg)}
+  .sec{min-height:70vh;display:grid;place-content:center;padding:80px 32px;max-width:900px;margin:0 auto;border-top:1px solid var(--line);opacity:0;transform:translateY(40px);transition:opacity .7s ease,transform .7s ease}
+  .sec.in{opacity:1;transform:translateY(0)}
+  .sec .n{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+  .sec h2{font-size:clamp(28px,5vw,56px);font-weight:800;letter-spacing:-.03em;line-height:1.04;margin-bottom:20px}
+  .sec p{font-size:18px;color:var(--muted);max-width:50ch;line-height:1.6}
+
+  /* ── Reduced-motion ──────────────────────────────────── */
+  @media (prefers-reduced-motion:reduce){
+    .layer{transition:none!important;transform:none!important}
+    .sec{opacity:1;transform:none;transition:none}
+  }
+
+  /* ── Responsive ──────────────────────────────────────── */
+  @media (max-width:640px){
+    .layer{transform:none!important}
+    .ring{width:300px;height:300px}
+    .sec{opacity:1;transform:none}
+  }
+
+  /* ── Scaffold badge ──────────────────────────────────── */
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="hero" id="hero">
+    <div class="layer layer-bg" data-depth="0.02"></div>
+    <div class="layer layer-mid" data-depth="0.06">
+      <div class="orb orb-a"></div>
+      <div class="orb orb-b"></div>
+      <div class="orb orb-c"></div>
+    </div>
+    <div class="layer layer-grid" data-depth="0.04"></div>
+    <div class="layer layer-fg" data-depth="0.12">
+      <div class="ring"></div>
+    </div>
+    <div class="content">
+      <p class="kicker">Depth in motion</p>
+      <h1>Layers that <em>breathe.</em></h1>
+      <p>Move your cursor — the scene shifts with you. Scroll to explore what lies beneath the surface.</p>
+      <a class="cta" href="#">Begin the journey</a>
+    </div>
+    <div class="scroll-cue"><span></span>Scroll</div>
+  </div>
+
+  <div class="sections">
+    <div class="sec"><p class="n">01 / Depth</p><h2>Motion creates dimension.</h2><p>Each layer moves at its own rate — background slow, foreground fast. The cursor becomes a window into space.</p></div>
+    <div class="sec"><p class="n">02 / Parallax</p><h2>Scroll continues the story.</h2><p>As you move down the page the depth relationship persists, reinforcing that you are travelling through a scene, not past a page.</p></div>
+    <div class="sec"><p class="n">03 / Restraint</p><h2>No canvas required.</h2><p>Pure CSS transforms on a handful of absolutely-stacked divs. Remove the JS and you still have a composed, layered hero.</p></div>
+  </div>
+
+  <div class="scaffold">56 · parallax-hero &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var isTouchOnly = !window.matchMedia('(pointer:fine)').matches;
+  var hero = document.getElementById('hero');
+  var layers = Array.from(document.querySelectorAll('[data-depth]'));
+
+  // ── Pointer parallax ──────────────────────────────────────────────────────
+  var pointerX = 0, pointerY = 0;
+  var rafPointer = null;
+
+  function applyPointer(){
+    rafPointer = null;
+    var cx = window.innerWidth / 2;
+    var cy = window.innerHeight / 2;
+    var dx = pointerX - cx;
+    var dy = pointerY - cy;
+    layers.forEach(function(el){
+      var depth = parseFloat(el.dataset.depth) || 0;
+      el.style.transform = 'translate(' + (-dx * depth) + 'px,' + (-dy * depth) + 'px)';
+    });
+  }
+
+  if(!prefersReduced && !isTouchOnly){
+    document.addEventListener('mousemove', function(e){
+      pointerX = e.clientX;
+      pointerY = e.clientY;
+      if(!rafPointer) rafPointer = requestAnimationFrame(applyPointer);
+    }, { passive: true });
+  }
+
+  // ── Scroll parallax + hero opacity ───────────────────────────────────────
+  var rafScroll = null;
+  var lastScrollY = window.scrollY;
+
+  function applyScroll(){
+    rafScroll = null;
+    var sy = window.scrollY;
+    if(!prefersReduced && !isTouchOnly){
+      layers.forEach(function(el){
+        var depth = parseFloat(el.dataset.depth) || 0;
+        var cx = window.innerWidth / 2;
+        var cy = window.innerHeight / 2;
+        var dx = pointerX - cx;
+        var dy = pointerY - cy;
+        var scrollShift = sy * depth * 0.6;
+        el.style.transform = 'translate(' + (-dx * depth) + 'px,' + (-dy * depth + scrollShift) + 'px)';
+      });
+    } else if(!prefersReduced){
+      // touch: just scroll parallax, no pointer
+      layers.forEach(function(el){
+        var depth = parseFloat(el.dataset.depth) || 0;
+        var scrollShift = sy * depth * 0.6;
+        el.style.transform = 'translateY(' + scrollShift + 'px)';
+      });
+    }
+    lastScrollY = sy;
+  }
+
+  if(!prefersReduced){
+    window.addEventListener('scroll', function(){
+      if(!rafScroll) rafScroll = requestAnimationFrame(applyScroll);
+    }, { passive: true });
+  }
+
+  // ── Scroll reveal ─────────────────────────────────────────────────────────
+  if(!prefersReduced && window.IntersectionObserver){
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting) entry.target.classList.add('in');
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.sec').forEach(function(el){ obs.observe(el); });
+  } else {
+    document.querySelectorAll('.sec').forEach(function(el){ el.classList.add('in'); });
+  }
+})();
+</script>
+</body>
+</html>

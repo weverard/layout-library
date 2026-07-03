@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>58 · Particle Starfield Hero — Layout scaffold</title>
+<!--
+  PATTERN    Particle Starfield Hero
+  NAV MODEL  An animated <canvas> star / particle field drifts behind bold
+             centred type; particles parallax gently toward the cursor,
+             creating depth without a 3D engine.
+  BEST FOR   Tech / launch heroes, splash screens, space themes.
+  REGIONS    <canvas> bg · .content overlay (headline + CTA).
+  RE-SKIN    --accent = headline colour + particle tint. Under
+             prefers-reduced-motion a single static frame is drawn and the
+             rAF loop never starts. Fewer particles on small screens (< 640px).
+-->
+<style>
+  :root{
+    --bg:#09090e; --ink:#f4f4f2; --muted:#6b6b7e; --accent:#6366F1;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden;line-height:1.5}
+
+  #field{position:fixed;inset:0;display:block;width:100%;height:100%}
+
+  .stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;pointer-events:none}
+
+  .content{pointer-events:auto;max-width:740px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:24px;opacity:.9}
+  .content h1{font-size:clamp(44px,9vw,120px);font-weight:800;letter-spacing:-.04em;line-height:.92;margin-bottom:28px}
+  .content h1 span{color:var(--accent)}
+  .content p{font-size:clamp(16px,2vw,20px);color:var(--muted);max-width:46ch;margin:0 auto 36px;line-height:1.65}
+  .cta{display:inline-block;padding:14px 38px;background:var(--accent);border-radius:999px;font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em;transition:opacity .2s,transform .2s;border:none;cursor:pointer}
+  .cta:hover{opacity:.88;transform:translateY(-2px)}
+
+  .sub-links{margin-top:48px;display:flex;gap:28px;justify-content:center;pointer-events:auto}
+  .sub-links a{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+  .sub-links a:hover{color:var(--ink)}
+
+  /* Scaffold */
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <canvas id="field"></canvas>
+
+  <div class="stage">
+    <div class="content">
+      <p class="kicker">Particle field</p>
+      <h1>Launch into <span>infinite</span> space.</h1>
+      <p>Move your cursor — the stars drift with you. A particle field that makes depth tangible, built from a single canvas element.</p>
+      <button class="cta">Get early access</button>
+    </div>
+    <div class="sub-links">
+      <a href="#">Documentation</a>
+      <a href="#">GitHub</a>
+      <a href="#">Status</a>
+    </div>
+  </div>
+
+  <div class="scaffold">58 · starfield &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('field');
+  var ctx = canvas.getContext('2d');
+
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var isSmall = window.innerWidth < 640;
+
+  // Accent colour matches CSS var — extracted once
+  var ACCENT_RGB = { r: 99, g: 102, b: 241 }; // #6366F1
+
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+  var particles = [];
+  var mouseX = 0, mouseY = 0;
+  var rafId = null;
+
+  function resize(){
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  function makeParticle(){
+    var baseCount = isSmall ? 80 : 220;
+    // Already seeded — this is called once per slot
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.6 + 0.3,
+      vx: (Math.random() - 0.5) * 0.22,
+      vy: (Math.random() - 0.5) * 0.22,
+      a: Math.random() * 0.7 + 0.2,
+      // parallax factor — distant stars move less
+      pf: Math.random() * 0.04 + 0.005
+    };
+  }
+
+  function seed(){
+    var count = isSmall ? 80 : 220;
+    particles = [];
+    for(var i = 0; i < count; i++) particles.push(makeParticle());
+  }
+
+  function drawStatic(){
+    ctx.clearRect(0, 0, W, H);
+    // Background gradient
+    var grd = ctx.createRadialGradient(W*0.5, H*0.45, 0, W*0.5, H*0.45, Math.max(W,H)*0.7);
+    grd.addColorStop(0, 'rgba(30,24,70,0.6)');
+    grd.addColorStop(1, 'rgba(9,9,14,0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    particles.forEach(function(p){
+      // slight accent tint on brighter stars
+      var useAccent = p.a > 0.7;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = useAccent
+        ? 'rgba(' + ACCENT_RGB.r + ',' + ACCENT_RGB.g + ',' + ACCENT_RGB.b + ',' + (p.a * 0.8) + ')'
+        : 'rgba(220,220,235,' + p.a + ')';
+      ctx.fill();
+    });
+  }
+
+  function tick(){
+    rafId = requestAnimationFrame(tick);
+
+    var cx = W * 0.5;
+    var cy = H * 0.5;
+    var dx = mouseX - cx;
+    var dy = mouseY - cy;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Background radial glow
+    var grd = ctx.createRadialGradient(W*0.5, H*0.45, 0, W*0.5, H*0.45, Math.max(W,H)*0.7);
+    grd.addColorStop(0, 'rgba(30,24,70,0.6)');
+    grd.addColorStop(1, 'rgba(9,9,14,0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    particles.forEach(function(p){
+      // drift
+      p.x += p.vx;
+      p.y += p.vy;
+      // parallax pull toward cursor
+      p.x += dx * p.pf * 0.02;
+      p.y += dy * p.pf * 0.02;
+      // wrap edges
+      if(p.x < -4) p.x = W + 4;
+      else if(p.x > W + 4) p.x = -4;
+      if(p.y < -4) p.y = H + 4;
+      else if(p.y > H + 4) p.y = -4;
+
+      var useAccent = p.a > 0.7;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = useAccent
+        ? 'rgba(' + ACCENT_RGB.r + ',' + ACCENT_RGB.g + ',' + ACCENT_RGB.b + ',' + (p.a * 0.8) + ')'
+        : 'rgba(220,220,235,' + p.a + ')';
+      ctx.fill();
+    });
+  }
+
+  // ── Pointer ────────────────────────────────────────────────────────────────
+  if(!prefersReduced){
+    document.addEventListener('mousemove', function(e){
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }, { passive: true });
+  }
+
+  // ── Resize ─────────────────────────────────────────────────────────────────
+  window.addEventListener('resize', function(){
+    isSmall = window.innerWidth < 640;
+    resize();
+    seed();
+    if(prefersReduced) drawStatic();
+  }, { passive: true });
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  resize();
+  mouseX = W * 0.5;
+  mouseY = H * 0.5;
+  seed();
+
+  if(prefersReduced){
+    drawStatic();
+    // rafId stays null — loop never starts
+  } else {
+    rafId = requestAnimationFrame(tick);
+  }
+})();
+</script>
+</body>
+</html>

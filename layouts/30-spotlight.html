@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>30 · Spotlight Scroll — Layout scaffold</title>
+<!--
+  PATTERN    Spotlight Scroll
+  NAV MODEL  The page is dark; a spotlight follows the cursor and reveals what's
+              beneath, dimming everything else. On touch it tracks the section in
+              view. Focus is the navigation — you light what you want to read.
+  BEST FOR   Cinematic landings, dramatic reveals, a striking finale section.
+  REGIONS    content sections  ·  .veil (fixed spotlight mask over everything)
+  RE-SKIN    --accent; tune the spotlight radius + dim level in the gradient.
+-->
+<style>
+  :root{
+    --ink:#f4f4f2; --muted:#83838c; --accent:#FF4D4D;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:#060607;color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+
+  .veil{position:fixed;inset:0;z-index:20;pointer-events:none;
+    background:radial-gradient(circle 230px at var(--x,50%) var(--y,40%),transparent 0,rgba(6,6,7,.55) 55%,rgba(6,6,7,.94) 100%);
+    transition:background .08s linear}
+
+  header.intro{min-height:100vh;display:grid;place-content:center;text-align:center;padding:24px}
+  header.intro .k{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  header.intro h1{font-size:clamp(40px,8vw,108px);letter-spacing:-.03em;font-weight:800;line-height:.95;margin:16px 0}
+  header.intro p{color:var(--muted);max-width:40ch;margin:0 auto;font-size:18px}
+
+  section.sp{min-height:90vh;display:grid;place-content:center;padding:8vw;max-width:900px;margin:0 auto}
+  section.sp .k{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  section.sp h2{font-size:clamp(30px,5vw,60px);letter-spacing:-.02em;line-height:1.04;margin:14px 0;font-weight:800}
+  section.sp p{font-size:clamp(18px,2vw,24px);color:#cfcfd4;max-width:46ch;line-height:1.5}
+
+  .cursor{position:fixed;z-index:21;pointer-events:none;width:14px;height:14px;border:2px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);left:var(--x,50%);top:var(--y,40%);transition:left .06s,top .06s}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:30;background:#000;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <header class="intro">
+    <div>
+      <p class="k">Spotlight scroll</p>
+      <h1>Move the light.</h1>
+      <p>Everything is in the dark until you point at it. Drag your cursor across the page — or just scroll on touch.</p>
+    </div>
+  </header>
+
+  <section class="sp"><p class="k">01</p><h2>Focus is the navigation.</h2><p>Instead of a menu, attention is the control. The reader lights one idea at a time and the rest recedes into black.</p></section>
+  <section class="sp"><p class="k">02</p><h2>Drama from restraint.</h2><p>A single moving light turns plain type into a reveal. Less on screen, more felt.</p></section>
+  <section class="sp"><p class="k">03</p><h2>Built from one gradient.</h2><p>A fixed radial-gradient veil tracks the pointer; everything sits beneath it. No canvas, no shaders.</p></section>
+  <section class="sp"><p class="k">04</p><h2>Use it as a finale.</h2><p>Powerful in small doses — a closing manifesto, a hero, a single dramatic section inside a calmer site.</p></section>
+
+  <div class="veil" id="veil"></div>
+  <div class="cursor" id="cursor"></div>
+
+  <div class="scaffold">30 · spotlight &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const root=document.documentElement;
+    let hasPointer=false;
+    addEventListener('pointermove',e=>{hasPointer=true;root.style.setProperty('--x',e.clientX+'px');root.style.setProperty('--y',e.clientY+'px');},{passive:true});
+    // touch / no-pointer: spotlight follows the section nearest viewport centre
+    function trackScroll(){
+      if(hasPointer)return;
+      const cy=innerHeight*0.5;let best=null,bd=1e9;
+      document.querySelectorAll('section.sp,header.intro').forEach(s=>{const r=s.getBoundingClientRect();const c=r.top+r.height/2;const d=Math.abs(c-cy);if(d<bd){bd=d;best=r;}});
+      if(best){root.style.setProperty('--x','50%');root.style.setProperty('--y',(best.top+best.height/2)+'px');}
+    }
+    addEventListener('scroll',()=>requestAnimationFrame(trackScroll),{passive:true});
+    addEventListener('touchstart',()=>{hasPointer=false;},{passive:true});
+    trackScroll();
+  </script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>44 · Slash-Command Editor — Layout scaffold</title>
+<!--
+  PATTERN    Slash-Command Editor
+  NAV MODEL  Notion-style document; typing / opens a block-type menu; choosing a
+             block inserts it inline at the cursor.
+  BEST FOR   Editors, CMS, note apps.
+  REGIONS    .doc (blocks)  ·  .slashmenu  ·  .block (heading/todo/quote/divider/callout)
+  RE-SKIN    --accent = menu highlight + block markers; single column, menu
+             repositions in viewport.
+-->
+<style>
+  :root{
+    --bg:#FAFAF9; --surface:#fff; --ink:#16161a; --muted:#8a8f9a; --line:rgba(20,20,26,.1);
+    --accent:#0D9488;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+  .editor-wrap{max-width:680px;margin:0 auto;padding:60px 28px 120px}
+
+  .doc-title{font-size:clamp(28px,5vw,42px);font-weight:800;letter-spacing:-.03em;color:var(--ink);outline:none;margin-bottom:8px;line-height:1.2}
+  .doc-title:empty:before{content:attr(data-placeholder);color:var(--muted)}
+  .doc-meta{font-size:13px;color:var(--muted);margin-bottom:40px;font-family:var(--mono)}
+
+  .doc{outline:none}
+
+  /* Block styles */
+  .block{position:relative;margin-bottom:2px}
+  .block-input{width:100%;border:0;background:transparent;color:var(--ink);font-size:16px;font-family:var(--sans);outline:none;padding:3px 0;line-height:1.7;display:block}
+  .block-input:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
+  /* heading */
+  .block.h1 .block-input{font-size:30px;font-weight:700;letter-spacing:-.02em;padding:6px 0 2px}
+  .block.h2 .block-input{font-size:22px;font-weight:700;letter-spacing:-.01em;padding:4px 0 2px}
+  /* quote */
+  .block.quote{border-left:3px solid var(--accent);padding-left:16px;margin:6px 0}
+  .block.quote .block-input{color:var(--muted);font-style:italic;font-size:17px}
+  /* todo */
+  .block.todo{display:flex;align-items:flex-start;gap:10px;padding:2px 0}
+  .block.todo .todo-check{appearance:none;width:18px;height:18px;border:1.5px solid var(--muted);border-radius:4px;cursor:pointer;flex:0 0 18px;margin-top:4px;background:transparent;transition:background .15s,border-color .15s}
+  .block.todo .todo-check:checked{background:var(--accent);border-color:var(--accent)}
+  .block.todo .block-input{flex:1}
+  /* divider */
+  .block.divider{padding:12px 0;pointer-events:none}
+  .block.divider hr{border:0;border-top:1.5px solid var(--line)}
+  /* callout */
+  .block.callout{background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:12px 16px;margin:6px 0;display:flex;align-items:flex-start;gap:10px}
+  .block.callout .callout-icon{font-size:18px;line-height:1.5;flex:0 0 auto}
+  .block.callout .block-input{flex:1;font-size:15px}
+
+  /* Slash menu */
+  .slashmenu{position:fixed;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);padding:6px;min-width:220px;z-index:100;display:none}
+  .slashmenu.open{display:block;animation:pop .15s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .sm-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:14px;transition:background .1s}
+  .sm-item:hover,.sm-item.active{background:#f0fdfa}
+  .sm-item.active{background:#e0fdf4}
+  .sm-icon{width:28px;height:28px;border-radius:7px;background:var(--line);display:grid;place-items:center;font-size:14px;flex:0 0 28px;border:1px solid var(--line)}
+  .sm-label{font-weight:500}
+  .sm-desc{font-size:12px;color:var(--muted)}
+
+  .hint-bar{font-size:12px;color:var(--muted);margin-bottom:24px;font-family:var(--mono)}
+
+  @media(max-width:540px){.editor-wrap{padding:32px 16px 80px}}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:200;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="editor-wrap">
+    <div class="doc-title" contenteditable="true" data-placeholder="Untitled document…" id="docTitle"></div>
+    <div class="doc-meta">Type <strong>/</strong> to insert a block</div>
+    <div class="doc" id="doc"></div>
+  </div>
+  <div class="slashmenu" id="slashmenu"></div>
+  <div class="scaffold">44 · slash-editor &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var docEl = document.getElementById('doc');
+  var menuEl = document.getElementById('slashmenu');
+
+  var BLOCK_TYPES = [
+    { id:'h1',   icon:'H₁', label:'Heading 1',  desc:'Large section heading' },
+    { id:'h2',   icon:'H₂', label:'Heading 2',  desc:'Medium section heading' },
+    { id:'todo', icon:'☐',  label:'To-do',       desc:'Track a task with a checkbox' },
+    { id:'quote',icon:'"',  label:'Quote',        desc:'A highlighted quotation' },
+    { id:'divider',icon:'—',label:'Divider',     desc:'Visual separator line' },
+    { id:'callout',icon:'💡',label:'Callout',    desc:'Highlighted info box' }
+  ];
+
+  var menuOpen = false;
+  var menuActive = 0;
+  var menuAnchorBlock = null; // the block element where / was typed
+
+  function renderMenu() {
+    menuEl.innerHTML = BLOCK_TYPES.map(function(bt, i) {
+      return '<div class="sm-item' + (i === menuActive ? ' active' : '') + '" data-type="' + bt.id + '">' +
+        '<div class="sm-icon">' + bt.icon + '</div>' +
+        '<div><div class="sm-label">' + bt.label + '</div><div class="sm-desc">' + bt.desc + '</div></div>' +
+        '</div>';
+    }).join('');
+    menuEl.querySelectorAll('.sm-item').forEach(function(el) {
+      el.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        var type = this.dataset.type;
+        insertBlock(type);
+      });
+    });
+  }
+
+  function positionMenu(anchorEl) {
+    var rect = anchorEl ? anchorEl.getBoundingClientRect() : { left: 100, bottom: 100 };
+    var menuTop = rect.bottom + 4;
+    var menuLeft = rect.left;
+    // keep in viewport
+    var menuH = 300;
+    if (menuTop + menuH > window.innerHeight) { menuTop = rect.top - menuH - 4; }
+    if (menuLeft + 240 > window.innerWidth) { menuLeft = window.innerWidth - 248; }
+    menuEl.style.top = menuTop + 'px';
+    menuEl.style.left = menuLeft + 'px';
+  }
+
+  function openMenu(anchorEl) {
+    menuAnchorBlock = anchorEl;
+    menuActive = 0;
+    menuOpen = true;
+    menuEl.classList.add('open');
+    renderMenu();
+    positionMenu(anchorEl);
+  }
+
+  function closeMenu() {
+    menuOpen = false;
+    menuEl.classList.remove('open');
+    menuAnchorBlock = null;
+  }
+
+  function insertBlock(type) {
+    // find which block the cursor is in
+    var anchor = menuAnchorBlock;
+    closeMenu();
+
+    if (!anchor) return;
+
+    // strip the leading / from the anchor block's input
+    var inp = anchor.querySelector('.block-input, textarea');
+    if (inp) {
+      var txt = inp.textContent || inp.value || '';
+      // remove the slash that triggered the menu
+      var slashIdx = txt.lastIndexOf('/');
+      if (slashIdx !== -1) {
+        txt = txt.substring(0, slashIdx);
+      }
+      if (inp.tagName === 'TEXTAREA') {
+        inp.value = txt;
+      } else {
+        inp.textContent = txt;
+      }
+    }
+
+    // If the anchor is a plain paragraph that's now empty (was just /), we'll convert it
+    var convertInPlace = anchor.classList.contains('para') && (!inp || !(inp.textContent || inp.value || '').trim());
+
+    if (convertInPlace) {
+      // convert this block in place
+      var newBlock = buildBlock(type);
+      anchor.parentNode.replaceChild(newBlock, anchor);
+      focusBlock(newBlock);
+    } else {
+      // insert after the anchor
+      var newBlock = buildBlock(type);
+      if (anchor.nextSibling) {
+        anchor.parentNode.insertBefore(newBlock, anchor.nextSibling);
+      } else {
+        anchor.parentNode.appendChild(newBlock);
+      }
+      focusBlock(newBlock);
+    }
+  }
+
+  function buildBlock(type) {
+    var div = document.createElement('div');
+    div.className = 'block ' + type;
+
+    if (type === 'divider') {
+      div.innerHTML = '<hr>';
+      return div;
+    }
+
+    if (type === 'callout') {
+      var icon = document.createElement('span');
+      icon.className = 'callout-icon';
+      icon.textContent = '💡';
+      var inp = makeBlockInput('Type a note…');
+      div.appendChild(icon);
+      div.appendChild(inp);
+      wireInput(inp, div);
+      return div;
+    }
+
+    if (type === 'todo') {
+      var chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.className = 'todo-check';
+      var inp = makeBlockInput('To-do item…');
+      div.appendChild(chk);
+      div.appendChild(inp);
+      wireInput(inp, div);
+      return div;
+    }
+
+    var placeholders = { h1:'Heading 1', h2:'Heading 2', quote:'Type a quote…', para:'Type something, or press / for commands…' };
+    var inp = makeBlockInput(placeholders[type] || 'Type…');
+    div.appendChild(inp);
+    wireInput(inp, div);
+    return div;
+  }
+
+  function makeBlockInput(placeholder) {
+    var el = document.createElement('div');
+    el.className = 'block-input';
+    el.contentEditable = 'true';
+    el.dataset.placeholder = placeholder;
+    el.setAttribute('spellcheck', 'false');
+    return el;
+  }
+
+  function wireInput(inp, blockDiv) {
+    inp.addEventListener('keydown', function(e) {
+      if (menuOpen) {
+        if (e.key === 'ArrowDown') { e.preventDefault(); menuActive = Math.min(BLOCK_TYPES.length - 1, menuActive + 1); renderMenu(); return; }
+        if (e.key === 'ArrowUp')   { e.preventDefault(); menuActive = Math.max(0, menuActive - 1); renderMenu(); return; }
+        if (e.key === 'Enter')     { e.preventDefault(); insertBlock(BLOCK_TYPES[menuActive].id); return; }
+        if (e.key === 'Escape')    { e.preventDefault(); closeMenu(); return; }
+        return;
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        // insert a new paragraph block after this one
+        var newPara = buildBlock('para');
+        if (blockDiv.nextSibling) {
+          blockDiv.parentNode.insertBefore(newPara, blockDiv.nextSibling);
+        } else {
+          blockDiv.parentNode.appendChild(newPara);
+        }
+        focusBlock(newPara);
+        return;
+      }
+      if (e.key === 'Backspace') {
+        var txt = inp.textContent || '';
+        // if block is empty and not the last paragraph, remove it
+        if (!txt.trim() && docEl.children.length > 1) {
+          var prev = blockDiv.previousSibling;
+          blockDiv.parentNode.removeChild(blockDiv);
+          if (prev) focusBlock(prev);
+        }
+      }
+    });
+
+    inp.addEventListener('input', function() {
+      var text = inp.textContent || '';
+      // check if user just typed / (at start or after whitespace)
+      if (text.endsWith('/') && (text.length === 1 || text[text.length - 2] === ' ' || text[text.length - 2] === '\n')) {
+        openMenu(blockDiv);
+      } else if (menuOpen) {
+        // user typed more after /, close menu (simplified: close on any non-/ typing after slash)
+        closeMenu();
+      }
+    });
+  }
+
+  function focusBlock(blockDiv) {
+    var inp = blockDiv.querySelector('.block-input');
+    if (inp) {
+      inp.focus();
+      // move cursor to end
+      var range = document.createRange();
+      range.selectNodeContents(inp);
+      range.collapse(false);
+      var sel = window.getSelection();
+      if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+    }
+  }
+
+  // close menu when clicking outside
+  document.addEventListener('mousedown', function(e) {
+    if (menuOpen && !menuEl.contains(e.target)) {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (menuOpen && e.key === 'Escape') {
+      e.preventDefault();
+      closeMenu();
+    }
+  });
+
+  // Seed initial blocks
+  var SEEDS = [
+    { type: 'h1', text: 'Meeting notes — Q3 Planning' },
+    { type: 'para', text: 'Use / to insert headings, to-dos, quotes, dividers, and callouts.' },
+    { type: 'h2', text: 'Agenda' },
+    { type: 'todo', text: 'Review revenue targets for next quarter' },
+    { type: 'todo', text: 'Confirm design handoff timeline' },
+    { type: 'quote', text: 'Make the most important thing the biggest thing.' },
+    { type: 'para', text: '' }
+  ];
+
+  SEEDS.forEach(function(s) {
+    var block = buildBlock(s.type);
+    var inp = block.querySelector('.block-input');
+    if (inp && s.text) inp.textContent = s.text;
+    docEl.appendChild(block);
+  });
+
+  // Focus last block
+  var last = docEl.lastChild;
+  if (last) focusBlock(last);
+})();
+</script>
+</body>
+</html>

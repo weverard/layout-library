@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>33 · Folder Column-View — Layout scaffold</title>
+<!--
+  PATTERN    Folder Column-View
+  NAV MODEL  Miller columns (Finder): selecting an item in a column reveals its
+             children as a NEW column to the right; deeper selection extends the
+             path; horizontal scroll follows the deepening path.
+  BEST FOR   File browsers, taxonomies, nested settings/menus.
+  REGIONS    .columns (horizontal scroller) · .col (a list) · .item
+             (.has-children shows a chevron) · .preview (leaf detail).
+  RE-SKIN    --accent = selected-row highlight; under ~640px show only the
+             deepest 1–2 columns (min-width + container scrolls).
+-->
+<style>
+  :root{
+    --bg:#F4F4F2; --surface:#fff; --ink:#16161a; --muted:#6b6f76;
+    --line:rgba(20,20,26,.10); --accent:#9333EA;
+    --accent-light:rgba(147,51,234,.1); --accent-text:#fff;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* — Top bar — */
+  .topbar{flex:0 0 auto;height:52px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:16px}
+  .topbar .brand{font-weight:700;font-size:15px;margin-right:auto}
+  .breadcrumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex:0 0 auto;min-width:0;overflow:hidden}
+  .breadcrumb span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+  .breadcrumb .sep{opacity:.4;flex:0 0 auto}
+
+  /* — Columns container — */
+  .columns-wrap{flex:1 1 auto;overflow:hidden;display:flex;flex-direction:column}
+  .columns{display:flex;flex-direction:row;height:100%;overflow-x:auto;overflow-y:hidden;scroll-behavior:smooth}
+  .columns::-webkit-scrollbar{height:6px}.columns::-webkit-scrollbar-track{background:var(--bg)}
+  .columns::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:3px}
+
+  /* — Column — */
+  .col{flex:0 0 220px;border-right:1px solid var(--line);overflow-y:auto;height:100%;background:var(--surface)}
+  .col:first-child{border-left:none}
+  .col::-webkit-scrollbar{width:4px}.col::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:2px}
+
+  /* — Items — */
+  .item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;font-size:14px;border-radius:0;transition:background .1s;user-select:none}
+  .item:hover{background:rgba(0,0,0,.04)}
+  .item.selected{background:var(--accent);color:var(--accent-text)}
+  .item.selected .item-icon,.item.selected .chevron{color:var(--accent-text);opacity:.85}
+  .item.ancestor{background:var(--accent-light)}
+  .item-icon{flex:0 0 auto;font-size:16px;line-height:1;width:20px;text-align:center;color:var(--muted)}
+  .item-label{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chevron{flex:0 0 auto;font-size:11px;color:var(--muted);opacity:.6}
+
+  /* — Preview pane — */
+  .preview{flex:0 0 280px;height:100%;border-left:1px solid var(--line);background:var(--surface);padding:28px 22px;overflow-y:auto}
+  .preview .p-icon{font-size:40px;margin-bottom:14px}
+  .preview .p-name{font-size:18px;font-weight:700;letter-spacing:-.015em;margin-bottom:6px}
+  .preview .p-type{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+  .preview .p-meta{display:flex;flex-direction:column;gap:8px}
+  .preview .p-row{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px solid var(--line);padding-bottom:8px}
+  .preview .p-row .pk{color:var(--muted)}
+  .preview .p-tag{display:inline-block;background:var(--accent-light);color:var(--accent);border-radius:4px;font-size:11px;padding:2px 8px;margin-top:10px;font-family:var(--mono)}
+
+  /* — Empty preview — */
+  .preview-empty{flex:0 0 240px;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;border-left:1px solid var(--line)}
+
+  /* — Responsive — */
+  @media(max-width:640px){
+    .col{flex:0 0 180px}
+    .preview{flex:0 0 220px;padding:18px 14px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">◇ File Browser</span>
+  <div class="breadcrumb" id="breadcrumb"></div>
+</div>
+
+<div class="columns-wrap">
+  <div class="columns" id="columns"></div>
+</div>
+
+<div class="scaffold">33 · column-view &nbsp;<a href="index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  /* ── Data tree ── */
+  const TREE = {
+    id:'root', label:'Root', children:[
+      { id:'docs', label:'Documents', icon:'📁', children:[
+        { id:'projects', label:'Projects', icon:'📁', children:[
+          { id:'proj-alpha', label:'Alpha', icon:'📁', children:[
+            { id:'alpha-spec', label:'Specification.md', icon:'📄', size:'18 KB', kind:'Markdown', modified:'2024-11-12' },
+            { id:'alpha-design', label:'Design Notes.txt', icon:'📝', size:'4 KB', kind:'Text', modified:'2024-11-09' },
+            { id:'alpha-data', label:'data.csv', icon:'📊', size:'142 KB', kind:'CSV', modified:'2024-10-31' }
+          ]},
+          { id:'proj-beta', label:'Beta', icon:'📁', children:[
+            { id:'beta-readme', label:'README.md', icon:'📄', size:'6 KB', kind:'Markdown', modified:'2024-12-01' },
+            { id:'beta-config', label:'config.json', icon:'⚙️', size:'2 KB', kind:'JSON', modified:'2024-11-28' }
+          ]},
+          { id:'proj-archive', label:'Archive', icon:'📁', children:[
+            { id:'arch-old', label:'old-brief.pdf', icon:'📋', size:'870 KB', kind:'PDF', modified:'2023-08-15' }
+          ]}
+        ]},
+        { id:'notes', label:'Notes', icon:'📁', children:[
+          { id:'note-meeting', label:'meeting-2024.txt', icon:'📝', size:'3 KB', kind:'Text', modified:'2024-12-03' },
+          { id:'note-ideas', label:'Ideas.md', icon:'📄', size:'11 KB', kind:'Markdown', modified:'2024-11-22' }
+        ]},
+        { id:'report-q4', label:'Q4 Report.pdf', icon:'📋', size:'2.1 MB', kind:'PDF', modified:'2024-12-05' }
+      ]},
+      { id:'media', label:'Media', icon:'📁', children:[
+        { id:'images', label:'Images', icon:'📁', children:[
+          { id:'img-cover', label:'cover.png', icon:'🖼️', size:'840 KB', kind:'PNG Image', modified:'2024-11-30' },
+          { id:'img-logo', label:'logo.svg', icon:'🖼️', size:'12 KB', kind:'SVG', modified:'2024-10-14' },
+          { id:'img-bg', label:'background.jpg', icon:'🖼️', size:'1.4 MB', kind:'JPEG', modified:'2024-09-08' }
+        ]},
+        { id:'video', label:'Video', icon:'📁', children:[
+          { id:'vid-demo', label:'demo-v2.mp4', icon:'🎬', size:'88 MB', kind:'Video', modified:'2024-11-15' }
+        ]},
+        { id:'audio', label:'Audio', icon:'📁', children:[
+          { id:'aud-intro', label:'intro.mp3', icon:'🎵', size:'4.2 MB', kind:'Audio', modified:'2024-10-20' }
+        ]}
+      ]},
+      { id:'settings', label:'Settings', icon:'📁', children:[
+        { id:'set-general', label:'General.json', icon:'⚙️', size:'3 KB', kind:'JSON', modified:'2024-12-01' },
+        { id:'set-theme', label:'theme.css', icon:'🎨', size:'8 KB', kind:'CSS', modified:'2024-11-18' },
+        { id:'set-keys', label:'keybindings.json', icon:'⚙️', size:'1 KB', kind:'JSON', modified:'2024-10-05' }
+      ]},
+      { id:'readme', label:'README.md', icon:'📄', size:'5 KB', kind:'Markdown', modified:'2024-12-06' }
+    ]
+  };
+
+  /* ── State ── */
+  /* selPath = array of node ids representing the open path (not including root) */
+  let selPath = [];
+
+  /* build a lookup map */
+  const nodeMap = {};
+  function indexTree(node){
+    nodeMap[node.id] = node;
+    if(node.children) node.children.forEach(indexTree);
+  }
+  indexTree(TREE);
+
+  /* ── DOM refs ── */
+  const columnsEl = document.getElementById('columns');
+  const breadcrumbEl = document.getElementById('breadcrumb');
+
+  /* ── Render everything ── */
+  function render(){
+    columnsEl.innerHTML = '';
+
+    /* col 0 = root's children */
+    let levelChildren = TREE.children;
+    let depth = 0;
+
+    while(levelChildren){
+      const selectedId = selPath[depth] || null;
+      const col = buildCol(levelChildren, selectedId, depth);
+      columnsEl.appendChild(col);
+
+      if(!selectedId) break;
+      const selectedNode = nodeMap[selectedId];
+      if(!selectedNode || !selectedNode.children){
+        /* leaf — show preview */
+        const pane = buildPreview(selectedNode);
+        columnsEl.appendChild(pane);
+        break;
+      }
+      levelChildren = selectedNode.children;
+      depth++;
+    }
+
+    /* Scroll the columns container to the far right */
+    columnsEl.scrollLeft = columnsEl.scrollWidth;
+
+    /* Update breadcrumb */
+    renderBreadcrumb();
+  }
+
+  function buildCol(items, selectedId, depth){
+    const col = document.createElement('div');
+    col.className = 'col';
+    items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'item' + (item.id === selectedId ? ' selected' : '');
+      /* ancestor highlight: item is in selPath but not the current selected */
+      /* (not needed at this depth since we only render one col per level) */
+      const hasChildren = !!(item.children && item.children.length);
+      el.innerHTML =
+        `<span class="item-icon">${item.icon || '📄'}</span>` +
+        `<span class="item-label">${item.label}</span>` +
+        (hasChildren ? `<span class="chevron">›</span>` : '');
+      el.addEventListener('click', () => selectItem(depth, item.id));
+      col.appendChild(el);
+    });
+    return col;
+  }
+
+  function buildPreview(node){
+    if(!node){
+      const empty = document.createElement('div');
+      empty.className = 'preview-empty';
+      empty.textContent = 'Select a file to preview';
+      return empty;
+    }
+    const pane = document.createElement('div');
+    pane.className = 'preview';
+    pane.innerHTML =
+      `<div class="p-icon">${node.icon || '📄'}</div>` +
+      `<div class="p-name">${node.label}</div>` +
+      `<div class="p-type">${node.kind || 'File'}</div>` +
+      `<div class="p-meta">` +
+        `<div class="p-row"><span class="pk">Size</span><span>${node.size || '—'}</span></div>` +
+        `<div class="p-row"><span class="pk">Modified</span><span>${node.modified || '—'}</span></div>` +
+        `<div class="p-row"><span class="pk">Kind</span><span>${node.kind || '—'}</span></div>` +
+      `</div>` +
+      `<span class="p-tag">${node.kind || 'file'}</span>`;
+    return pane;
+  }
+
+  function renderBreadcrumb(){
+    if(!selPath.length){
+      breadcrumbEl.innerHTML = '<span>Root</span>';
+      return;
+    }
+    let parts = ['<span>Root</span>'];
+    selPath.forEach(id => {
+      const n = nodeMap[id];
+      if(n) parts.push(`<span class="sep">›</span><span>${n.label}</span>`);
+    });
+    breadcrumbEl.innerHTML = parts.join('');
+  }
+
+  /* ── Interaction ── */
+  function selectItem(depth, itemId){
+    /* Truncate path to this depth, then set the selection */
+    selPath = selPath.slice(0, depth);
+    selPath[depth] = itemId;
+    render();
+  }
+
+  /* ── Boot ── */
+  render();
+})();
+</script>
+</body>
+</html>

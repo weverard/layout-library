@@ -1,0 +1,2295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>55 · ChatGPT Agentic Commerce — Layout scaffold</title>
+<!--
+  PATTERN    ChatGPT Agentic Commerce (illustrative homage — fictional products & merchants)
+  NAV MODEL  A ChatGPT-style conversation that shops for you: user asks → Shopping research
+             runs (clarifying follow-up chips + live streaming progress) → returns a Buyer's
+             guide (side-by-side comparison + "Not interested" / "More like this" + cited
+             sources) → Instant Checkout (product cards with Buy → inline Stripe checkout
+             sheet → order confirmation). Scripted/illustrative; fictional products & merchants.
+  BEST FOR   Agentic-commerce demos, conversational shopping, checkout-in-chat concepts.
+  REGIONS    .app (.sidebar conversations + .main thread) · .composer · message types:
+             .research-progress · .followups (chips) · .buyer-guide (.compare-table +
+             .sources) · .product-card (Buy) · .checkout (inline Stripe sheet) · .order-confirm
+  RE-SKIN    --accent = #10A37F (OpenAI green) for assistant accents, Buy/primary buttons,
+             active states. Sidebar collapses under ~820px via hamburger toggle.
+-->
+<style>
+  :root {
+    --bg: #f9f9f9;
+    --surface: #fff;
+    --ink: #0d0d0d;
+    --muted: #6b7280;
+    --line: rgba(0,0,0,.08);
+    --accent: #10A37F;
+    --accent-lt: #e6f7f3;
+    --accent-dk: #0d8f6e;
+    --sidebar-w: 260px;
+    --user-bg: #10A37F;
+    --asst-bg: #fff;
+    --thread-max: 740px;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --radius: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  button {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font-family: var(--sans);
+    color: inherit;
+  }
+
+  /* ── App shell ── */
+  .app {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: #f0f0f0;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    transition: transform .22s ease;
+  }
+
+  .sidebar-head {
+    padding: 14px 12px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--ink);
+  }
+
+  .logo-mark {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--ink);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .logo-mark::after {
+    content: '';
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+  }
+
+  .new-chat-btn {
+    display: block;
+    margin: 0 12px 10px;
+    padding: 9px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background .12s;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .new-chat-btn:hover { background: #e8e8e8; }
+  .new-chat-btn .plus-ic {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    background: var(--accent);
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .sidebar-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 14px 4px;
+    flex-shrink: 0;
+  }
+
+  .conv-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 6px;
+  }
+
+  .conv-item {
+    display: block;
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background .1s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: left;
+  }
+  .conv-item:hover { background: rgba(0,0,0,.05); }
+  .conv-item.active {
+    background: var(--surface);
+    font-weight: 500;
+    box-shadow: 0 1px 4px rgba(0,0,0,.07);
+  }
+
+  .sidebar-foot {
+    border-top: 1px solid var(--line);
+    padding: 12px;
+    flex-shrink: 0;
+  }
+
+  .user-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .user-row:hover { background: rgba(0,0,0,.05); }
+
+  .user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #d1d5db;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+  }
+
+  .user-name { font-size: 13px; font-weight: 500; }
+
+  /* ── Main column ── */
+  .main-col {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+    background: var(--surface);
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .menu-toggle {
+    display: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .menu-toggle:hover { background: var(--bg); }
+  .menu-toggle svg { display: block; }
+
+  .model-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -.01em;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    transition: background .1s;
+    user-select: none;
+  }
+  .model-badge:hover { background: var(--bg); }
+  .model-badge .chevron {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: none;
+    border: 0;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background .1s, color .1s;
+  }
+  .icon-btn:hover { background: var(--bg); color: var(--ink); }
+
+  /* ── Thread area ── */
+  .thread {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 18px 24px;
+    gap: 0;
+    scroll-behavior: smooth;
+  }
+
+  .thread-inner {
+    width: 100%;
+    max-width: var(--thread-max);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* ── Messages ── */
+  .msg {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    width: 100%;
+  }
+
+  .msg.user { justify-content: flex-end; }
+
+  .msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .msg-avatar.asst {
+    background: var(--ink);
+    color: #fff;
+  }
+  .msg-avatar.asst::after {
+    content: '';
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  .msg-body {
+    max-width: calc(100% - 44px);
+    flex: 1;
+  }
+
+  .msg.user .msg-body {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .user-bubble {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 18px 18px 4px 18px;
+    padding: 12px 16px;
+    font-size: 14.5px;
+    line-height: 1.55;
+    max-width: 72%;
+  }
+
+  .asst-body {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  .asst-body p { margin-bottom: 10px; }
+  .asst-body p:last-child { margin-bottom: 0; }
+
+  /* ── Research progress ── */
+  .research-progress {
+    background: var(--accent-lt);
+    border: 1px solid rgba(16,163,127,.2);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-top: 4px;
+  }
+
+  .research-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-dk);
+    margin-bottom: 10px;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(16,163,127,.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .research-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .r-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .25s, transform .25s;
+  }
+  .r-step.visible {
+    opacity: 1;
+    transform: none;
+  }
+  .r-step.done { color: var(--accent-dk); }
+  .r-step.done::before { content: '✓ '; font-weight: 700; }
+  .r-step.active { color: var(--ink); font-weight: 500; }
+  .r-step.active::before { content: '▣ '; color: var(--accent); }
+
+  /* ── Follow-up chips ── */
+  .followups {
+    margin-top: 10px;
+  }
+
+  .followups-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .chip-group {
+    margin-bottom: 10px;
+  }
+
+  .chip-group-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    background: var(--surface);
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .chip.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .refining-line {
+    font-size: 13px;
+    color: var(--accent-dk);
+    margin-top: 8px;
+    font-style: italic;
+    display: none;
+  }
+  .refining-line.visible { display: block; }
+
+  /* ── Buyer's guide ── */
+  .buyer-guide {
+    margin-top: 8px;
+  }
+
+  .guide-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+  .guide-title-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .consider-block {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .consider-block h4 {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .consider-block p {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  /* ── Comparison table ── */
+  .compare-table-wrap {
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .compare-table th {
+    background: var(--bg);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: .02em;
+    color: var(--muted);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  .compare-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+    line-height: 1.45;
+  }
+
+  .compare-table tr:last-child td { border-bottom: 0; }
+
+  .compare-table .prod-name {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 13px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .compare-table .prod-merchant {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+  }
+
+  .compare-table .price {
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .compare-table .rating {
+    color: #f59e0b;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .badge-fit {
+    display: inline-block;
+    background: var(--accent-lt);
+    color: var(--accent-dk);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  /* product row actions */
+  .prod-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    transition: all .12s;
+    background: var(--surface);
+    white-space: nowrap;
+    color: var(--muted);
+  }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+
+  .action-btn.more-like { border-color: var(--accent); color: var(--accent); }
+  .action-btn.more-like:hover { background: var(--accent); color: #fff; }
+
+  .prod-row-dim td { opacity: .35; pointer-events: none; }
+
+  .more-like-flash { animation: flashrow .5s ease; }
+  @keyframes flashrow {
+    0% { background: var(--accent-lt); }
+    100% { background: transparent; }
+  }
+
+  /* ── Sources ── */
+  .sources {
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+
+  .sources-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+
+  .source-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .source-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    background: var(--surface);
+    transition: border-color .12s, color .12s;
+  }
+  .source-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  .source-num {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .organic-note {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .organic-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* ── Product cards ── */
+  .product-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .product-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    transition: box-shadow .15s;
+  }
+  .product-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+
+  .card-swatch {
+    width: 100%;
+    height: 110px;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .card-body {
+    padding: 12px;
+  }
+
+  .card-merchant {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .card-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--ink);
+    line-height: 1.3;
+    margin-bottom: 5px;
+  }
+
+  .card-price {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .card-rating {
+    font-size: 12px;
+    color: #f59e0b;
+    margin-bottom: 10px;
+  }
+
+  .card-buy-btn {
+    display: block;
+    width: 100%;
+    padding: 9px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    border: 0;
+    transition: background .12s;
+  }
+  .card-buy-btn:hover { background: var(--accent-dk); }
+  .card-buy-btn:disabled { background: #d1d5db; cursor: not-allowed; }
+
+  /* ── Checkout sheet ── */
+  .checkout {
+    border: 1.5px solid var(--accent);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--surface);
+    margin-top: 12px;
+    box-shadow: 0 8px 32px rgba(16,163,127,.12);
+  }
+
+  .checkout-header {
+    background: var(--accent);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .checkout-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .checkout-close {
+    display: inline-flex;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    border: 0;
+    line-height: 1;
+  }
+  .checkout-close:hover { background: rgba(255,255,255,.35); }
+
+  .checkout-body {
+    padding: 18px;
+  }
+
+  .checkout-section {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .checkout-section:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
+
+  .checkout-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .order-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .order-swatch {
+    width: 48px;
+    height: 48px;
+    border-radius: 9px;
+    flex-shrink: 0;
+  }
+
+  .order-item-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .order-item-detail {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .order-item-price {
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .cost-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cost-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .cost-row.total {
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 14.5px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+    margin-top: 4px;
+  }
+
+  .address-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .address-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .address-edit {
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+  .address-edit:hover { text-decoration: underline; }
+
+  .payment-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .pay-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 1.5px solid var(--line);
+    cursor: pointer;
+    font-size: 13px;
+    transition: border-color .12s;
+    background: var(--surface);
+  }
+  .pay-option.selected { border-color: var(--accent); background: var(--accent-lt); }
+
+  .pay-radio {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    flex-shrink: 0;
+    position: relative;
+    transition: border-color .12s;
+  }
+  .pay-option.selected .pay-radio {
+    border-color: var(--accent);
+  }
+  .pay-option.selected .pay-radio::after {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .pay-card-chip {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+
+  .link-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #635BFF;
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: .02em;
+  }
+  .link-badge-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.7);
+  }
+
+  .stripe-footnote {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stripe-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #635BFF;
+  }
+  .stripe-s {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: #635BFF;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+    text-align: center;
+    line-height: 14px;
+    flex-shrink: 0;
+  }
+
+  .buy-now-btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    border: 0;
+    margin-top: 16px;
+    transition: background .12s;
+    letter-spacing: -.01em;
+  }
+  .buy-now-btn:hover { background: var(--accent-dk); }
+  .buy-now-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .processing-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0 4px;
+    font-size: 13px;
+    color: var(--muted);
+    display: none;
+  }
+  .processing-row.visible { display: flex; }
+
+  /* ── Order confirmation ── */
+  .order-confirm {
+    border-radius: var(--radius);
+    border: 1px solid rgba(16,163,127,.25);
+    background: var(--accent-lt);
+    padding: 18px 20px;
+    margin-top: 12px;
+  }
+
+  .confirm-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent-dk);
+    margin-bottom: 12px;
+  }
+
+  .confirm-check {
+    display: inline-flex;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .confirm-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .confirm-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    align-items: baseline;
+  }
+  .confirm-row .cr-label { color: var(--muted); }
+  .confirm-row .cr-value { font-weight: 500; color: var(--ink); }
+  .confirm-row .cr-eta { color: var(--accent-dk); font-weight: 600; }
+
+  /* ── Composer ── */
+  .composer-wrap {
+    flex-shrink: 0;
+    padding: 12px 18px 18px;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+
+  .composer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 8px 10px 8px 14px;
+    background: var(--surface);
+    transition: border-color .15s, box-shadow .15s;
+    max-width: var(--thread-max);
+    margin: 0 auto;
+  }
+  .composer:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(16,163,127,.12);
+  }
+
+  .composer-tools {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background .1s, color .1s;
+    flex-shrink: 0;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .composer-tools:hover { background: var(--bg); color: var(--ink); }
+
+  .composer-input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    font-family: var(--sans);
+    font-size: 14.5px;
+    color: var(--ink);
+    background: transparent;
+    resize: none;
+    line-height: 1.5;
+    min-height: 24px;
+  }
+  .composer-input::placeholder { color: var(--muted); }
+
+  .send-btn {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--ink);
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    border: 0;
+    transition: background .12s;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: #333; }
+  .send-btn.active { background: var(--accent); }
+  .send-btn.active:hover { background: var(--accent-dk); }
+
+  .composer-hint {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 7px;
+    max-width: var(--thread-max);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ── State display ── */
+  .step-hidden { display: none !important; }
+
+  /* ── CTA overlay (initial state) ── */
+  .thread-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-align: center;
+    padding: 24px;
+    gap: 20px;
+  }
+
+  .cta-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .cta-icon::after {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  .cta-heading {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--ink);
+  }
+  .cta-sub {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 340px;
+    line-height: 1.5;
+    margin-top: -8px;
+  }
+
+  .cta-send-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 0;
+    transition: background .12s;
+    letter-spacing: -.01em;
+  }
+  .cta-send-btn:hover { background: #333; }
+
+  .example-prompt {
+    font-size: 13.5px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: border-color .12s, color .12s;
+    font-style: italic;
+  }
+  .example-prompt:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Sidebar overlay (mobile) ── */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 40;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 820px) {
+    .app {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 50;
+      width: var(--sidebar-w);
+      transform: translateX(-100%);
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .sidebar-overlay.open {
+      display: block;
+    }
+
+    .menu-toggle {
+      display: inline-flex;
+    }
+
+    .product-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .compare-table-wrap {
+      overflow-x: visible;
+    }
+
+    /* Stacked cards instead of table on mobile */
+    .compare-table thead { display: none; }
+    .compare-table, .compare-table tbody, .compare-table tr, .compare-table td {
+      display: block;
+      width: 100%;
+    }
+    .compare-table tbody tr {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      padding: 12px;
+      background: var(--surface);
+    }
+    .compare-table td {
+      padding: 5px 0;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .compare-table td::before {
+      content: attr(data-label);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex-shrink: 0;
+      min-width: 68px;
+    }
+    .compare-table .prod-actions {
+      flex-wrap: wrap;
+    }
+  }
+
+  /* ── Scaffold badge ── */
+  .scaffold {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 99;
+    background: #000;
+    color: #fff;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-family: var(--mono);
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+  .scaffold a { color: #fff; opacity: .6; }
+  .scaffold a:hover { opacity: 1; }
+  @media (max-width: 820px) { .scaffold { bottom: 12px; right: 10px; } }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">
+        <span class="logo-mark"></span>
+        ChatGPT
+      </div>
+    </div>
+
+    <button class="new-chat-btn" id="newChatBtn">
+      <span class="plus-ic">+</span>
+      New chat
+    </button>
+
+    <div class="sidebar-section-label">Today</div>
+    <div class="conv-list">
+      <button class="conv-item active">Trail running shoes under $120</button>
+      <button class="conv-item">Best noise-cancelling headphones</button>
+      <button class="conv-item">Lightweight camping backpack</button>
+    </div>
+
+    <div class="sidebar-section-label">Yesterday</div>
+    <div class="conv-list">
+      <button class="conv-item">Mechanical keyboard under $80</button>
+      <button class="conv-item">Ergonomic desk chair options</button>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="user-row">
+        <div class="user-avatar">J</div>
+        <span class="user-name">Jamie Everett</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main column ── -->
+  <div class="main-col">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle icon-btn" id="menuToggle" aria-label="Open sidebar">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="4" width="14" height="1.5" rx=".75" fill="currentColor"/>
+            <rect x="2" y="8.25" width="14" height="1.5" rx=".75" fill="currentColor"/>
+            <rect x="2" y="12.5" width="14" height="1.5" rx=".75" fill="currentColor"/>
+          </svg>
+        </button>
+        <span class="model-badge">
+          ChatGPT &nbsp;<span style="color:var(--accent);font-weight:700">5</span>
+          <span class="chevron">▾</span>
+        </span>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" title="Share">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M11 1l4 4-4 4V7H6a3 3 0 00-3 3v2H1v-2a5 5 0 015-5h5V1z" fill="currentColor"/>
+          </svg>
+        </button>
+        <button class="icon-btn" title="Edit">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M11.5 1.5a2.12 2.12 0 013 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Thread -->
+    <div class="thread" id="thread">
+      <div class="thread-inner" id="threadInner">
+
+        <!-- Initial CTA state -->
+        <div class="thread-cta" id="ctaBlock">
+          <div class="cta-icon"></div>
+          <div>
+            <div class="cta-heading">What can I help with?</div>
+            <div class="cta-sub">Ask me to find, compare, and buy anything — I can shop across the web and check out right here in the chat.</div>
+          </div>
+          <button class="cta-send-btn" id="ctaSendBtn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 8h12M9 3l5 5-5 5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Try: "Best trail running shoes under $120 for wide feet"
+          </button>
+          <div class="example-prompt" id="examplePrompt">"Best trail running shoes under $120 for wide feet — I prefer brands focused on trail performance."</div>
+        </div>
+
+        <!-- ── Turn 1: user message ── -->
+        <div class="msg user step-hidden" id="msgUser1">
+          <div class="msg-body">
+            <div class="user-bubble">Best trail running shoes under $120 for wide feet</div>
+          </div>
+        </div>
+
+        <!-- ── Turn 2: Shopping research + follow-ups ── -->
+        <div class="msg step-hidden" id="msgResearch">
+          <div class="msg-avatar asst"></div>
+          <div class="msg-body">
+            <div class="asst-body">
+              <!-- Research progress -->
+              <div class="research-progress" id="researchProgress">
+                <div class="research-header">
+                  <span class="spinner" id="researchSpinner"></span>
+                  <span id="researchLabel">Shopping research</span>
+                </div>
+                <div class="research-steps" id="researchSteps">
+                  <div class="r-step" id="step1">Searching retailers for wide-fit trail running shoes under $120&hellip;</div>
+                  <div class="r-step" id="step2">Reading 18 product pages across 6 sites&hellip;</div>
+                  <div class="r-step" id="step3">Comparing prices, availability &amp; reviews&hellip;</div>
+                  <div class="r-step" id="step4">Checking wide-fit availability in standard sizes&hellip;</div>
+                </div>
+              </div>
+
+              <!-- Follow-ups -->
+              <div class="followups step-hidden" id="followupsBlock">
+                <div class="followups-label">A few quick questions to narrow this down for you:</div>
+
+                <div class="chip-group">
+                  <div class="chip-group-label">What matters most?</div>
+                  <div class="chips" id="priorityChips">
+                    <button class="chip" data-group="priority" data-label="Performance">&#127939; Performance</button>
+                    <button class="chip" data-group="priority" data-label="Comfort">&#128149; Comfort</button>
+                    <button class="chip" data-group="priority" data-label="Style">&#10024; Style</button>
+                    <button class="chip" data-group="priority" data-label="Price">&#128176; Price</button>
+                  </div>
+                </div>
+
+                <div class="chip-group">
+                  <div class="chip-group-label">Preferred brand feel</div>
+                  <div class="chips" id="brandChips">
+                    <button class="chip" data-group="brand" data-label="Trail specialists">Trail specialists</button>
+                    <button class="chip" data-group="brand" data-label="Big names OK">Big names OK</button>
+                    <button class="chip" data-group="brand" data-label="No preference">No preference</button>
+                  </div>
+                </div>
+
+                <div class="chip-group">
+                  <div class="chip-group-label">Width</div>
+                  <div class="chips" id="widthChips">
+                    <button class="chip" data-group="width" data-label="Wide (2E)">Wide (2E)</button>
+                    <button class="chip" data-group="width" data-label="Extra Wide (4E)">Extra Wide (4E)</button>
+                    <button class="chip" data-group="width" data-label="Regular + stretch">Regular + stretch lacing</button>
+                  </div>
+                </div>
+
+                <div class="refining-line" id="refiningLine"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Turn 3: Buyer's guide ── -->
+        <div class="msg step-hidden" id="msgGuide">
+          <div class="msg-avatar asst"></div>
+          <div class="msg-body">
+            <div class="asst-body">
+              <div class="buyer-guide">
+                <div class="guide-title">
+                  <span class="guide-title-icon"></span>
+                  Buyer&#39;s guide &mdash; Wide-fit trail shoes under $120
+                </div>
+
+                <!-- What to consider -->
+                <div class="consider-block">
+                  <h4>What to consider</h4>
+                  <p>For wide feet on the trail, the toe box geometry matters more than the stated width — look for a shoe that&#39;s anatomically wide at the front rather than just a stretched upper. Rockplate protection separates true trail shoes from road crossovers. Under $120, you&#39;ll find solid options in Goretex-free versions; waterproofing adds ~$30. Stack height and drop vary a lot between brands — lower drop (&lt;6 mm) rewards more experienced runners. Check the return window: sizing in wide trail shoes runs inconsistent.</p>
+                </div>
+
+                <!-- Comparison table -->
+                <div class="compare-table-wrap">
+                  <table class="compare-table">
+                    <thead>
+                      <tr>
+                        <th>Option</th>
+                        <th>Price</th>
+                        <th>Key features</th>
+                        <th>Rating</th>
+                        <th>Wide fit</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Row 1 -->
+                      <tr id="prodRow0">
+                        <td data-label="Option">
+                          <span class="prod-name">Trailhead Co. Ridgeline 3</span>
+                          <span class="prod-merchant">Trailhead Co. direct</span>
+                        </td>
+                        <td data-label="Price"><span class="price">$109</span></td>
+                        <td data-label="Features">6 mm drop &middot; rockplate &middot; Vibram outsole &middot; mesh upper</td>
+                        <td data-label="Rating"><span class="rating">&#9733; 4.6</span> (312)</td>
+                        <td data-label="Wide fit"><span class="badge-fit">wide fit &#10003;</span></td>
+                        <td>
+                          <div class="prod-actions">
+                            <button class="action-btn not-interested-btn" data-row="0">Not interested</button>
+                            <button class="action-btn more-like" data-row="0">More like this</button>
+                          </div>
+                        </td>
+                      </tr>
+                      <!-- Row 2 -->
+                      <tr id="prodRow1">
+                        <td data-label="Option">
+                          <span class="prod-name">Apex Stride XT Wide</span>
+                          <span class="prod-merchant">RunGear.co</span>
+                        </td>
+                        <td data-label="Price"><span class="price">$115</span></td>
+                        <td data-label="Features">8 mm drop &middot; dual-density foam &middot; drainage ports &middot; 2E wide</td>
+                        <td data-label="Rating"><span class="rating">&#9733; 4.4</span> (187)</td>
+                        <td data-label="Wide fit"><span class="badge-fit">2E certified &#10003;</span></td>
+                        <td>
+                          <div class="prod-actions">
+                            <button class="action-btn not-interested-btn" data-row="1">Not interested</button>
+                            <button class="action-btn more-like" data-row="1">More like this</button>
+                          </div>
+                        </td>
+                      </tr>
+                      <!-- Row 3 -->
+                      <tr id="prodRow2">
+                        <td data-label="Option">
+                          <span class="prod-name">Marlowe Studio Canyon Runner</span>
+                          <span class="prod-merchant">Etsy seller: Marlowe Studio</span>
+                        </td>
+                        <td data-label="Price"><span class="price">$98</span></td>
+                        <td data-label="Features">Zero drop &middot; handcrafted &middot; natural rubber sole &middot; wide toe box</td>
+                        <td data-label="Rating"><span class="rating">&#9733; 4.8</span> (54)</td>
+                        <td data-label="Wide fit"><span class="badge-fit">roomy toe box &#10003;</span></td>
+                        <td>
+                          <div class="prod-actions">
+                            <button class="action-btn not-interested-btn" data-row="2">Not interested</button>
+                            <button class="action-btn more-like" data-row="2">More like this</button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Sources -->
+                <div class="sources">
+                  <div class="sources-label">Sources</div>
+                  <div class="source-chips">
+                    <a class="source-chip" href="#">
+                      <span class="source-num">1</span>
+                      trailheadco.com
+                    </a>
+                    <a class="source-chip" href="#">
+                      <span class="source-num">2</span>
+                      rungear.co
+                    </a>
+                    <a class="source-chip" href="#">
+                      <span class="source-num">3</span>
+                      runnersbible.com
+                    </a>
+                    <a class="source-chip" href="#">
+                      <span class="source-num">4</span>
+                      etsy.com / marlowe-studio
+                    </a>
+                  </div>
+                  <div class="organic-note">
+                    <span class="organic-dot"></span>
+                    Results are organic — not paid placements.
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Turn 4: Product cards + Checkout ── -->
+        <div class="msg step-hidden" id="msgCards">
+          <div class="msg-avatar asst"></div>
+          <div class="msg-body">
+            <div class="asst-body">
+              <p>Two of these are available for Instant Checkout right in the chat:</p>
+
+              <!-- Product cards -->
+              <div class="product-cards">
+
+                <!-- Card 1 -->
+                <div class="product-card">
+                  <svg class="card-swatch" viewBox="0 0 200 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="200" height="110" fill="#e8f5f1"/>
+                    <rect x="20" y="35" width="160" height="55" rx="10" fill="#10A37F" opacity=".18"/>
+                    <!-- Simplified shoe silhouette -->
+                    <path d="M30 75 Q50 50 80 52 Q105 54 120 58 L155 60 Q168 61 170 68 Q172 76 160 78 L40 80 Q28 80 28 75Z" fill="#10A37F" opacity=".6"/>
+                    <path d="M55 52 Q58 38 68 35 L82 38 Q78 50 75 52Z" fill="#10A37F" opacity=".4"/>
+                    <circle cx="60" cy="74" r="8" fill="#fff" opacity=".5"/>
+                    <circle cx="130" cy="72" r="10" fill="#fff" opacity=".5"/>
+                    <text x="100" y="26" text-anchor="middle" fill="#0d8f6e" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif" font-weight="700">Trailhead Co.</text>
+                  </svg>
+                  <div class="card-body">
+                    <div class="card-merchant">Trailhead Co. direct</div>
+                    <div class="card-title">Ridgeline 3 — Wide</div>
+                    <div class="card-price">$109</div>
+                    <div class="card-rating">&#9733; 4.6 &nbsp;<span style="color:var(--muted);font-size:11px">(312 reviews)</span></div>
+                    <button class="card-buy-btn" id="buyBtn0">Buy</button>
+                  </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="product-card">
+                  <svg class="card-swatch" viewBox="0 0 200 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="200" height="110" fill="#f3f0ff"/>
+                    <rect x="20" y="35" width="160" height="55" rx="10" fill="#7c3aed" opacity=".12"/>
+                    <path d="M28 76 Q50 52 85 50 Q112 48 130 54 L158 58 Q170 60 172 68 Q174 77 162 79 L38 81 Q26 81 26 76Z" fill="#7c3aed" opacity=".5"/>
+                    <path d="M58 50 Q62 36 73 33 L86 36 Q82 48 78 50Z" fill="#7c3aed" opacity=".35"/>
+                    <circle cx="62" cy="75" r="8" fill="#fff" opacity=".5"/>
+                    <circle cx="134" cy="73" r="10" fill="#fff" opacity=".5"/>
+                    <text x="100" y="26" text-anchor="middle" fill="#7c3aed" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif" font-weight="700">Etsy: Marlowe Studio</text>
+                  </svg>
+                  <div class="card-body">
+                    <div class="card-merchant">Etsy seller: Marlowe Studio</div>
+                    <div class="card-title">Canyon Runner — Natural Wide</div>
+                    <div class="card-price">$98</div>
+                    <div class="card-rating">&#9733; 4.8 &nbsp;<span style="color:var(--muted);font-size:11px">(54 reviews)</span></div>
+                    <button class="card-buy-btn" id="buyBtn1">Buy</button>
+                  </div>
+                </div>
+
+              </div><!-- /product-cards -->
+
+              <!-- ── Checkout sheet (hidden until Buy is clicked) ── -->
+              <div class="checkout step-hidden" id="checkoutSheet">
+                <div class="checkout-header">
+                  <span class="checkout-title">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M14 4H2L3.5 11h9L14 4z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+                      <circle cx="6" cy="13.5" r=".75" fill="#fff"/>
+                      <circle cx="11" cy="13.5" r=".75" fill="#fff"/>
+                    </svg>
+                    Instant Checkout
+                  </span>
+                  <button class="checkout-close" id="checkoutClose">&#215;</button>
+                </div>
+                <div class="checkout-body">
+
+                  <!-- Order summary -->
+                  <div class="checkout-section">
+                    <div class="checkout-section-label">Order summary</div>
+                    <div class="order-summary-item">
+                      <svg class="order-swatch" id="orderSwatch" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="9" fill="#e8f5f1"/>
+                        <path d="M8 33 Q16 20 26 21 Q34 22 38 26 L44 28 Q46 29 46 32 Q46 36 42 37 L10 37 Q7 37 7 33Z" fill="#10A37F" opacity=".6"/>
+                      </svg>
+                      <div style="flex:1;min-width:0">
+                        <div class="order-item-name" id="orderItemName">Ridgeline 3 — Wide</div>
+                        <div class="order-item-detail" id="orderItemDetail">Size 11 Wide &middot; Trailhead Co. direct</div>
+                      </div>
+                      <div class="order-item-price" id="orderItemPrice">$109.00</div>
+                    </div>
+                    <div class="cost-rows">
+                      <div class="cost-row"><span>Subtotal</span><span id="orderSubtotal">$109.00</span></div>
+                      <div class="cost-row"><span>Shipping</span><span>$7.95</span></div>
+                      <div class="cost-row"><span>Tax</span><span id="orderTax">$9.81</span></div>
+                      <div class="cost-row total"><span>Total</span><span id="orderTotal">$126.76</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Shipping address -->
+                  <div class="checkout-section">
+                    <div class="checkout-section-label">Shipping address</div>
+                    <div class="address-row">
+                      <div class="address-text">Jamie Everett<br>47 Cedarwood Ave, Apt 3<br>Portland, OR 97201</div>
+                      <span class="address-edit">Edit</span>
+                    </div>
+                  </div>
+
+                  <!-- Payment -->
+                  <div class="checkout-section">
+                    <div class="checkout-section-label">Payment</div>
+                    <div class="payment-methods">
+                      <div class="pay-option selected" id="payCard">
+                        <span class="pay-radio"></span>
+                        <span class="pay-card-chip">&bull;&bull;&bull;&bull; 4782</span>
+                        <span style="font-size:13px">Visa ending 4782</span>
+                      </div>
+                      <div class="pay-option" id="payLink">
+                        <span class="pay-radio"></span>
+                        <span class="link-badge"><span class="link-badge-dot"></span>Link</span>
+                        <span style="font-size:13px;color:var(--muted)">One-click checkout via Stripe Link</span>
+                      </div>
+                    </div>
+
+                    <div class="stripe-footnote">
+                      <span class="stripe-mark"><span class="stripe-s">S</span> Powered by Stripe</span>
+                      &middot; Agentic Commerce Protocol
+                    </div>
+                  </div>
+
+                  <!-- Buy now -->
+                  <button class="buy-now-btn" id="buyNowBtn">Buy now &rarr;</button>
+                  <div class="processing-row" id="processingRow">
+                    <span class="spinner"></span>
+                    <span>Placing your order&hellip;</span>
+                  </div>
+
+                </div>
+              </div><!-- /checkout -->
+
+              <!-- ── Order confirmation ── -->
+              <div class="order-confirm step-hidden" id="orderConfirm">
+                <div class="confirm-header">
+                  <span class="confirm-check">&#10003;</span>
+                  Order placed &#10003;
+                </div>
+                <div class="confirm-rows">
+                  <div class="confirm-row">
+                    <span class="cr-label">Order #</span>
+                    <span class="cr-value" id="confirmOrderNum">TH-2847193</span>
+                  </div>
+                  <div class="confirm-row">
+                    <span class="cr-label">Item</span>
+                    <span class="cr-value" id="confirmItem">Ridgeline 3 — Wide</span>
+                  </div>
+                  <div class="confirm-row">
+                    <span class="cr-label">Merchant</span>
+                    <span class="cr-value" id="confirmMerchant">Trailhead Co. direct</span>
+                  </div>
+                  <div class="confirm-row">
+                    <span class="cr-label">Total</span>
+                    <span class="cr-value" id="confirmTotal">$126.76</span>
+                  </div>
+                  <div class="confirm-row">
+                    <span class="cr-label">Estimated arrival</span>
+                    <span class="cr-eta" id="confirmEta">Jul 1 &ndash; Jul 3</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div><!-- /msgCards -->
+
+      </div><!-- /thread-inner -->
+    </div><!-- /thread -->
+
+    <!-- Composer -->
+    <div class="composer-wrap">
+      <div class="composer">
+        <button class="composer-tools" title="Attach / tools">+</button>
+        <textarea class="composer-input" id="composerInput" rows="1" placeholder="Message ChatGPT&#8230;" aria-label="Message input"></textarea>
+        <button class="send-btn" id="sendBtn" aria-label="Send">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 12V2M2 7l5-5 5 5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="composer-hint">ChatGPT can make mistakes. Shopping results are organic and illustrative.</div>
+    </div>
+
+  </div><!-- /main-col -->
+</div><!-- /app -->
+
+<div class="scaffold">55 &middot; chatgpt-commerce &nbsp;<a href="index.html">&#8596; gallery</a></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── DOM refs ── */
+  var thread        = document.getElementById('thread');
+  var ctaBlock      = document.getElementById('ctaBlock');
+  var ctaSendBtn    = document.getElementById('ctaSendBtn');
+  var examplePrompt = document.getElementById('examplePrompt');
+  var composerInput = document.getElementById('composerInput');
+  var sendBtn       = document.getElementById('sendBtn');
+  var sidebar       = document.getElementById('sidebar');
+  var sidebarOverlay= document.getElementById('sidebarOverlay');
+  var menuToggle    = document.getElementById('menuToggle');
+  var newChatBtn    = document.getElementById('newChatBtn');
+
+  var msgUser1        = document.getElementById('msgUser1');
+  var msgResearch     = document.getElementById('msgResearch');
+  var researchProgress= document.getElementById('researchProgress');
+  var researchSpinner = document.getElementById('researchSpinner');
+  var researchLabel   = document.getElementById('researchLabel');
+  var step1 = document.getElementById('step1');
+  var step2 = document.getElementById('step2');
+  var step3 = document.getElementById('step3');
+  var step4 = document.getElementById('step4');
+  var followupsBlock  = document.getElementById('followupsBlock');
+  var refiningLine    = document.getElementById('refiningLine');
+
+  var msgGuide        = document.getElementById('msgGuide');
+  var msgCards        = document.getElementById('msgCards');
+  var checkoutSheet   = document.getElementById('checkoutSheet');
+  var checkoutClose   = document.getElementById('checkoutClose');
+  var buyNowBtn       = document.getElementById('buyNowBtn');
+  var processingRow   = document.getElementById('processingRow');
+  var orderConfirm    = document.getElementById('orderConfirm');
+  var buyBtn0         = document.getElementById('buyBtn0');
+  var buyBtn1         = document.getElementById('buyBtn1');
+  var payCard         = document.getElementById('payCard');
+  var payLink         = document.getElementById('payLink');
+
+  /* ── State ── */
+  var flowTimers   = [];   /* ALL timer IDs collected here */
+  var flowActive   = false;
+  var currentBuyIdx = 0;   /* 0 = Ridgeline, 1 = Canyon Runner */
+  var orderPlaced  = false;
+
+  /* ── Products data ── */
+  var PRODUCTS = [
+    {
+      name: 'Ridgeline 3 — Wide',
+      merchant: 'Trailhead Co. direct',
+      price: '$109.00',
+      subtotal: '$109.00',
+      tax: '$9.81',
+      total: '$126.76',
+      orderNum: 'TH-2847193',
+      eta: 'Jul 1 – Jul 3',
+      swatchFill: '#e8f5f1',
+      swatchAccent: '#10A37F'
+    },
+    {
+      name: 'Canyon Runner — Natural Wide',
+      merchant: 'Etsy seller: Marlowe Studio',
+      price: '$98.00',
+      subtotal: '$98.00',
+      tax: '$8.82',
+      total: '$114.77',
+      orderNum: 'MS-9384021',
+      eta: 'Jul 3 – Jul 8',
+      swatchFill: '#f3f0ff',
+      swatchAccent: '#7c3aed'
+    }
+  ];
+
+  /* ── Timer helpers (no stacked timers) ── */
+  function delay(ms, fn) {
+    var id = setTimeout(fn, ms);
+    flowTimers.push(id);
+    return id;
+  }
+
+  function clearAllTimers() {
+    for (var i = 0; i < flowTimers.length; i++) {
+      clearTimeout(flowTimers[i]);
+    }
+    flowTimers = [];
+  }
+
+  /* ── Scroll helper ── */
+  function scrollToBottom() {
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  /* ── Show/hide helpers ── */
+  function show(el) { el.classList.remove('step-hidden'); }
+  function hide(el) { el.classList.add('step-hidden'); }
+
+  /* ── Full reset ── */
+  function resetFlow() {
+    clearAllTimers();
+    flowActive   = false;
+    orderPlaced  = false;
+    currentBuyIdx = 0;
+
+    /* Hide all steps */
+    hide(msgUser1);
+    hide(msgResearch);
+    hide(msgGuide);
+    hide(msgCards);
+    hide(checkoutSheet);
+    hide(orderConfirm);
+    hide(followupsBlock);
+
+    /* Show CTA */
+    show(ctaBlock);
+
+    /* Reset research steps */
+    [step1, step2, step3, step4].forEach(function(s) {
+      s.className = 'r-step';
+    });
+    researchLabel.textContent = 'Shopping research';
+    researchSpinner.style.display = '';
+
+    /* Reset chips */
+    document.querySelectorAll('.chip').forEach(function(c) {
+      c.classList.remove('selected');
+    });
+    refiningLine.className = 'refining-line';
+
+    /* Reset buy buttons */
+    buyBtn0.disabled = false;
+    buyBtn0.textContent = 'Buy';
+    buyBtn1.disabled = false;
+    buyBtn1.textContent = 'Buy';
+
+    /* Reset buy now */
+    buyNowBtn.disabled = false;
+    buyNowBtn.textContent = 'Buy now →';
+    processingRow.className = 'processing-row';
+
+    /* Reset compare rows */
+    for (var r = 0; r < 3; r++) {
+      var row = document.getElementById('prodRow' + r);
+      if (row) {
+        row.classList.remove('prod-row-dim', 'more-like-flash');
+        row.style.transition = '';
+      }
+    }
+
+    /* Reset payment selection */
+    payCard.classList.add('selected');
+    payLink.classList.remove('selected');
+
+    /* Scroll to top */
+    thread.scrollTop = 0;
+
+    /* Reset composer */
+    composerInput.value = '';
+    sendBtn.classList.remove('active');
+  }
+
+  /* ── Kick off the scripted flow ── */
+  function startFlow() {
+    if (flowActive) return;
+    flowActive = true;
+
+    hide(ctaBlock);
+
+    /* Step A: show user message */
+    show(msgUser1);
+    scrollToBottom();
+
+    /* Step B: show research block */
+    delay(350, function() {
+      show(msgResearch);
+      scrollToBottom();
+    });
+
+    /* Step C: stream research steps */
+    delay(600, function() {
+      step1.classList.add('r-step', 'visible', 'active');
+      scrollToBottom();
+    });
+    delay(1600, function() {
+      step1.classList.remove('active');
+      step1.classList.add('done');
+      step2.classList.add('visible', 'active');
+      scrollToBottom();
+    });
+    delay(2800, function() {
+      step2.classList.remove('active');
+      step2.classList.add('done');
+      step3.classList.add('visible', 'active');
+      scrollToBottom();
+    });
+    delay(4000, function() {
+      step3.classList.remove('active');
+      step3.classList.add('done');
+      step4.classList.add('visible', 'active');
+      scrollToBottom();
+    });
+
+    /* Step D: finish research, show follow-ups */
+    delay(5200, function() {
+      step4.classList.remove('active');
+      step4.classList.add('done');
+      researchLabel.textContent = 'Shopping research — done';
+      researchSpinner.style.display = 'none';
+      show(followupsBlock);
+      scrollToBottom();
+    });
+
+    /* Note: guide appears after the user clicks a chip OR after a 5s auto-advance
+       so the demo is not stuck waiting. Only ONE timer set here; chips clear it. */
+    var guideTimer = delay(10000, function() {
+      revealGuide();
+    });
+    /* Store this specific timer id so chips can cancel it */
+    flowTimers.push(guideTimer);
+
+    /* We track guideTimer by reference in the chip handler closure, but that
+       pattern requires a ref; instead we rely on clearAllTimers + re-arm in
+       revealGuide itself — revealGuide is idempotent (checks msgGuide visibility). */
+  }
+
+  /* ── Reveal buyer's guide ── */
+  function revealGuide() {
+    if (!msgGuide.classList.contains('step-hidden')) return; /* already visible */
+    /* Cancel any pending auto-advance (all timers) - guide is being shown now */
+    clearAllTimers();
+    flowActive = true; /* keep active */
+
+    show(msgGuide);
+    scrollToBottom();
+
+    delay(500, function() {
+      show(msgCards);
+      scrollToBottom();
+    });
+  }
+
+  /* ── Chip interactions ── */
+  document.querySelectorAll('.chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      var grp = chip.getAttribute('data-group');
+      var lbl = chip.getAttribute('data-label');
+
+      /* Toggle within group — single select */
+      document.querySelectorAll('.chip[data-group="' + grp + '"]').forEach(function(c) {
+        c.classList.remove('selected');
+      });
+      chip.classList.add('selected');
+
+      /* Show refining line */
+      refiningLine.textContent = 'Refining for ' + lbl + '…';
+      refiningLine.classList.add('visible');
+      scrollToBottom();
+
+      /* Reveal guide shortly after first chip select (cancel any pending auto) */
+      clearAllTimers();
+      flowActive = true;
+      delay(1400, revealGuide);
+    });
+  });
+
+  /* ── Buy buttons ── */
+  function openCheckout(idx) {
+    if (orderPlaced) return;
+    currentBuyIdx = idx;
+    var prod = PRODUCTS[idx];
+
+    /* Update checkout content */
+    document.getElementById('orderItemName').textContent   = prod.name;
+    document.getElementById('orderItemDetail').textContent = 'Size 11 Wide · ' + prod.merchant;
+    document.getElementById('orderItemPrice').textContent  = prod.price;
+    document.getElementById('orderSubtotal').textContent   = prod.subtotal;
+    document.getElementById('orderTax').textContent        = prod.tax;
+    document.getElementById('orderTotal').textContent      = prod.total;
+
+    /* Update order swatch color */
+    var swatch = document.getElementById('orderSwatch');
+    swatch.querySelector('rect').setAttribute('fill', prod.swatchFill);
+    swatch.querySelector('path').setAttribute('fill', prod.swatchAccent);
+
+    /* Reset buy-now state */
+    buyNowBtn.disabled = false;
+    buyNowBtn.textContent = 'Buy now →';
+    processingRow.className = 'processing-row';
+
+    show(checkoutSheet);
+    hide(orderConfirm);
+    scrollToBottom();
+  }
+
+  buyBtn0.addEventListener('click', function() {
+    openCheckout(0);
+  });
+
+  buyBtn1.addEventListener('click', function() {
+    openCheckout(1);
+  });
+
+  /* ── Close checkout ── */
+  checkoutClose.addEventListener('click', function() {
+    hide(checkoutSheet);
+  });
+
+  /* ── Payment method selection ── */
+  payCard.addEventListener('click', function() {
+    payCard.classList.add('selected');
+    payLink.classList.remove('selected');
+  });
+  payLink.addEventListener('click', function() {
+    payLink.classList.add('selected');
+    payCard.classList.remove('selected');
+  });
+
+  /* ── Buy now ── */
+  buyNowBtn.addEventListener('click', function() {
+    if (buyNowBtn.disabled) return;
+    buyNowBtn.disabled = true;
+    buyNowBtn.textContent = 'Processing…';
+    processingRow.classList.add('visible');
+    scrollToBottom();
+
+    clearAllTimers();
+    flowActive = true;
+
+    delay(1800, function() {
+      var prod = PRODUCTS[currentBuyIdx];
+      hide(checkoutSheet);
+
+      /* Fill confirm */
+      document.getElementById('confirmOrderNum').textContent = prod.orderNum;
+      document.getElementById('confirmItem').textContent     = prod.name;
+      document.getElementById('confirmMerchant').textContent = prod.merchant;
+      document.getElementById('confirmTotal').textContent    = prod.total;
+      document.getElementById('confirmEta').textContent      = prod.eta;
+
+      show(orderConfirm);
+      orderPlaced = true;
+
+      /* Disable the used Buy button */
+      var usedBtn = currentBuyIdx === 0 ? buyBtn0 : buyBtn1;
+      usedBtn.disabled = true;
+      usedBtn.textContent = 'Ordered';
+
+      scrollToBottom();
+    });
+  });
+
+  /* ── "Not interested" ── */
+  document.querySelectorAll('.not-interested-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var rowIdx = btn.getAttribute('data-row');
+      var row = document.getElementById('prodRow' + rowIdx);
+      if (row) {
+        row.classList.add('prod-row-dim');
+      }
+    });
+  });
+
+  /* ── "More like this" ── */
+  document.querySelectorAll('.action-btn.more-like').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var rowIdx = btn.getAttribute('data-row');
+      var row = document.getElementById('prodRow' + rowIdx);
+      if (row) {
+        row.classList.add('more-like-flash');
+        clearAllTimers();
+        flowActive = true;
+        delay(600, function() {
+          row.classList.remove('more-like-flash');
+        });
+      }
+    });
+  });
+
+  /* ── Start flow triggers ── */
+  function handleSend() {
+    if (!flowActive) {
+      startFlow();
+    }
+  }
+
+  ctaSendBtn.addEventListener('click', handleSend);
+  examplePrompt.addEventListener('click', handleSend);
+
+  sendBtn.addEventListener('click', handleSend);
+
+  composerInput.addEventListener('keydown', function(evt) {
+    if (evt.key === 'Enter' && !evt.shiftKey) {
+      evt.preventDefault();
+      handleSend();
+    }
+  });
+
+  composerInput.addEventListener('input', function() {
+    if (composerInput.value.trim().length > 0) {
+      sendBtn.classList.add('active');
+    } else {
+      sendBtn.classList.remove('active');
+    }
+    /* Auto-resize textarea */
+    composerInput.style.height = 'auto';
+    composerInput.style.height = Math.min(composerInput.scrollHeight, 120) + 'px';
+  });
+
+  /* ── New chat / reset ── */
+  newChatBtn.addEventListener('click', function() {
+    resetFlow();
+    /* Close sidebar on mobile */
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+  });
+
+  /* ── Sidebar toggle (mobile) ── */
+  menuToggle.addEventListener('click', function() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('open');
+  });
+
+  sidebarOverlay.addEventListener('click', function() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+  });
+
+  /* ── Conversation list items → reset flow ── */
+  document.querySelectorAll('.conv-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      resetFlow();
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('open');
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

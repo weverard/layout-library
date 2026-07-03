@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>09 · Map-Pinned — Layout scaffold</title>
+<!--
+  PATTERN    Map-Pinned
+  NAV MODEL  Content lives at coordinates on a map; click a pin to open its
+             detail in a side sheet. Wayfinding is spatial + a legend.
+  BEST FOR   Anything with geography or an invented "world" / territory map.
+  REGIONS    .map (canvas + pins)  ·  .pin  ·  .sheet (detail)  ·  .legend
+  RE-SKIN    --accent; pins are placed by % so the map is responsive.
+-->
+<style>
+  :root{
+    --bg:#0a1418; --ink:#E7F0F0; --muted:#8fa3a6; --line:rgba(255,255,255,.14);
+    --accent:#FF7A45; --water:#0b1a20; --land:#1f4049;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  .map{position:fixed;inset:0;overflow:hidden;
+    background:
+      radial-gradient(58% 52% at 28% 40%,var(--land),transparent 66%),
+      radial-gradient(42% 46% at 72% 66%,var(--land),transparent 68%),
+      radial-gradient(30% 32% at 84% 24%,var(--land),transparent 66%),
+      radial-gradient(22% 26% at 50% 84%,var(--land),transparent 70%),
+      var(--water);
+  }
+  .map::after{content:"";position:absolute;inset:0;opacity:.5;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:70px 70px;mask-image:radial-gradient(circle at 50% 50%,#000,transparent 90%)}
+
+  .pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:3;appearance:none;background:none;border:0;padding:0}
+  .pin .dot{display:block;width:22px;height:22px;border-radius:50% 50% 50% 0;background:var(--accent);transform:rotate(-45deg);
+    box-shadow:0 6px 14px rgba(0,0,0,.5);border:2px solid rgba(255,255,255,.55)}
+  .pin .lbl{position:absolute;left:50%;top:-26px;transform:translateX(-50%);white-space:nowrap;font-size:12px;font-family:var(--mono);
+    background:rgba(0,0,0,.55);border:1px solid var(--line);border-radius:6px;padding:3px 7px;opacity:0;transition:opacity .15s}
+  .pin:hover .lbl,.pin.active .lbl{opacity:1}
+  .pin .pulse{position:absolute;left:50%;top:0;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:var(--accent);opacity:0}
+  .pin.active .pulse{animation:pulse 1.4s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(1);opacity:.5}100%{transform:scale(3.4);opacity:0}}
+
+  .legend{position:fixed;left:18px;bottom:18px;z-index:5;background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px}
+  .legend h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .legend div{display:flex;align-items:center;gap:8px;color:var(--muted);padding:2px 0}
+  .legend i{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+
+  .sheet{position:fixed;top:0;right:0;height:100vh;width:360px;max-width:86vw;z-index:8;background:#0e1d22;border-left:1px solid var(--line);
+    transform:translateX(100%);transition:transform .28s cubic-bezier(.5,0,.2,1);padding:28px 26px}
+  .sheet.open{transform:none}
+  .sheet .close{float:right;font-family:var(--mono);color:var(--muted);cursor:pointer}
+  .sheet .k{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .sheet h2{font-size:24px;margin:8px 0 4px}
+  .sheet .coord{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:16px}
+  .sheet p{color:#c8d6d8;line-height:1.6;font-size:15px}
+
+  .scaffold{position:fixed;right:16px;top:16px;z-index:9;background:#000;color:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="map" id="map"></div>
+
+  <div class="legend">
+    <h4>Regions · 5 sites</h4>
+    <div><i></i> Click a pin to open its brief</div>
+  </div>
+
+  <aside class="sheet" id="sheet">
+    <span class="close" id="close">esc ✕</span>
+    <p class="k">Site brief</p>
+    <h2 id="sTitle">—</h2>
+    <p class="coord" id="sCoord"></p>
+    <p id="sBody"></p>
+  </aside>
+
+  <div class="scaffold">09 · map-pinned &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const SITES=[
+      {x:26,y:36,t:"Harbor North",c:"58.1°N, 4.2°W",d:"The entry point. Deep water, busy quay — where most traffic first arrives."},
+      {x:44,y:58,t:"The Flats",c:"55.4°N, 2.9°W",d:"Low, open ground. Easy to cross, hard to defend; everything funnels through here."},
+      {x:70,y:64,t:"Ember Vale",c:"53.0°N, 1.1°W",d:"Warm valley, rich soil. The productive heart of the territory."},
+      {x:80,y:28,t:"Highpoint",c:"56.7°N, 0.4°E",d:"Commanding ridge with a long view. Whoever holds it sees everything."},
+      {x:54,y:30,t:"Old Crossing",c:"57.0°N, 1.8°W",d:"An ancient ford. The only reliable link between the two halves."}
+    ];
+    const map=document.getElementById('map'),sheet=document.getElementById('sheet');
+    let active=null;
+    SITES.forEach((s,i)=>{
+      const p=document.createElement('button');p.className='pin';p.style.left=s.x+'%';p.style.top=s.y+'%';p.dataset.i=i;
+      p.innerHTML=`<span class="pulse"></span><span class="dot"></span><span class="lbl">${s.t}</span>`;
+      map.appendChild(p);
+    });
+    const pins=[...map.querySelectorAll('.pin')];
+    function open(i){
+      pins.forEach((p,j)=>p.classList.toggle('active',j===i));active=i;
+      const s=SITES[i];document.getElementById('sTitle').textContent=s.t;document.getElementById('sCoord').textContent=s.c;document.getElementById('sBody').textContent=s.d;
+      sheet.classList.add('open');
+    }
+    function close(){sheet.classList.remove('open');pins.forEach(p=>p.classList.remove('active'));active=null;}
+    map.addEventListener('click',e=>{const p=e.target.closest('.pin');if(p)open(+p.dataset.i);});
+    document.getElementById('close').onclick=close;
+    addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  </script>
+</body>
+</html>

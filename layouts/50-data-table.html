@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>50 · Data Table — Layout scaffold</title>
+<!--
+  PATTERN    Data Table
+  NAV MODEL  A sortable spreadsheet; rows are objects; click a column header to
+              sort (toggle asc/desc with a ▲▼ indicator); click a row to open a
+              detail drawer.
+  BEST FOR   Admin panels, dashboards, records.
+  REGIONS    .table (thead sortable, tbody rows)  ·  .drawer.
+  RE-SKIN    --accent = sort indicator + selected row; table condenses/scrolls on
+              narrow screens (~720px); drawer becomes a full overlay.
+-->
+<style>
+  :root{
+    --bg:#F4F4F2;--surface:#fff;--ink:#16161a;--muted:#6b6f76;--line:rgba(20,20,26,.12);
+    --accent:#475569;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+
+  .layout{display:flex;min-height:100vh;transition:padding-right .3s}
+  .layout.drawer-open{padding-right:340px}
+
+  .main{flex:1;min-width:0;padding:42px 32px 80px}
+  .masthead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px}
+  .masthead .brand{font-weight:700;font-size:18px}
+  .masthead .sub{font-size:13px;color:var(--muted)}
+
+  /* Table wrapper */
+  .table-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .table-scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead{position:sticky;top:0;z-index:1}
+  thead tr{background:var(--bg);border-bottom:1px solid var(--line)}
+  th{padding:10px 16px;text-align:left;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;cursor:pointer;user-select:none;-webkit-user-select:none}
+  th:hover{color:var(--ink)}
+  th.sorted{color:var(--accent)}
+  .sort-ind{margin-left:5px;font-size:10px;opacity:.6}
+  th.sorted .sort-ind{opacity:1}
+  tbody tr{border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:rgba(71,85,105,.05)}
+  tbody tr.selected{background:rgba(71,85,105,.1)}
+  td{padding:12px 16px;vertical-align:middle}
+  td:first-child{font-weight:500}
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px}
+  .badge.active{background:rgba(22,163,74,.12);color:#16a34a}
+  .badge.paused{background:rgba(234,179,8,.12);color:#ca8a04}
+  .badge.inactive{background:rgba(239,68,68,.1);color:#dc2626}
+
+  /* Low-priority column to hide on narrow */
+  .col-optional{display:table-cell}
+
+  /* Drawer */
+  .drawer{
+    position:fixed;top:0;right:0;height:100vh;width:340px;
+    background:var(--surface);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+    z-index:50;overflow-y:auto;
+  }
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 16px;border-bottom:1px solid var(--line)}
+  .drawer-head h2{font-size:16px;font-weight:700}
+  .drawer-close{appearance:none;background:none;border:0;padding:0;cursor:pointer;font:inherit;color:var(--muted);font-size:20px;line-height:1;display:block;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:background .12s,color .12s}
+  .drawer-close:hover{background:rgba(20,20,26,.07);color:var(--ink)}
+  .drawer-body{padding:22px;flex:1}
+  .field{margin-bottom:18px}
+  .field-k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px}
+  .field-v{font-size:14px;font-weight:500}
+  .field-v .badge{font-size:12px}
+
+  @media(max-width:720px){
+    .layout.drawer-open{padding-right:0}
+    .main{padding:24px 16px 80px}
+    .col-optional{display:none}
+    .drawer{width:100%}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="layout" id="layout">
+    <div class="main">
+      <div class="masthead">
+        <span class="brand">◇ Members</span>
+        <span class="sub" id="row-count">12 records</span>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="data-table">
+            <thead>
+              <tr>
+                <th data-col="name">Name <span class="sort-ind">↕</span></th>
+                <th data-col="role">Role <span class="sort-ind">↕</span></th>
+                <th data-col="status">Status <span class="sort-ind">↕</span></th>
+                <th data-col="score" class="col-optional">Score <span class="sort-ind">↕</span></th>
+                <th data-col="joined" class="col-optional">Joined <span class="sort-ind">↕</span></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer" id="drawer">
+      <div class="drawer-head">
+        <h2 id="drawer-name">Record</h2>
+        <button class="drawer-close" id="drawer-close" aria-label="Close drawer">✕</button>
+      </div>
+      <div class="drawer-body" id="drawer-body"></div>
+    </div>
+  </div>
+
+  <div class="scaffold">50 · data-table &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var records = [
+    {name:'Amara Osei',role:'Designer',status:'active',score:94,joined:'2022-03-14'},
+    {name:'Felix Braun',role:'Engineer',status:'active',score:87,joined:'2021-11-02'},
+    {name:'Lena Voss',role:'Product',status:'paused',score:76,joined:'2023-01-28'},
+    {name:'Jin Mori',role:'Engineer',status:'active',score:91,joined:'2022-07-09'},
+    {name:'Priya Suresh',role:'Designer',status:'active',score:88,joined:'2023-05-17'},
+    {name:'Carlos Reyes',role:'Data',status:'inactive',score:62,joined:'2020-08-30'},
+    {name:'Nora Lindqvist',role:'Engineer',status:'active',score:95,joined:'2021-04-22'},
+    {name:'Kenji Tanaka',role:'Product',status:'paused',score:70,joined:'2022-12-01'},
+    {name:'Adaeze Ike',role:'Data',status:'active',score:83,joined:'2023-09-11'},
+    {name:'Marco Vitale',role:'Designer',status:'inactive',score:55,joined:'2019-06-05'},
+    {name:'Soren Holm',role:'Engineer',status:'active',score:90,joined:'2022-02-18'},
+    {name:'Yuki Watanabe',role:'Product',status:'active',score:79,joined:'2023-07-03'}
+  ];
+
+  var data = records.slice();
+  var sortCol = null;
+  var sortAsc = true;
+  var selectedIdx = -1;
+  var layout = document.getElementById('layout');
+  var drawer = document.getElementById('drawer');
+  var tbody = document.getElementById('tbody');
+
+  function fmt(rec, col){
+    if(col === 'status') return rec[col];
+    if(col === 'joined') return rec.joined.replace(/(\d{4})-(\d{2})-(\d{2})/, function(_,y,m,d){
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return d + ' ' + months[parseInt(m,10)-1] + ' ' + y;
+    });
+    return String(rec[col]);
+  }
+
+  function render(){
+    tbody.innerHTML = '';
+    data.forEach(function(rec, i){
+      var tr = document.createElement('tr');
+      if(i === selectedIdx) tr.classList.add('selected');
+      tr.innerHTML =
+        '<td>' + rec.name + '</td>' +
+        '<td>' + rec.role + '</td>' +
+        '<td><span class="badge ' + rec.status + '">' + rec.status.charAt(0).toUpperCase() + rec.status.slice(1) + '</span></td>' +
+        '<td class="col-optional" style="font-family:var(--mono);font-size:13px">' + rec.score + '</td>' +
+        '<td class="col-optional" style="font-size:13px;color:var(--muted)">' + fmt(rec,'joined') + '</td>';
+      tr.addEventListener('click', function(){ openDrawer(i); });
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Sort
+  document.querySelectorAll('th[data-col]').forEach(function(th){
+    th.addEventListener('click', function(){
+      var col = th.getAttribute('data-col');
+      if(sortCol === col){
+        sortAsc = !sortAsc;
+      } else {
+        sortCol = col;
+        sortAsc = true;
+      }
+      // Update header indicators
+      document.querySelectorAll('th[data-col]').forEach(function(h){
+        h.classList.remove('sorted');
+        h.querySelector('.sort-ind').textContent = '↕';
+      });
+      th.classList.add('sorted');
+      th.querySelector('.sort-ind').textContent = sortAsc ? '▲' : '▼';
+
+      data.sort(function(a, b){
+        var av = a[col], bv = b[col];
+        var cmp;
+        if(typeof av === 'number'){
+          cmp = av - bv;
+        } else {
+          cmp = String(av).localeCompare(String(bv));
+        }
+        return sortAsc ? cmp : -cmp;
+      });
+      // Reset selection when sort changes
+      selectedIdx = -1;
+      closeDrawer();
+      render();
+    });
+  });
+
+  function openDrawer(idx){
+    selectedIdx = idx;
+    var rec = data[idx];
+    document.getElementById('drawer-name').textContent = rec.name;
+    var body = document.getElementById('drawer-body');
+    body.innerHTML =
+      field('Full name', rec.name) +
+      field('Role', rec.role) +
+      fieldBadge('Status', rec.status) +
+      field('Score', rec.score + ' / 100') +
+      field('Member since', fmt(rec,'joined'));
+    drawer.classList.add('open');
+    layout.classList.add('drawer-open');
+    render();
+  }
+
+  function closeDrawer(){
+    selectedIdx = -1;
+    drawer.classList.remove('open');
+    layout.classList.remove('drawer-open');
+    render();
+  }
+
+  function field(k, v){
+    return '<div class="field"><div class="field-k">' + k + '</div><div class="field-v">' + v + '</div></div>';
+  }
+  function fieldBadge(k, v){
+    var label = v.charAt(0).toUpperCase() + v.slice(1);
+    return '<div class="field"><div class="field-k">' + k + '</div><div class="field-v"><span class="badge ' + v + '">' + label + '</span></div></div>';
+  }
+
+  document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && drawer.classList.contains('open')){
+      closeDrawer();
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

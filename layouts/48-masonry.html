@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>48 · Masonry Gallery — Layout scaffold</title>
+<!--
+  PATTERN    Masonry Gallery
+  NAV MODEL  A Pinterest-style staggered-height grid; click a tile to open a
+              lightbox; arrow keys move through the set; Esc or the backdrop closes.
+  BEST FOR   Galleries, moodboards, portfolios.
+  REGIONS    .masonry (columns)  ·  .tile  ·  .lightbox (.lb-stage, prev/next, close).
+  RE-SKIN    --accent = lightbox chrome / active; column count drops 4→3→2→1
+              across breakpoints (CSS columns layout).
+-->
+<style>
+  :root{
+    --bg:#F4F4F2;--surface:#fff;--ink:#16161a;--muted:#6b6f76;--line:rgba(20,20,26,.12);
+    --accent:#DB2777;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:42px 24px 80px}
+  .masthead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px}
+  .masthead .brand{font-weight:700;font-size:18px}
+  .masthead .sub{font-size:13px;color:var(--muted)}
+
+  /* Masonry via CSS columns */
+  .masonry{columns:4;column-gap:14px}
+  .tile{break-inside:avoid;margin-bottom:14px;border-radius:12px;overflow:hidden;cursor:pointer;position:relative;background:var(--surface);border:1px solid var(--line);transition:transform .18s,box-shadow .18s}
+  .tile:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.12)}
+  .tile-swatch{width:100%;display:block}
+  .tile-cap{padding:10px 12px 12px;font-size:12px;color:var(--muted);line-height:1.4}
+  .tile-cap strong{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:1px}
+
+  @media(max-width:900px){.masonry{columns:3}}
+  @media(max-width:600px){.masonry{columns:2}}
+  @media(max-width:360px){.masonry{columns:1}}
+
+  /* Lightbox */
+  .lightbox{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+  .lightbox.open{opacity:1;pointer-events:auto}
+  .lb-backdrop{position:absolute;inset:0;background:rgba(10,10,14,.82)}
+  .lb-stage{position:relative;z-index:1;display:flex;flex-direction:column;max-width:560px;width:calc(100% - 48px);border-radius:16px;overflow:hidden;background:var(--surface);box-shadow:0 32px 80px rgba(0,0,0,.4)}
+  .lb-swatch{width:100%;display:block}
+  .lb-info{padding:16px 20px 18px}
+  .lb-title{font-size:16px;font-weight:700;margin-bottom:4px}
+  .lb-desc{font-size:13px;color:var(--muted)}
+  .lb-index{font-size:11px;font-family:var(--mono);color:var(--accent);margin-top:6px}
+  .lb-close{position:absolute;top:12px;right:12px;z-index:2;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.4);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;border:0;padding:0;cursor:pointer;font-family:var(--sans);appearance:none;transition:background .15s}
+  .lb-close:hover{background:var(--accent)}
+  .lb-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;border:0;padding:0;cursor:pointer;font-family:var(--sans);appearance:none;backdrop-filter:blur(4px);transition:background .15s}
+  .lb-arrow:hover{background:var(--accent)}
+  .lb-prev{left:-52px}
+  .lb-next{right:-52px}
+  @media(max-width:680px){.lb-prev{left:8px}.lb-next{right:8px}}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="masthead">
+      <span class="brand">◇ Moodboard</span>
+      <span class="sub">14 pieces</span>
+    </div>
+    <div class="masonry" id="masonry">
+      <!-- tiles injected by JS to keep heights data-driven -->
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image lightbox">
+    <div class="lb-backdrop" id="lb-backdrop"></div>
+    <div class="lb-stage">
+      <button class="lb-close" id="lb-close" aria-label="Close">✕</button>
+      <svg class="lb-swatch" id="lb-swatch" viewBox="0 0 560 360" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="lb-info">
+        <div class="lb-title" id="lb-title"></div>
+        <div class="lb-desc" id="lb-desc"></div>
+        <div class="lb-index" id="lb-index"></div>
+      </div>
+    </div>
+    <button class="lb-arrow lb-prev" id="lb-prev" aria-label="Previous">←</button>
+    <button class="lb-arrow lb-next" id="lb-next" aria-label="Next">→</button>
+  </div>
+
+  <div class="scaffold">48 · masonry &nbsp;<a href="index.html">↔ gallery</a></div>
+<script>
+(function(){
+  var tiles = [
+    {title:'Coastal Morning',desc:'Soft mist over the bay at low tide.',h:220,bg:'#94a3b8',fg:'#e2e8f0'},
+    {title:'Amber Field',desc:'Late-afternoon light across a wheat field.',h:320,bg:'#d97706',fg:'#fef3c7'},
+    {title:'Monolith No. 3',desc:'Polished concrete slab, brutalist garden.',h:180,bg:'#374151',fg:'#9ca3af'},
+    {title:'Greenhouse Interior',desc:'Tropical foliage under filtered glass.',h:280,bg:'#15803d',fg:'#bbf7d0'},
+    {title:'Ceramic Series I',desc:'Hand-thrown vessels, iron-oxide glaze.',h:200,bg:'#c2410c',fg:'#ffedd5'},
+    {title:'Archive Room',desc:'Filing drawers, floor to ceiling.',h:340,bg:'#1e3a5f',fg:'#bfdbfe'},
+    {title:'Salt Flats',desc:'Mirror lake at dusk, Bolivia.',h:190,bg:'#7c3aed',fg:'#ede9fe'},
+    {title:'Workshop Table',desc:'Tools arranged by size and type.',h:260,bg:'#854d0e',fg:'#fef9c3'},
+    {title:'Fog Study',desc:'Mountain ridge, morning, no horizon.',h:310,bg:'#6b7280',fg:'#f3f4f6'},
+    {title:'Ink on Washi',desc:'Brushstroke study, mineral pigment.',h:170,bg:'#be185d',fg:'#fce7f3'},
+    {title:'Stairwell',desc:'Spiral cast iron, Victorian mill.',h:290,bg:'#0f766e',fg:'#ccfbf1'},
+    {title:'Desert Study',desc:'Red rock formation, midday.',h:210,bg:'#b45309',fg:'#fef3c7'},
+    {title:'Night Market',desc:'Lanterns reflected on wet stone.',h:350,bg:'#4c1d95',fg:'#ede9fe'},
+    {title:'Estuary',desc:'Tidal creek at golden hour.',h:230,bg:'#065f46',fg:'#d1fae5'}
+  ];
+
+  var openIdx = -1;
+  var lb = document.getElementById('lightbox');
+  var lbSwatch = document.getElementById('lb-swatch');
+  var lbTitle = document.getElementById('lb-title');
+  var lbDesc = document.getElementById('lb-desc');
+  var lbIndex = document.getElementById('lb-index');
+
+  // Build tiles
+  var container = document.getElementById('masonry');
+  tiles.forEach(function(t, i){
+    var el = document.createElement('div');
+    el.className = 'tile';
+    el.setAttribute('data-idx', i);
+    // SVG swatch with varied height
+    el.innerHTML =
+      '<svg class="tile-swatch" viewBox="0 0 300 ' + t.h + '" xmlns="http://www.w3.org/2000/svg">' +
+        '<rect width="300" height="' + t.h + '" fill="' + t.bg + '"/>' +
+        '<text x="150" y="' + Math.round(t.h * 0.48) + '" text-anchor="middle" dominant-baseline="middle" ' +
+          'font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" fill="' + t.fg + '" opacity=".8">' +
+          t.title + '</text>' +
+      '</svg>' +
+      '<div class="tile-cap"><strong>' + t.title + '</strong>' + t.desc + '</div>';
+    el.addEventListener('click', function(){ openLightbox(i); });
+    container.appendChild(el);
+  });
+
+  function openLightbox(idx){
+    openIdx = idx;
+    renderLightbox();
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(){
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+    openIdx = -1;
+  }
+
+  function renderLightbox(){
+    var t = tiles[openIdx];
+    lbSwatch.innerHTML =
+      '<rect width="560" height="360" fill="' + t.bg + '"/>' +
+      '<text x="280" y="175" text-anchor="middle" dominant-baseline="middle" ' +
+        'font-family="ui-sans-serif,system-ui,sans-serif" font-size="20" fill="' + t.fg + '">' +
+        t.title + '</text>';
+    lbTitle.textContent = t.title;
+    lbDesc.textContent = t.desc;
+    lbIndex.textContent = (openIdx + 1) + ' / ' + tiles.length;
+  }
+
+  function prev(){
+    openIdx = (openIdx - 1 + tiles.length) % tiles.length;
+    renderLightbox();
+  }
+  function next(){
+    openIdx = (openIdx + 1) % tiles.length;
+    renderLightbox();
+  }
+
+  document.getElementById('lb-backdrop').addEventListener('click', closeLightbox);
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+  document.getElementById('lb-prev').addEventListener('click', function(e){ e.stopPropagation(); prev(); });
+  document.getElementById('lb-next').addEventListener('click', function(e){ e.stopPropagation(); next(); });
+
+  document.addEventListener('keydown', function(e){
+    if(!lb.classList.contains('open')) return;
+    if(e.key === 'Escape') closeLightbox();
+    if(e.key === 'ArrowLeft') prev();
+    if(e.key === 'ArrowRight') next();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>14 · Terminal — Layout scaffold</title>
+<!--
+  PATTERN    Terminal / CLI
+  NAV MODEL  The site is a command line. Type commands (or click hint chips);
+             output scrolls. History with ↑/↓.
+  BEST FOR   Developer portfolios, playful product sites, docs for CLI tools.
+  REGIONS    .term (scrollback)  ·  .line (prompt input)  ·  hint chips
+  RE-SKIN    --accent / --green; extend the COMMANDS map.
+-->
+<style>
+  :root{
+    --bg:#0a0e0c; --ink:#d4e7d8; --muted:#6f8a76; --accent:#39d98a; --line:rgba(150,255,190,.14);
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--mono);background:var(--bg);color:var(--ink);height:100vh;-webkit-font-smoothing:antialiased}
+  .win{max-width:860px;margin:0 auto;height:100vh;display:flex;flex-direction:column}
+  .titlebar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);color:var(--muted);font-size:13px}
+  .titlebar .lights{display:flex;gap:6px;margin-right:8px}
+  .titlebar .lights i{width:11px;height:11px;border-radius:50%}
+  .lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+  .term{flex:1;overflow:auto;padding:18px 18px 8px;font-size:14px;line-height:1.7}
+  .term .out{white-space:pre-wrap;color:var(--ink)}
+  .term .cmd{color:var(--ink)}
+  .term .pfx{color:var(--accent)}
+  .term .muted{color:var(--muted)}
+  .term a{color:var(--accent);text-decoration:underline;cursor:pointer}
+  .liner{display:flex;align-items:center;gap:8px;padding:6px 18px 12px}
+  .liner .pfx{color:var(--accent)}
+  .liner input{flex:1;background:transparent;border:0;outline:none;color:var(--ink);font-family:var(--mono);font-size:14px;caret-color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 16px}
+  .chip{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer}
+  .chip:hover{color:var(--accent);border-color:var(--accent)}
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px}
+  .scaffold a{color:var(--accent);opacity:.7}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="win">
+    <div class="titlebar"><span class="lights"><i></i><i></i><i></i></span> guest@beacon — ~/site</div>
+    <div class="term" id="term"></div>
+    <div class="chips" id="chips"></div>
+    <form class="liner" id="form"><span class="pfx">➜ ~</span><input id="input" autocomplete="off" autofocus placeholder="type 'help' and hit enter" /></form>
+  </div>
+  <div class="scaffold">14 · terminal &nbsp;<a href="index.html">↔ gallery</a></div>
+
+  <script>
+    const term=document.getElementById('term'),input=document.getElementById('input'),form=document.getElementById('form');
+    const CMDS={
+      help:()=>`Available commands:\n  <a data-cmd="about">about</a>      who is behind this\n  <a data-cmd="projects">projects</a>   things built\n  <a data-cmd="ls">ls</a>         list sections\n  <a data-cmd="contact">contact</a>    get in touch\n  <a data-cmd="theme">theme</a>      flip the colors\n  <a data-cmd="clear">clear</a>      wipe the screen`,
+      about:()=>`A terminal as a homepage: every page is a command, every command is\ndiscoverable with <a data-cmd="help">help</a>. Fast for the people who like it, and\nthe hint chips keep it kind to everyone else.`,
+      projects:()=>`projects/\n  01  atlas        a spatial index            <span class="muted">2024</span>\n  02  beacon       command-first docs         <span class="muted">2024</span>\n  03  ledger       the centered reader         <span class="muted">2023</span>\nrun <a data-cmd="open atlas">open atlas</a> to view one.`,
+      ls:()=>`about/   projects/   contact/   theme   help`,
+      contact:()=>`mail   <a data-cmd="noop">hello@beacon.dev</a>\nsocial @beacon`,
+      clear:()=>{term.innerHTML='';return null;},
+      theme:()=>{document.documentElement.classList.toggle('amber');return 'theme toggled.';},
+    };
+    function open(arg){return arg?`opening <span class="muted">${arg}</span>… (demo: nothing to launch)`:`open: needs an argument, e.g. open atlas`;}
+    function print(html,cls='out'){const d=document.createElement('div');d.className=cls;d.innerHTML=html;term.appendChild(d);term.scrollTop=term.scrollHeight;}
+    function echo(cmd){print(`<span class="pfx">➜ ~</span> <span class="cmd">${cmd}</span>`);}
+    const cmdhist=[];let hi=-1;
+    function run(raw){
+      const cmd=raw.trim();if(!cmd)return;echo(cmd);cmdhist.push(cmd);hi=cmdhist.length;
+      const [name,...rest]=cmd.split(/\s+/);const arg=rest.join(' ');
+      let out;
+      if(name==='open')out=open(arg);
+      else if(CMDS[name])out=CMDS[name]();
+      else out=`<span class="muted">command not found: ${name} — try </span><a data-cmd="help">help</a>`;
+      if(out!==null&&out!==undefined)print(out);
+    }
+    form.addEventListener('submit',e=>{e.preventDefault();run(input.value);input.value='';});
+    input.addEventListener('keydown',e=>{
+      if(e.key==='ArrowUp'){hi=Math.max(0,hi-1);input.value=cmdhist[hi]||'';}
+      if(e.key==='ArrowDown'){hi=Math.min(cmdhist.length,hi+1);input.value=cmdhist[hi]||'';}
+    });
+    term.addEventListener('click',e=>{const a=e.target.closest('[data-cmd]');if(a){run(a.dataset.cmd);input.focus();}});
+    // hint chips
+    const chips=['help','about','projects','contact','theme'];
+    document.getElementById('chips').innerHTML=chips.map(c=>`<span class="chip" data-cmd="${c}">${c}</span>`).join('');
+    document.getElementById('chips').addEventListener('click',e=>{const c=e.target.closest('[data-cmd]');if(c){run(c.dataset.cmd);input.focus();}});
+    document.addEventListener('click',()=>input.focus());
+    // boot
+    print(`<span class="muted">beacon shell — type </span><a data-cmd="help">help</a><span class="muted"> to begin.</span>`);
+  </script>
+  <style>:root.amber{--bg:#100b04;--ink:#f0d8a8;--muted:#9a7b48;--accent:#ffb838;--line:rgba(255,184,56,.16)}</style>
+</body>
+</html>
