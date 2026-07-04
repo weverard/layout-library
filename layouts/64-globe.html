@@ -124,7 +124,6 @@
 
   var TOTAL_POINTS = 120;
   var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var isSmall = window.innerWidth < 640;
 
   var wrap = document.getElementById('globe');
   var canvas = document.getElementById('canvas');
@@ -252,7 +251,7 @@
     }
     project();
     draw();
-    if(rotVelocity !== 0 || dragging){
+    if((rotVelocity !== 0 && !selected) || dragging){
       rafId = requestAnimationFrame(frame);
     } else {
       rafId = null;
@@ -354,7 +353,6 @@
   });
 
   window.addEventListener('resize', function(){
-    isSmall = window.innerWidth < 640;
     resize();
     project();
     draw();
