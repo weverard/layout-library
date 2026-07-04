@@ -19,7 +19,9 @@ A gallery (`index.html`) links to all of them with mini wireframe thumbnails.
 > browser-verified (clean console + working interaction). Catalog/backlog/counts
 > below are current. **Update 2026-07-04:** Agentic commerce grown 6 → **9**
 > (`61` Chat + Live Product Canvas, `62` Human-in-the-Loop Approvals,
-> `63` Comparison-in-Chat) — library now **63 scaffolds**.
+> `63` Comparison-in-Chat). **Update 2026-07-04 (later):** cleared the two
+> non-agentic backlog items — `64` Globe (3D Points, Spatial) and `65`
+> Ticker / Stock-Board (Objects & cards) — library now **65 scaffolds**.
 
 ---
 
@@ -126,7 +128,7 @@ fresh load in the browser.
 
 ---
 
-## The catalog (63)
+## The catalog (65)
 
 **Foundations — app & document shells**
 `01` Split Panel · `02` Centered Document · `03` Sidebar App Shell ·
@@ -136,7 +138,8 @@ fresh load in the browser.
 **Spatial — navigate through space**
 `06` Infinite Canvas · `07` Zettelkasten Panes · `08` Radial Orbit ·
 `09` Map-Pinned · `27` Elevator Floors · `28` Arrow Rooms ·
-`33` Folder Column-View · `34` Isometric Scene · `35` Mind-Map Tree
+`33` Folder Column-View · `34` Isometric Scene · `35` Mind-Map Tree ·
+`64` Globe (3D Points)
 
 **Sequence & story — the axis is the nav**
 `05` Scrollytelling · `10` Timeline Scrubber · `11` Horizontal Filmstrip ·
@@ -151,7 +154,8 @@ fresh load in the browser.
 **Objects & cards — the content is a thing**
 `16` Desktop OS · `17` Card-Deck Swipe · `18` Pinboard Wall ·
 `19` Split-Flap Board · `24` Cover Flow (3D) · `47` Kanban Board ·
-`48` Masonry Gallery · `49` Card Wallet · `50` Data Table
+`48` Masonry Gallery · `49` Card Wallet · `50` Data Table ·
+`65` Ticker / Stock-Board
 
 **Immersive — cinematic**
 `20` Z-Axis Fly-Through · `21` Grid-to-Detail Morph · `22` Poster / Full-Bleed ·
@@ -175,8 +179,6 @@ fresh load in the browser.
 ---
 
 ## Backlog — ideas not yet built
-
-globe (3D points) · ticker / stock-board.
 
 Agentic-commerce ideas not yet built: chat-assembled cart drawer ·
 voice + chat commerce.

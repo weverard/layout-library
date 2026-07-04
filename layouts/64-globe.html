@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>64 · Globe (3D Points) — Layout scaffold</title>
+<!--
+  PATTERN    Globe (3D Points)
+  NAV MODEL  A slowly-rotating 3D point globe is the index — locations are dots
+             on the sphere. Drag to spin it yourself; click a front-facing dot
+             to select it and open its brief. Selecting pauses the auto-rotation
+             (so you can read), deselecting resumes it.
+  BEST FOR   Global footprints, network / node presence, travel, "where we are".
+  REGIONS    .globe (canvas + points)  ·  .brief (selected location card)  ·
+             .legendhint
+  RE-SKIN    --accent = active dot + brief accents. Breakpoint ~640px: .brief
+             leaves the side column and docks as a bottom sheet under the globe.
+-->
+<style>
+  :root{
+    --bg:#0a0f16; --surface:#101821; --ink:#eef3f6; --muted:#7c8a99;
+    --line:rgba(255,255,255,.12); --accent:#0891B2;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;height:100vh;overflow:hidden}
+  a{color:inherit;text-decoration:none}
+
+  .layout{display:flex;height:100vh}
+
+  .stage{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:32px}
+  .stage .top{position:absolute;top:28px;left:32px;right:32px;display:flex;align-items:baseline;justify-content:space-between}
+  .stage .brand{font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .stage .count{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+  .globe{position:relative;width:min(60vh,60vw,520px);height:min(60vh,60vw,520px);touch-action:none;cursor:grab}
+  .globe.dragging{cursor:grabbing}
+  .globe canvas{width:100%;height:100%;display:block}
+
+  .legendhint{position:absolute;bottom:28px;left:32px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:16px}
+  .legendhint span{display:flex;align-items:center;gap:6px}
+  .legendhint i{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+  .legendhint .paused{color:var(--accent);opacity:0;transition:opacity .2s}
+  .legendhint .paused.on{opacity:1}
+
+  .brief{flex:0 0 320px;border-left:1px solid var(--line);background:var(--surface);padding:28px 26px;overflow-y:auto}
+  .brief .empty{color:var(--muted);font-size:14px;margin-top:8px}
+  .brief .k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .brief h2{font-size:22px;letter-spacing:-.01em;margin-bottom:4px}
+  .brief .coord{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:18px}
+  .brief p{color:#c7d1d8;font-size:14px;line-height:1.6;margin-bottom:18px}
+  .brief .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .brief .stat{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .brief .stat .sk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .brief .stat .sv{font-family:var(--mono);font-size:16px;color:var(--ink)}
+  .brief .close{display:none}
+
+  @media (max-width:640px){
+    .layout{flex-direction:column}
+    .stage{flex:1}
+    .brief{
+      flex:none;border-left:0;border-top:1px solid var(--line);
+      position:fixed;left:0;right:0;bottom:0;max-height:60vh;
+      transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+      border-radius:16px 16px 0 0;box-shadow:0 -18px 40px rgba(0,0,0,.4);z-index:10;
+    }
+    .brief.open{transform:translateY(0)}
+    .brief .close{display:block;position:absolute;top:14px;right:16px;font-family:var(--mono);font-size:12px;color:var(--muted);cursor:pointer}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="layout">
+    <div class="stage">
+      <div class="top">
+        <span class="brand">◇ Meridian Network</span>
+        <span class="count" id="nodeCount">120 nodes</span>
+      </div>
+      <div class="globe" id="globe">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div class="legendhint">
+        <span><i></i> drag to spin</span>
+        <span>click a dot for its brief</span>
+        <span class="paused" id="pausedHint">rotation paused</span>
+      </div>
+    </div>
+
+    <aside class="brief" id="brief">
+      <span class="close" id="briefClose">close ✕</span>
+      <div id="briefBody">
+        <p class="empty">Select a node on the globe to open its brief. Drag anywhere on the sphere to spin it manually.</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="scaffold">64 · globe &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  // ── Fictional hub data ──────────────────────────────────────────────────
+  // A subset of the ~120 sphere points are named, selectable "hubs"; the rest
+  // are ambient texture dots that fill out the sphere but carry no brief.
+  var HUBS = [
+    {name:"North Reach",     lat: 62, lon: -18,  status:"Active",   nodes: 14, latency: 18,  since: "2019"},
+    {name:"Ember Delta",     lat:  8, lon:  34,   status:"Active",   nodes: 22, latency: 41,  since: "2017"},
+    {name:"Coral Strait",    lat:-14, lon: 112,   status:"Active",   nodes: 9,  latency: 63,  since: "2021"},
+    {name:"Frost Line",      lat: 58, lon:  92,   status:"Building", nodes: 3,  latency: 88,  since: "2025"},
+    {name:"Amber Coast",     lat: 34, lon: -98,   status:"Active",   nodes: 31, latency: 12,  since: "2015"},
+    {name:"Salt Flats Hub",  lat:-33, lon: -64,   status:"Active",   nodes: 11, latency: 54,  since: "2020"},
+    {name:"Highland Relay",  lat: 46, lon:   9,   status:"Active",   nodes: 19, latency: 22,  since: "2018"},
+    {name:"Delta Junction",  lat: -6, lon: -46,   status:"Active",   nodes: 8,  latency: 71,  since: "2022"},
+    {name:"Cobalt Point",    lat: 21, lon:  78,   status:"Active",   nodes: 27, latency: 34,  since: "2016"},
+    {name:"Ivory Cape",      lat:-28, lon:  24,   status:"Building", nodes: 4,  latency: 96,  since: "2025"},
+    {name:"Verdant Ridge",   lat: 51, lon: -110,  status:"Active",   nodes: 16, latency: 29,  since: "2019"},
+    {name:"Obsidian Bay",    lat:-41, lon: 172,   status:"Active",   nodes: 6,  latency: 84,  since: "2023"},
+    {name:"Solstice Array",  lat: 68, lon:  26,   status:"Active",   nodes: 12, latency: 47,  since: "2020"},
+    {name:"Meridian Anchor", lat:  1, lon:   0,   status:"Active",   nodes: 40, latency: 8,   since: "2014"}
+  ];
+
+  var TOTAL_POINTS = 120;
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isSmall = window.innerWidth < 640;
+
+  var wrap = document.getElementById('globe');
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+  var briefEl = document.getElementById('brief');
+  var briefBody = document.getElementById('briefBody');
+  var pausedHint = document.getElementById('pausedHint');
+  document.getElementById('nodeCount').textContent = TOTAL_POINTS + ' nodes';
+
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0, R = 0;
+
+  // ── Build the point table: lat/lon in radians, hub ref if any ───────────
+  var points = [];
+  (function seedPoints(){
+    var goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    for(var i = 0; i < TOTAL_POINTS; i++){
+      var y = 1 - (i / (TOTAL_POINTS - 1)) * 2; // 1..-1
+      var radiusAtY = Math.sqrt(Math.max(0, 1 - y * y));
+      var theta = goldenAngle * i;
+      var x = Math.cos(theta) * radiusAtY;
+      var z = Math.sin(theta) * radiusAtY;
+      var lat = Math.asin(y);
+      var lon = Math.atan2(z, x);
+      points.push({ lat: lat, lon: lon, hub: null, sx: 0, sy: 0, front: true });
+    }
+    // Snap the nearest ambient point to each hub's lat/lon so hubs sit on the
+    // precomputed table too, and tag it.
+    HUBS.forEach(function(hub){
+      var hlat = hub.lat * Math.PI / 180;
+      var hlon = hub.lon * Math.PI / 180;
+      var best = null, bestD = Infinity;
+      points.forEach(function(p){
+        if(p.hub) return;
+        var d = (p.lat - hlat) * (p.lat - hlat) + (p.lon - hlon) * (p.lon - hlon);
+        if(d < bestD){ bestD = d; best = p; }
+      });
+      if(best){ best.lat = hlat; best.lon = hlon; best.hub = hub; }
+    });
+  })();
+
+  var rotationY = 0.4;      // current rotation angle (radians)
+  var rotVelocity = prefersReduced ? 0 : 0.0028; // auto-spin speed
+  var dragging = false;
+  var dragLastX = 0;
+  var dragMoved = false;
+  var selected = null;      // hub object currently open in .brief
+  var rafId = null;
+
+  function resize(){
+    var rect = wrap.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    R = Math.min(W, H) * 0.42;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  function project(){
+    var cx = W / 2, cy = H / 2;
+    for(var i = 0; i < points.length; i++){
+      var p = points[i];
+      var lon = p.lon + rotationY;
+      var x = Math.cos(p.lat) * Math.sin(lon);
+      var y = Math.sin(p.lat);
+      var z = Math.cos(p.lat) * Math.cos(lon);
+      p.sx = cx + x * R;
+      p.sy = cy - y * R;
+      p.front = z > 0;
+      p.depth = z; // -1..1, used for size/opacity falloff
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    var cx = W / 2, cy = H / 2;
+
+    // sphere outline
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // back points first, then front, so front always draws on top
+    var back = [], front = [];
+    points.forEach(function(p){ (p.front ? front : back).push(p); });
+
+    function paint(p){
+      var depthT = (p.depth + 1) / 2; // 0 back .. 1 front
+      var isHub = !!p.hub;
+      var r = (isHub ? 4.2 : 2) * (0.55 + depthT * 0.6);
+      var alpha = 0.18 + depthT * (isHub ? 0.82 : 0.6);
+      ctx.beginPath();
+      ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+      if(isHub){
+        var isSel = selected === p.hub;
+        ctx.fillStyle = isSel
+          ? 'rgba(255,255,255,' + alpha + ')'
+          : 'rgba(8,145,178,' + alpha + ')';
+        if(isSel){
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r + 5, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(8,145,178,.9)';
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+        } else {
+          ctx.fill();
+        }
+      } else {
+        ctx.fillStyle = 'rgba(230,236,240,' + alpha + ')';
+        ctx.fill();
+      }
+    }
+    back.forEach(paint);
+    front.forEach(paint);
+  }
+
+  function frame(){
+    if(!dragging && !selected && rotVelocity !== 0){
+      rotationY += rotVelocity;
+    }
+    project();
+    draw();
+    if(rotVelocity !== 0 || dragging){
+      rafId = requestAnimationFrame(frame);
+    } else {
+      rafId = null;
+    }
+  }
+
+  function ensureLoop(){
+    if(rafId === null){
+      rafId = requestAnimationFrame(frame);
+    }
+  }
+
+  // ── Hit test: nearest front-facing hub within a pixel radius ────────────
+  function hitTestHub(px, py){
+    var HIT_RADIUS = 16;
+    var closest = null, closestD = HIT_RADIUS * HIT_RADIUS;
+    points.forEach(function(p){
+      if(!p.hub || !p.front) return;
+      var dx = p.sx - px, dy = p.sy - py;
+      var d = dx * dx + dy * dy;
+      if(d < closestD){ closestD = d; closest = p.hub; }
+    });
+    return closest;
+  }
+
+  function renderBrief(hub){
+    if(!hub){
+      briefBody.innerHTML = '<p class="empty">Select a node on the globe to open its brief. Drag anywhere on the sphere to spin it manually.</p>';
+      briefEl.classList.remove('open');
+      return;
+    }
+    briefBody.innerHTML =
+      '<p class="k">Node brief</p>' +
+      '<h2>' + hub.name + '</h2>' +
+      '<p class="coord">' + hub.lat.toFixed(1) + '°, ' + hub.lon.toFixed(1) + '° &middot; est. ' + hub.since + '</p>' +
+      '<p>' + hub.name + ' has been part of the network since ' + hub.since + ', currently running ' + hub.nodes + ' node' + (hub.nodes === 1 ? '' : 's') + ' with a status of ' + hub.status.toLowerCase() + '.</p>' +
+      '<div class="stats">' +
+        '<div class="stat"><div class="sk">Status</div><div class="sv">' + hub.status + '</div></div>' +
+        '<div class="stat"><div class="sk">Nodes</div><div class="sv">' + hub.nodes + '</div></div>' +
+        '<div class="stat"><div class="sk">Latency</div><div class="sv">' + hub.latency + 'ms</div></div>' +
+        '<div class="stat"><div class="sk">Since</div><div class="sv">' + hub.since + '</div></div>' +
+      '</div>';
+    briefEl.classList.add('open');
+  }
+
+  function selectHub(hub){
+    selected = hub;
+    renderBrief(hub);
+    pausedHint.classList.toggle('on', !!hub);
+    if(!prefersReduced) ensureLoop();
+    else { project(); draw(); }
+  }
+
+  // ── Pointer / drag handling ───────────────────────────────────────────
+  wrap.addEventListener('pointerdown', function(e){
+    dragging = true;
+    dragMoved = false;
+    dragLastX = e.clientX;
+    wrap.classList.add('dragging');
+    wrap.setPointerCapture(e.pointerId);
+    ensureLoop();
+  });
+
+  wrap.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var dx = e.clientX - dragLastX;
+    if(Math.abs(dx) > 2) dragMoved = true;
+    rotationY += dx * 0.006;
+    dragLastX = e.clientX;
+    project();
+    draw();
+  });
+
+  function endDrag(e){
+    if(!dragging) return;
+    dragging = false;
+    wrap.classList.remove('dragging');
+    if(!dragMoved){
+      var rect = canvas.getBoundingClientRect();
+      var px = e.clientX - rect.left;
+      var py = e.clientY - rect.top;
+      var hub = hitTestHub(px, py);
+      if(hub){
+        selectHub(selected === hub ? null : hub);
+      }
+    }
+    if(!prefersReduced && !selected) ensureLoop();
+  }
+
+  wrap.addEventListener('pointerup', endDrag);
+  wrap.addEventListener('pointercancel', endDrag);
+
+  document.getElementById('briefClose').addEventListener('click', function(){
+    selectHub(null);
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && selected) selectHub(null);
+  });
+
+  window.addEventListener('resize', function(){
+    isSmall = window.innerWidth < 640;
+    resize();
+    project();
+    draw();
+  }, { passive: true });
+
+  // ── Init ─────────────────────────────────────────────────────────────
+  resize();
+  project();
+  draw();
+  if(!prefersReduced){
+    rafId = requestAnimationFrame(frame);
+  }
+})();
+</script>
+</body>
+</html>

@@ -7,7 +7,7 @@
 <!--
   A library of reusable, standalone layout + navigation scaffolds. Each file is
   self-contained (inline CSS/JS, no build, no deps) and neutrally themed with
-  CSS variables at :root — fork one as the basis for a new build. 63 scaffolds
+  CSS variables at :root — fork one as the basis for a new build. 65 scaffolds
   across 7 categories of navigation paradigm.
 -->
 <style>
@@ -306,6 +306,15 @@
   .t-compare .col i{height:5px;border-radius:2px;background:#e3e5ea;display:block}
   .t-compare .col.w{background:var(--accent);border-color:transparent}
   .t-compare .col.w i{background:rgba(255,255,255,.72)}
+  .t-globe{display:block;border-radius:50%;background:#0d1319;border:1px solid var(--line)}
+  .t-globe .gd{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .t-globe .gd.sm{width:3px;height:3px;background:#5b6672;opacity:.7}
+  .t-board{flex-direction:column;gap:5px;padding:0 14px;justify-content:center}
+  .t-board .brow{display:flex;align-items:center;gap:6px;height:11px}
+  .t-board .brow .lbl{flex:1;height:6px;border-radius:3px;background:#d8dade;display:block}
+  .t-board .brow .chip{width:16px;height:8px;border-radius:3px;display:block;flex:0 0 auto}
+  .t-board .brow .chip.up{background:var(--accent)}
+  .t-board .brow .chip.down{background:rgba(220,38,38,.45)}
 
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
@@ -314,8 +323,8 @@
 <body>
   <div class="wrap">
     <header class="intro">
-      <p class="kicker">Reusable scaffolds · 63 layouts · info design coming</p>
-      <h1>Sixty-three ways to navigate.</h1>
+      <p class="kicker">Reusable scaffolds · 65 layouts · info design coming</p>
+      <h1>Sixty-five ways to navigate.</h1>
       <p>Standalone HTML templates — self-contained, no build, neutral tokens in
       <code>:root</code>. Fork one as a starting point. Each file opens with a comment
       describing its pattern, nav model, and regions; the <code>.scaffold</code> badge is safe to delete.</p>
@@ -351,6 +360,7 @@
       <a class="card" href="layouts/33-column-view.html" style="--accent:#9333EA"><div class="thumb"><div class="tw t-cols"><div class="b2"><i></i><i class="a"></i><i></i></div><div class="b2"><i class="a"></i><i></i><i></i></div><div class="b2"><i></i><i></i></div></div></div><div class="b"><p class="n">33</p><h3>Folder Column-View</h3><p class="nav"><b>Drill into columns</b> — selecting cascades children to the right.</p><div class="tags"><span class="tag">files</span><span class="tag">taxonomy</span></div></div></a>
       <a class="card" href="layouts/34-isometric.html" style="--accent:#0891B2"><div class="thumb"><div class="tw t-iso"><div class="plane"><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">34</p><h3>Isometric Scene</h3><p class="nav"><b>Travel a 2.5D plane</b> — click a zone; arrow keys move focus.</p><div class="tags"><span class="tag">world-select</span><span class="tag">playful</span></div></div></a>
       <a class="card" href="layouts/35-mind-map.html" style="--accent:#DB2777"><div class="thumb"><div class="tw t-tree"><svg class="tree-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M24,50 C42,50 46,24 60,24"/><path d="M24,50 H60"/><path d="M24,50 C42,50 46,76 60,76"/></svg><span class="root"></span><span class="kid" style="top:18%"></span><span class="kid" style="top:50%;transform:translateY(-50%)"></span><span class="kid" style="bottom:18%"></span></div></div><div class="b"><p class="n">35</p><h3>Mind-Map Tree</h3><p class="nav"><b>Expand branches</b> — click a node to grow its children.</p><div class="tags"><span class="tag">topics</span><span class="tag">structure</span></div></div></a>
+      <a class="card" href="layouts/64-globe.html" style="--accent:#0891B2"><div class="thumb"><div class="tw t-globe"><span class="gd" style="left:30%;top:26%"></span><span class="gd" style="left:60%;top:46%"></span><span class="gd" style="left:42%;top:68%"></span><span class="gd sm" style="left:18%;top:52%"></span><span class="gd sm" style="left:70%;top:26%"></span><span class="gd sm" style="left:54%;top:34%"></span><span class="gd sm" style="left:34%;top:44%"></span></div></div><div class="b"><p class="n">64</p><h3>Globe (3D Points)</h3><p class="nav"><b>Drag to spin</b> a point globe; click a dot to open its brief.</p><div class="tags"><span class="tag">network</span><span class="tag">footprint</span></div></div></a>
     </div>
 
     <p class="cat">Sequence & story — the axis is the nav</p>
@@ -390,6 +400,7 @@
       <a class="card" href="layouts/48-masonry.html" style="--accent:#DB2777"><div class="thumb"><div class="tw t-masonry"><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">48</p><h3>Masonry Gallery</h3><p class="nav"><b>Staggered grid</b> → click a tile to open a lightbox.</p><div class="tags"><span class="tag">gallery</span><span class="tag">moodboard</span></div></div></a>
       <a class="card" href="layouts/49-card-wallet.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-wallet"><span class="p"></span><span class="p"></span><span class="p"></span></div></div><div class="b"><p class="n">49</p><h3>Card Wallet</h3><p class="nav"><b>Tap a pass</b> to raise it, tap again to flip for detail.</p><div class="tags"><span class="tag">passes</span><span class="tag">loyalty</span></div></div></a>
       <a class="card" href="layouts/50-data-table.html" style="--accent:#475569"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span></div></div><div class="b"><p class="n">50</p><h3>Data Table</h3><p class="nav"><b>Sort columns</b>, click a row for a detail drawer.</p><div class="tags"><span class="tag">admin</span><span class="tag">records</span></div></div></a>
+      <a class="card" href="layouts/65-ticker-board.html" style="--accent:#475569"><div class="thumb"><div class="tw t-board"><div class="brow"><span class="lbl"></span><span class="chip up"></span></div><div class="brow"><span class="lbl"></span><span class="chip down"></span></div><div class="brow"><span class="lbl"></span><span class="chip up"></span></div><div class="brow"><span class="lbl"></span><span class="chip up"></span></div></div></div><div class="b"><p class="n">65</p><h3>Ticker / Stock-Board</h3><p class="nav"><b>Values tick live</b> — a marquee runs above; click a row for its sparkline.</p><div class="tags"><span class="tag">markets</span><span class="tag">leaderboard</span></div></div></a>
     </div>
 
     <p class="cat">Immersive — cinematic</p>
