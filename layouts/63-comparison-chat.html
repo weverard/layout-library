@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>63 · Comparison-in-Chat — Layout scaffold</title>
+<!--
+  PATTERN    Comparison-in-Chat
+  NAV MODEL  A chat where mentioning a product adds a column to a growing
+             comparison tray pinned beside the thread. Toggling "highlight
+             differences" accents attribute rows that disagree across columns;
+             a Pick button per column names a winner and the agent closes with
+             a summary turn. The tray persists across the whole conversation.
+  BEST FOR   Product comparison, plan/tier chooser, vendor evaluation.
+  REGIONS    .thread  ·  .tray (product columns × attribute rows)  ·
+             .diff toggle  ·  .pick (choose-winner CTA per column)
+  RE-SKIN    --accent = added-column flash + diff highlights + winner column.
+             Responsive: below 760px the tray docks below the thread.
+-->
+<style>
+  :root{
+    --bg:#F6F6FB; --surface:#fff; --ink:#16161f; --muted:#6b6f7d; --line:rgba(20,20,30,.12);
+    --accent:#6366F1; --accent-lt:#eef0ff;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;appearance:none;-webkit-tap-highlight-color:transparent}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:34px 22px 90px}
+  .masthead{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+  .masthead .logo{width:30px;height:30px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+  .masthead .name{font-weight:700;font-size:16px}
+  .masthead .tag{font-size:12px;color:var(--muted);margin-left:2px}
+
+  .layout{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
+
+  /* ── thread ── */
+  .thread-panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    display:flex;flex-direction:column;height:560px;overflow:hidden;
+  }
+  .thread-head{padding:13px 16px;border-bottom:1px solid var(--line);font-size:12px;font-family:var(--mono);color:var(--muted);letter-spacing:.04em}
+  .thread{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .msg{display:flex;flex-direction:column;gap:4px;max-width:94%;animation:rise .22s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .msg.user{align-self:flex-end;align-items:flex-end}
+  .msg.agent{align-self:flex-start}
+  .bubble{border-radius:14px;padding:9px 12px;font-size:13.5px;line-height:1.5}
+  .msg.user .bubble{background:var(--ink);color:#fff;border-bottom-right-radius:4px}
+  .msg.agent .bubble{background:#f1f1f6;color:var(--ink);border-bottom-left-radius:4px}
+  .typing-dots{display:inline-flex;gap:4px;padding:2px 0}
+  .typing-dots i{display:block;width:5px;height:5px;border-radius:50%;background:#9497a3;animation:bln 1s infinite}
+  .typing-dots i:nth-child(2){animation-delay:.15s}
+  .typing-dots i:nth-child(3){animation-delay:.3s}
+  @keyframes bln{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+  .composer{flex-shrink:0;border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:8px}
+  .msg-input{flex:1;border:1px solid var(--line);border-radius:20px;padding:9px 14px;font:inherit;font-size:13.5px;color:var(--ink);background:#fafafc;outline:none;transition:border-color .15s}
+  .msg-input:focus{border-color:var(--accent)}
+  .send-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;font-size:15px;font-weight:800;flex-shrink:0;transition:opacity .15s,transform .1s}
+  .send-btn:active{transform:scale(.93)}
+  .send-btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ── tray ── */
+  .tray-panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    height:560px;display:flex;flex-direction:column;overflow:hidden;
+  }
+  .tray-head{
+    padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;
+  }
+  .tray-head h2{font-size:12px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:auto}
+  .diff-toggle{
+    font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:6px 13px;
+    transition:background .15s,border-color .15s,color .15s;
+  }
+  .diff-toggle.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+  .tray-scroll{flex:1;overflow:auto;padding:0}
+  .tray-empty{color:var(--muted);font-size:13px;padding:30px 20px;text-align:center}
+
+  table.tray-table{border-collapse:separate;border-spacing:0;width:100%;min-width:420px}
+  .tray-table th, .tray-table td{padding:10px 16px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;font-size:13px}
+  .tray-table .attr-col{
+    position:sticky;left:0;background:var(--surface);z-index:2;
+    font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    border-right:1px solid var(--line);
+  }
+  thead .attr-col{background:var(--surface)}
+  .prod-col{min-width:150px;position:relative}
+  .prod-col .pname{font-size:13.5px;font-weight:700;margin-bottom:6px}
+  .prod-col .pick-btn{
+    font-size:11px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:4px 10px;
+    color:var(--muted);transition:background .15s,border-color .15s,color .15s;
+  }
+  .prod-col .pick-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .prod-col.winner .pick-btn{background:var(--accent);border-color:var(--accent);color:#fff}
+  th.prod-col.winner, td.prod-col.winner{background:var(--accent-lt)}
+  th.flash, td.flash{animation:colFlash 1s ease}
+  @keyframes colFlash{0%{background:var(--accent-lt)}100%{background:transparent}}
+  th.prod-col.winner.flash, td.prod-col.winner.flash{animation:none}
+
+  tr[data-attr].diff td.prod-col{background:#fff7ec}
+  tr[data-attr].diff td.prod-col.winner{background:#e3fbe8}
+  tr[data-attr].diff .attr-col{color:var(--ink);font-weight:700}
+
+  /* ── responsive ── */
+  @media (max-width:760px){
+    .layout{grid-template-columns:1fr}
+    .thread-panel{order:-1;height:420px}
+    .tray-panel{height:380px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="masthead">
+      <div class="logo">◆</div>
+      <span class="name">Compareo</span>
+      <span class="tag">· agent laptop comparison</span>
+    </div>
+
+    <div class="layout">
+      <div class="thread-panel">
+        <div class="thread-head">Chat — mention a model to add it to the tray</div>
+        <div class="thread" id="thread"></div>
+        <div class="composer">
+          <input class="msg-input" id="msgInput" type="text" placeholder="Ask about a laptop…" autocomplete="off" />
+          <button class="send-btn" id="sendBtn" aria-label="Send">↑</button>
+        </div>
+      </div>
+
+      <div class="tray-panel">
+        <div class="tray-head">
+          <h2>Comparison tray</h2>
+          <button class="diff-toggle" id="diffToggle">Highlight differences</button>
+        </div>
+        <div class="tray-scroll" id="trayScroll">
+          <div class="tray-empty" id="trayEmpty">Nothing to compare yet — send a message to add a model.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scaffold">63 · comparison-chat &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var ROWS = [
+    {k:'price',    label:'Price'},
+    {k:'battery',  label:'Battery'},
+    {k:'weight',   label:'Weight'},
+    {k:'warranty', label:'Warranty'},
+    {k:'rating',   label:'Rating'}
+  ];
+
+  var TURNS = [
+    {mention:'Nimbus 14',  user:'Compare the Nimbus 14',            reply:'Added the Nimbus 14 to the comparison.',
+      p:{id:'c1', name:'Nimbus 14',  price:'$999',  battery:'18 hrs', weight:'1.2 kg',  warranty:'1 yr', rating:'4.6★'}},
+    {mention:'Zenith Air', user:'What about the Zenith Air?',       reply:"Added the Zenith Air — it's lighter, worth a look.",
+      p:{id:'c2', name:'Zenith Air', price:'$849',  battery:'14 hrs', weight:'0.98 kg', warranty:'1 yr', rating:'4.3★'}},
+    {mention:'Orbit Max',  user:'And the Orbit Max?',               reply:'Added the Orbit Max — longest battery of the three.',
+      p:{id:'c3', name:'Orbit Max',  price:'$1199', battery:'22 hrs', weight:'1.4 kg',  warranty:'1 yr', rating:'4.8★'}},
+    {mention:'Drift Mini', user:'One more — the Drift Mini',        reply:'Added the Drift Mini, the budget pick of the group.',
+      p:{id:'c4', name:'Drift Mini', price:'$649',  battery:'10 hrs', weight:'0.85 kg', warranty:'1 yr', rating:'4.1★'}}
+  ];
+  var CLOSER = "You've got four models in the tray — toggle differences to compare, or pick a winner above.";
+
+  var threadEl  = document.getElementById('thread');
+  var msgInput  = document.getElementById('msgInput');
+  var sendBtn   = document.getElementById('sendBtn');
+  var trayScroll= document.getElementById('trayScroll');
+  var trayEmpty = document.getElementById('trayEmpty');
+  var diffToggle= document.getElementById('diffToggle');
+
+  var turnIndex = 0;
+  var busy = false;
+  var timers = [];
+  var diffOn = false;
+  var table = null; // built lazily on first column
+  var winnerId = null;
+
+  function pushTimer(fn, ms){
+    var id = setTimeout(function(){
+      timers = timers.filter(function(t){ return t !== id; });
+      fn();
+    }, ms);
+    timers.push(id);
+    return id;
+  }
+  function clearPending(){
+    timers.forEach(function(id){ clearTimeout(id); });
+    timers = [];
+  }
+
+  function scrollThread(){ threadEl.scrollTop = threadEl.scrollHeight; }
+
+  function addMsg(role, text){
+    var row = document.createElement('div');
+    row.className = 'msg ' + role;
+    var b = document.createElement('div');
+    b.className = 'bubble';
+    b.textContent = text;
+    row.appendChild(b);
+    threadEl.appendChild(row);
+    scrollThread();
+    return row;
+  }
+
+  function addTyping(){
+    var row = document.createElement('div');
+    row.className = 'msg agent';
+    var b = document.createElement('div');
+    b.className = 'bubble';
+    b.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span>';
+    row.appendChild(b);
+    threadEl.appendChild(row);
+    scrollThread();
+    return row;
+  }
+
+  /* ── build the table on demand ── */
+  function ensureTable(){
+    if(table) return table;
+    trayEmpty.remove();
+    table = document.createElement('table');
+    table.className = 'tray-table';
+    var thead = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    var attrTh = document.createElement('th');
+    attrTh.className = 'attr-col';
+    attrTh.textContent = 'Attribute';
+    headRow.appendChild(attrTh);
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    ROWS.forEach(function(row){
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-attr', row.k);
+      var td = document.createElement('td');
+      td.className = 'attr-col';
+      td.textContent = row.label;
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    trayScroll.appendChild(table);
+    return table;
+  }
+
+  function addColumn(p){
+    var t = ensureTable();
+    var headRow = t.querySelector('thead tr');
+    var th = document.createElement('th');
+    th.className = 'prod-col flash';
+    th.setAttribute('data-id', p.id);
+    th.innerHTML = '<div class="pname">' + p.name + '</div><button class="pick-btn" data-act="pick">Pick</button>';
+    headRow.appendChild(th);
+
+    ROWS.forEach(function(row){
+      var tr = t.querySelector('tr[data-attr="' + row.k + '"]');
+      var td = document.createElement('td');
+      td.className = 'prod-col flash';
+      td.setAttribute('data-id', p.id);
+      td.textContent = p[row.k];
+      tr.appendChild(td);
+    });
+
+    pushTimer(function(){
+      t.querySelectorAll('.flash').forEach(function(el){ el.classList.remove('flash'); });
+    }, 1000);
+
+    trayScroll.scrollLeft = trayScroll.scrollWidth;
+    recomputeDiff();
+  }
+
+  function recomputeDiff(){
+    if(!table) return;
+    ROWS.forEach(function(row){
+      var tr = table.querySelector('tr[data-attr="' + row.k + '"]');
+      var cells = tr.querySelectorAll('td.prod-col');
+      var values = Array.prototype.map.call(cells, function(c){ return c.textContent; });
+      var uniq = values.filter(function(v, i){ return values.indexOf(v) === i; });
+      var differs = uniq.length > 1;
+      tr.classList.toggle('diff', diffOn && differs);
+    });
+  }
+
+  diffToggle.addEventListener('click', function(){
+    diffOn = !diffOn;
+    diffToggle.classList.toggle('on', diffOn);
+    diffToggle.textContent = diffOn ? '✓ Highlighting differences' : 'Highlight differences';
+    recomputeDiff();
+  });
+
+  trayScroll.addEventListener('click', function(e){
+    var btn = e.target.closest('.pick-btn');
+    if(!btn) return;
+    var col = btn.closest('.prod-col');
+    var id = col.getAttribute('data-id');
+    winnerId = (winnerId === id) ? null : id;
+    table.querySelectorAll('.prod-col').forEach(function(cell){
+      var isWinner = cell.getAttribute('data-id') === winnerId;
+      cell.classList.toggle('winner', isWinner);
+      var pb = cell.querySelector('.pick-btn');
+      if(pb) pb.textContent = isWinner ? '✓ Picked' : 'Pick';
+    });
+    if(winnerId){
+      var winnerName = table.querySelector('th.prod-col[data-id="' + winnerId + '"] .pname').textContent;
+      pushTimer(function(){
+        addTyping();
+        pushTimer(function(){
+          threadEl.querySelector('.msg.agent:last-child').remove();
+          addMsg('agent', 'Good call — the ' + winnerName + ' looks like the best fit. Want to compare anything else?');
+        }, 500);
+      }, 120);
+    }
+  });
+
+  /* ── send flow ── */
+  function playTurn(){
+    if(turnIndex >= TURNS.length){
+      addTyping();
+      pushTimer(function(){
+        threadEl.querySelector('.msg.agent:last-child').remove();
+        addMsg('agent', CLOSER);
+        busy = false;
+        sendBtn.disabled = false;
+      }, 500);
+      return;
+    }
+    var turn = TURNS[turnIndex];
+    addTyping();
+    pushTimer(function(){
+      threadEl.querySelector('.msg.agent:last-child').remove();
+      addMsg('agent', turn.reply);
+      addColumn(turn.p);
+      turnIndex++;
+      busy = false;
+      sendBtn.disabled = false;
+    }, 550);
+  }
+
+  function handleSend(){
+    if(busy) return;
+    var val = msgInput.value.trim();
+    var fallback = turnIndex < TURNS.length ? TURNS[turnIndex].user : 'Anything else to compare?';
+    var text = val || fallback;
+    msgInput.value = '';
+    clearPending();
+    busy = true;
+    sendBtn.disabled = true;
+    addMsg('user', text);
+    playTurn();
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+  msgInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); handleSend(); }
+  });
+
+  /* ── greeting ── */
+  addMsg('agent', "Hi — tell me which laptops you're weighing and I'll build a side-by-side comparison.");
+})();
+</script>
+</body>
+</html>

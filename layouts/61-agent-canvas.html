@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>61 · Chat + Live Product Canvas — Layout scaffold</title>
+<!--
+  PATTERN    Chat + Live Product Canvas
+  NAV MODEL  A chat rail drives a persistent product canvas: each scripted agent
+             reply adds or rearranges product tiles on the canvas. Hovering a
+             message draws a link line to the tiles it produced; clicking a tile
+             raises it and pops a "why" chip explaining its presence.
+  BEST FOR   Agent shopping, curation tools, research-with-artifacts.
+  REGIONS    .chat (thread + input)  ·  .canvas (product tiles, focus state)  ·
+             .linkline (hover cue tying a message to its tiles)
+  RE-SKIN    --accent = agent bubbles + focused tile + link line. Responsive:
+             below 760px the canvas stacks above the chat rail.
+-->
+<style>
+  :root{
+    --bg:#0F1115; --surface:#fff; --ink:#15161A; --muted:#6b7280; --line:rgba(20,20,26,.1);
+    --accent:#22D3EE; --accent-lt:#ecfeff; --bot-bg:#f1f5f9; --panel:#181a20;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;appearance:none;-webkit-tap-highlight-color:transparent}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:36px 22px 80px}
+  .masthead{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .masthead .logo{width:30px;height:30px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#0b1116;font-size:15px;font-weight:800;flex-shrink:0}
+  .masthead .name{font-weight:700;font-size:16px;color:#fff}
+  .masthead .tag{font-size:12px;color:#8b93a1;margin-left:2px}
+
+  .layout{position:relative;display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+
+  /* ── chat rail ── */
+  .chat{
+    background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:16px;
+    display:flex;flex-direction:column;height:600px;overflow:hidden;
+  }
+  .chat-head{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;font-family:var(--mono);color:#8b93a1;letter-spacing:.04em}
+  .thread{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .msg{display:flex;flex-direction:column;gap:4px;max-width:92%;animation:rise .22s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .msg.user{align-self:flex-end;align-items:flex-end}
+  .msg.agent{align-self:flex-start}
+  .bubble{border-radius:14px;padding:9px 12px;font-size:13.5px;line-height:1.5}
+  .msg.user .bubble{background:#2a2d36;color:#fff;border-bottom-right-radius:4px}
+  .msg.agent .bubble{background:#20232b;color:#e5e7eb;border-bottom-left-radius:4px;border:1px solid rgba(255,255,255,.06);transition:box-shadow .15s,border-color .15s}
+  .msg.agent[data-turn].linked .bubble{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .cursor-blink{display:inline-block;width:2px;height:12px;background:var(--accent);margin-left:2px;vertical-align:text-bottom;animation:blink .7s infinite}
+  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+  .typing-dots{display:inline-flex;gap:4px;padding:2px 0}
+  .typing-dots i{display:block;width:5px;height:5px;border-radius:50%;background:#6b7280;animation:bln 1s infinite}
+  .typing-dots i:nth-child(2){animation-delay:.15s}
+  .typing-dots i:nth-child(3){animation-delay:.3s}
+  @keyframes bln{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+  .composer{flex-shrink:0;border-top:1px solid rgba(255,255,255,.08);padding:10px 12px;display:flex;gap:8px}
+  .msg-input{flex:1;border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:9px 14px;font:inherit;font-size:13.5px;color:#fff;background:#0d0f13;outline:none;transition:border-color .15s}
+  .msg-input:focus{border-color:var(--accent)}
+  .msg-input::placeholder{color:#5b6270}
+  .send-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#0b1116;font-size:15px;font-weight:800;flex-shrink:0;transition:opacity .15s,transform .1s}
+  .send-btn:active{transform:scale(.93)}
+  .send-btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ── canvas ── */
+  .canvas{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    height:600px;overflow-y:auto;overflow-x:visible;padding:20px;position:relative;
+  }
+  .canvas-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .canvas-head h2{font-size:14px;font-family:var(--mono);letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+  .canvas-empty{color:var(--muted);font-size:13px;padding:40px 0;text-align:center}
+  .tile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}
+  .tile{
+    position:relative;background:#fff;border:1px solid var(--line);border-radius:13px;overflow:visible;
+    padding:0 0 10px;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,opacity .18s;
+    animation:land .38s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes land{from{opacity:0;transform:translateY(14px) scale(.92)}to{opacity:1;transform:none}}
+  .tile .swatch{height:64px;border-radius:13px 13px 0 0}
+  .tile .info{padding:9px 10px 0}
+  .tile .pname{font-size:12.5px;font-weight:600;line-height:1.3}
+  .tile .pprice{font-size:12px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+  .tile:hover{border-color:#cfd2d8;transform:translateY(-2px)}
+  .tile.linked{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+  .tile.faded{opacity:.4}
+  .tile.focused{
+    border-color:var(--accent);z-index:6;transform:translateY(-6px) scale(1.06);
+    box-shadow:0 18px 34px rgba(0,0,0,.16);
+  }
+  .why-chip{
+    position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(4px);
+    background:var(--ink);color:#fff;font-size:11.5px;line-height:1.4;padding:8px 10px;border-radius:9px;
+    width:190px;text-align:left;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:10;
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
+  }
+  .why-chip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--ink)}
+  .tile.focused .why-chip{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ── link line overlay ── */
+  .linkline-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:20}
+  .linkline-svg line{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 4;opacity:0;transition:opacity .15s}
+  .linkline-svg line.on{opacity:.85}
+
+  /* ── responsive ── */
+  @media (max-width:760px){
+    .layout{grid-template-columns:1fr}
+    .canvas{order:-1;height:340px}
+    .chat{height:440px}
+    .tile-grid{grid-template-columns:repeat(2,1fr)}
+    .linkline-svg{display:none}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="masthead">
+      <div class="logo">◆</div>
+      <span class="name">Fernwood</span>
+      <span class="tag">· agent shopping canvas</span>
+    </div>
+
+    <div class="layout" id="layoutEl">
+      <svg class="linkline-svg" id="linkSvg"><line id="linkLine" x1="0" y1="0" x2="0" y2="0"></line></svg>
+
+      <div class="chat">
+        <div class="chat-head">Assistant thread — hover a reply to see what it added</div>
+        <div class="thread" id="thread"></div>
+        <div class="composer">
+          <input class="msg-input" id="msgInput" type="text" placeholder="Ask the agent to shop for you…" autocomplete="off" />
+          <button class="send-btn" id="sendBtn" aria-label="Send">↑</button>
+        </div>
+      </div>
+
+      <div class="canvas" id="canvas">
+        <div class="canvas-head"><h2>Canvas</h2></div>
+        <div class="canvas-empty" id="canvasEmpty">Nothing here yet — send a message to start.</div>
+        <div class="tile-grid" id="tileGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scaffold">61 · agent-canvas &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var threadEl   = document.getElementById('thread');
+  var msgInput   = document.getElementById('msgInput');
+  var sendBtn    = document.getElementById('sendBtn');
+  var tileGrid   = document.getElementById('tileGrid');
+  var canvasEmpty= document.getElementById('canvasEmpty');
+  var canvasEl   = document.getElementById('canvas');
+  var layoutEl   = document.getElementById('layoutEl');
+  var linkSvg    = document.getElementById('linkSvg');
+  var linkLine   = document.getElementById('linkLine');
+
+  var TURNS = [
+    {
+      user: 'Set up my home office',
+      reply: "Here's a starter kit — a desk, an ergonomic chair, and a monitor arm to free up surface space.",
+      products: [
+        {id:'p1', name:'Aalto Desk 140', price:'$340', swatch:'linear-gradient(135deg,#7dd3fc,#0ea5e9)', why:'The anchor piece — sized for a single monitor + laptop setup.'},
+        {id:'p2', name:'Mesh Task Chair', price:'$210', swatch:'linear-gradient(135deg,#a7f3d0,#10b981)', why:'Ergonomic support to pair with a full workday at the desk.'},
+        {id:'p3', name:'Dual Monitor Arm', price:'$95', swatch:'linear-gradient(135deg,#fde68a,#f59e0b)', why:'Clears desk surface — you asked for a home office, not a control room.'}
+      ]
+    },
+    {
+      user: 'Make it more minimal',
+      reply: 'Swapping in slimmer, lower-profile pieces that read as quieter.',
+      products: [
+        {id:'p4', name:'Slate Desk 120', price:'$310', swatch:'linear-gradient(135deg,#e5e7eb,#9ca3af)', why:'Thinner top and legs — replaces the bulkier desk per "more minimal."'},
+        {id:'p5', name:'Wire-Frame Chair', price:'$175', swatch:'linear-gradient(135deg,#ddd6fe,#8b5cf6)', why:'Lighter visual weight than the mesh chair, same support.'}
+      ]
+    },
+    {
+      user: 'Add something for cable management',
+      reply: "Good call — this tray clips right under the desk and hides the power strip.",
+      products: [
+        {id:'p6', name:'Underdesk Cable Tray', price:'$28', swatch:'linear-gradient(135deg,#fecaca,#f87171)', why:'Keeps cords off the floor — pairs with the Slate Desk mounts.'}
+      ]
+    }
+  ];
+  var CLOSER = "That rounds out the setup — everything on the canvas is ready whenever you want to check out.";
+
+  var turnIndex = 0;
+  var busy = false;
+  var timers = [];
+
+  function pushTimer(fn, ms){
+    var id = setTimeout(function(){
+      timers = timers.filter(function(t){ return t !== id; });
+      fn();
+    }, ms);
+    timers.push(id);
+    return id;
+  }
+  function clearPending(){
+    timers.forEach(function(id){ clearTimeout(id); });
+    timers = [];
+  }
+
+  function scrollThread(){ threadEl.scrollTop = threadEl.scrollHeight; }
+
+  function addUserMsg(text){
+    var row = document.createElement('div');
+    row.className = 'msg user';
+    var b = document.createElement('div');
+    b.className = 'bubble';
+    b.textContent = text;
+    row.appendChild(b);
+    threadEl.appendChild(row);
+    scrollThread();
+  }
+
+  function addTyping(){
+    var row = document.createElement('div');
+    row.className = 'msg agent';
+    var b = document.createElement('div');
+    b.className = 'bubble';
+    b.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span>';
+    row.appendChild(b);
+    threadEl.appendChild(row);
+    scrollThread();
+    return row;
+  }
+
+  function typeReply(bubbleEl, text, done){
+    bubbleEl.innerHTML = '<span class="rtext"></span><span class="cursor-blink"></span>';
+    var span = bubbleEl.querySelector('.rtext');
+    var i = 0;
+    function step(){
+      span.textContent = text.slice(0, i);
+      scrollThread();
+      if(i >= text.length){
+        bubbleEl.querySelector('.cursor-blink').remove();
+        done();
+        return;
+      }
+      i += 2;
+      pushTimer(step, 14);
+    }
+    step();
+  }
+
+  function tileHtml(p){
+    var tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.setAttribute('data-turn', String(p.turnId));
+    tile.setAttribute('data-id', p.id);
+    tile.innerHTML =
+      '<div class="why-chip">' + p.why + '</div>' +
+      '<div class="swatch" style="background:' + p.swatch + '"></div>' +
+      '<div class="info"><div class="pname">' + p.name + '</div><div class="pprice">' + p.price + '</div></div>';
+    return tile;
+  }
+
+  function landTiles(products, turnId, done){
+    canvasEmpty.style.display = 'none';
+    var i = 0;
+    function dropOne(){
+      if(i >= products.length){ done(); return; }
+      var p = products[i];
+      p.turnId = turnId;
+      var el = tileHtml(p);
+      tileGrid.appendChild(el);
+      canvasEl.scrollTop = canvasEl.scrollHeight;
+      i++;
+      pushTimer(dropOne, 160);
+    }
+    dropOne();
+  }
+
+  function playTurn(){
+    if(turnIndex >= TURNS.length){
+      addTyping();
+      pushTimer(function(){
+        var last = threadEl.querySelector('.msg.agent:last-child .bubble');
+        typeReply(last, CLOSER, function(){ busy = false; sendBtn.disabled = false; });
+      }, 500);
+      return;
+    }
+    var turn = TURNS[turnIndex];
+    var typingRow = addTyping();
+    pushTimer(function(){
+      var bubble = typingRow.querySelector('.bubble');
+      typingRow.setAttribute('data-turn', String(turnIndex));
+      typeReply(bubble, turn.reply, function(){
+        landTiles(turn.products, turnIndex, function(){
+          turnIndex++;
+          busy = false;
+          sendBtn.disabled = false;
+        });
+      });
+    }, 550);
+  }
+
+  function handleSend(){
+    if(busy) return;
+    var val = msgInput.value.trim();
+    var fallback = turnIndex < TURNS.length ? TURNS[turnIndex].user : 'Anything else?';
+    var text = val || fallback;
+    msgInput.value = '';
+    clearPending();
+    busy = true;
+    sendBtn.disabled = true;
+    addUserMsg(text);
+    playTurn();
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+  msgInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); handleSend(); }
+  });
+
+  /* ── hover link: message <-> tiles ── */
+  function clearLinks(){
+    tileGrid.querySelectorAll('.tile.linked').forEach(function(t){ t.classList.remove('linked'); });
+    threadEl.querySelectorAll('.msg.agent.linked').forEach(function(m){ m.classList.remove('linked'); });
+    linkLine.classList.remove('on');
+  }
+
+  threadEl.addEventListener('mouseover', function(e){
+    var msg = e.target.closest('.msg.agent[data-turn]');
+    if(!msg) return;
+    var turnId = msg.getAttribute('data-turn');
+    var tiles = tileGrid.querySelectorAll('.tile[data-turn="' + turnId + '"]');
+    if(!tiles.length) return;
+    msg.classList.add('linked');
+    tiles.forEach(function(t){ t.classList.add('linked'); });
+
+    if(window.innerWidth > 760){
+      var layoutRect = layoutEl.getBoundingClientRect();
+      var msgRect = msg.getBoundingClientRect();
+      var tileRect = tiles[0].getBoundingClientRect();
+      linkLine.setAttribute('x1', (msgRect.right - layoutRect.left));
+      linkLine.setAttribute('y1', (msgRect.top + msgRect.height / 2 - layoutRect.top));
+      linkLine.setAttribute('x2', (tileRect.left - layoutRect.left));
+      linkLine.setAttribute('y2', (tileRect.top + tileRect.height / 2 - layoutRect.top));
+      linkLine.classList.add('on');
+    }
+  });
+  threadEl.addEventListener('mouseout', function(e){
+    var msg = e.target.closest('.msg.agent[data-turn]');
+    if(!msg) return;
+    if(e.relatedTarget && msg.contains(e.relatedTarget)) return;
+    clearLinks();
+  });
+
+  /* ── click a tile: focus + why chip ── */
+  tileGrid.addEventListener('click', function(e){
+    var tile = e.target.closest('.tile');
+    if(!tile) return;
+    var already = tile.classList.contains('focused');
+    tileGrid.querySelectorAll('.tile').forEach(function(t){
+      t.classList.remove('focused');
+      t.classList.remove('faded');
+    });
+    if(!already){
+      tile.classList.add('focused');
+      tileGrid.querySelectorAll('.tile').forEach(function(t){
+        if(t !== tile) t.classList.add('faded');
+      });
+    }
+  });
+
+  canvasEl.addEventListener('click', function(e){
+    if(e.target === canvasEl || e.target === tileGrid){
+      tileGrid.querySelectorAll('.tile').forEach(function(t){
+        t.classList.remove('focused');
+        t.classList.remove('faded');
+      });
+    }
+  });
+
+  /* ── greeting ── */
+  var greetRow = document.createElement('div');
+  greetRow.className = 'msg agent';
+  var greetBubble = document.createElement('div');
+  greetBubble.className = 'bubble';
+  greetBubble.textContent = "Hi — I'm your shopping agent. Tell me what you're setting up and I'll build it on the canvas.";
+  greetRow.appendChild(greetBubble);
+  threadEl.appendChild(greetRow);
+})();
+</script>
+</body>
+</html>

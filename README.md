@@ -17,8 +17,9 @@ A gallery (`index.html`) links to all of them with mini wireframe thumbnails.
 > including two ChatGPT-style homages: `55` (desktop, Shopping Research + Instant
 > Checkout) and `60` (mobile, bottom-sheet checkout). Every scaffold was
 > browser-verified (clean console + working interaction). Catalog/backlog/counts
-> below are current. Not a git repo (nothing committed). **Open follow-ups:** take
-> Agentic commerce from 6 → 9 (backlog ideas listed below); optional `git init`.
+> below are current. **Update 2026-07-04:** Agentic commerce grown 6 → **9**
+> (`61` Chat + Live Product Canvas, `62` Human-in-the-Loop Approvals,
+> `63` Comparison-in-Chat) — library now **63 scaffolds**.
 
 ---
 
@@ -125,7 +126,7 @@ fresh load in the browser.
 
 ---
 
-## The catalog (60)
+## The catalog (63)
 
 **Foundations — app & document shells**
 `01` Split Panel · `02` Centered Document · `03` Sidebar App Shell ·
@@ -161,12 +162,15 @@ fresh load in the browser.
 `51` Mobile Shopping Chat · `52` Agentic Checkout Journey (deck) ·
 `53` Streaming Agent Trace · `54` Multi-Agent Handoff ·
 `55` ChatGPT Agentic Commerce (Shopping Research + Instant Checkout) ·
-`60` ChatGPT Mobile Commerce (mobile chat + bottom-sheet checkout)
-> Set of 6 (2026-06-23). `55` (desktop) and `60` (mobile) are illustrative
-> ChatGPT-style homages (fictional products/merchants); `60` reuses `55`'s flow in
-> a phone frame with checkout as a slide-up bottom sheet. Could extend toward 9
-> later: chat + live canvas, human-in-the-loop approvals, chat-assembled cart
-> drawer, comparison-in-chat, voice + chat commerce.
+`60` ChatGPT Mobile Commerce (mobile chat + bottom-sheet checkout) ·
+`61` Chat + Live Product Canvas · `62` Human-in-the-Loop Approvals ·
+`63` Comparison-in-Chat
+> Set of 9 (grown 6 → 9 on 2026-07-04 with `61`–`63`). `55` (desktop) and `60`
+> (mobile) are illustrative ChatGPT-style homages (fictional products/merchants);
+> `60` reuses `55`'s flow in a phone frame with checkout as a slide-up bottom
+> sheet. `61` pairs a chat rail with a persistent product canvas, `62` is an
+> approve/edit/reject proposal queue, `63` grows a comparison tray from chat
+> mentions.
 
 ---
 
@@ -174,6 +178,5 @@ fresh load in the browser.
 
 globe (3D points) · ticker / stock-board.
 
-Agentic-commerce ideas not yet built (to take the category from 5 → 9): chat + live
-product canvas · human-in-the-loop approvals · chat-assembled cart drawer ·
-comparison-in-chat · voice + chat commerce.
+Agentic-commerce ideas not yet built: chat-assembled cart drawer ·
+voice + chat commerce.

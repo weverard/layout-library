@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>62 · Human-in-the-Loop Approvals — Layout scaffold</title>
+<!--
+  PATTERN    Human-in-the-Loop Approvals
+  NAV MODEL  An agent proposes purchase actions into a pending queue; the human
+             approves, edits, or rejects each one. Approved actions play into an
+             activity log with a running total. Navigation IS the queue — there
+             is no separate menu, just proposals arriving and leaving.
+  BEST FOR   Agent commerce guardrails, expense approval, moderation queues.
+  REGIONS    .queue (.proposal cards: intent, price, rationale)  ·  .editor
+             (inline amend — qty/budget)  ·  .log (approved/rejected trail)  ·
+             .agentbar (status: proposing / waiting / executing)
+  RE-SKIN    --accent = approve button + agent status. Responsive: below 720px
+             the queue and log stack into one column.
+-->
+<style>
+  :root{
+    --bg:#FBF8F4; --surface:#fff; --ink:#17140F; --muted:#78716c; --line:rgba(23,20,15,.12);
+    --accent:#F97316; --accent-lt:#fff1e6; --reject:#dc2626; --reject-lt:#fef2f2;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;appearance:none;-webkit-tap-highlight-color:transparent}
+  input{font:inherit;color:inherit}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:34px 22px 90px}
+
+  /* ── agentbar ── */
+  .agentbar{
+    display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:14px 18px;margin-bottom:20px;
+  }
+  .agentbar .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 1.4s infinite}
+  .agentbar.idle .dot{animation:none;background:#a3a3a3}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .agentbar .lbl{font-weight:700;font-size:14px}
+  .agentbar .state{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .agentbar .total{margin-left:auto;text-align:right}
+  .agentbar .total .k{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+  .agentbar .total .v{font-size:18px;font-weight:800;font-family:var(--mono)}
+
+  /* ── two-pane layout ── */
+  .panes{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+
+  .col-head{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+
+  /* ── queue ── */
+  .queue{display:flex;flex-direction:column;gap:12px;min-height:120px}
+  .queue-empty{
+    background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:30px 20px;
+    text-align:center;color:var(--muted);font-size:13.5px;
+  }
+  .proposal{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+    animation:rise .25s ease;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .proposal.leaving{animation:leave .3s ease forwards}
+  @keyframes leave{to{opacity:0;transform:translateX(24px) scale(.97)}}
+  .proposal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .proposal .intent{font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .proposal .price{font-family:var(--mono);font-size:15px;font-weight:700;white-space:nowrap}
+  .proposal .rationale{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.5}
+  .proposal .meta{display:flex;gap:8px;margin-top:8px}
+  .proposal .tag{font-size:10.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;background:var(--accent-lt);color:var(--accent);border-radius:5px;padding:3px 7px}
+
+  .proposal-actions{display:flex;gap:8px;margin-top:14px}
+  .btn{border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;transition:opacity .15s,transform .1s,background .15s}
+  .btn:active{transform:scale(.96)}
+  .btn-approve{background:var(--accent);color:#fff}
+  .btn-approve:hover{opacity:.9}
+  .btn-edit{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+  .btn-edit:hover{border-color:var(--ink)}
+  .btn-reject{background:var(--reject-lt);color:var(--reject)}
+  .btn-reject:hover{opacity:.85}
+
+  /* ── inline editor ── */
+  .editor{
+    margin-top:12px;border-top:1px solid var(--line);padding-top:12px;
+    display:none;gap:10px;flex-wrap:wrap;align-items:flex-end;
+  }
+  .editor.open{display:flex}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:10.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .field input{width:88px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px}
+  .field input:focus{outline:none;border-color:var(--accent)}
+  .btn-save{background:var(--ink);color:#fff}
+  .editor-repriced{font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--mono)}
+
+  /* ── log ── */
+  .log{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow-y:auto}
+  .log-empty{color:var(--muted);font-size:13px;padding:6px 2px}
+  .log-item{
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    display:flex;align-items:flex-start;gap:8px;animation:rise .2s ease;
+  }
+  .log-item .mark{font-size:13px;flex-shrink:0;margin-top:1px}
+  .log-item.approved .mark{color:var(--accent)}
+  .log-item.rejected .mark{color:var(--reject)}
+  .log-item .body{flex:1;min-width:0}
+  .log-item .li-intent{font-size:12.5px;font-weight:600}
+  .log-item.rejected .li-intent{text-decoration:line-through;color:var(--muted)}
+  .log-item .li-price{font-size:11.5px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+
+  .reset-row{margin-top:16px;display:none;align-items:center;gap:10px}
+  .reset-row.show{display:flex}
+  .btn-reset{background:var(--ink);color:#fff}
+  .done-note{font-size:12.5px;color:var(--muted)}
+
+  /* ── responsive ── */
+  @media (max-width:720px){
+    .panes{grid-template-columns:1fr}
+    .agentbar .total{text-align:left}
+    .log{max-height:none}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:99;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="agentbar" id="agentbar">
+      <span class="dot"></span>
+      <span class="lbl">Procurement Agent</span>
+      <span class="state" id="agentState">proposing…</span>
+      <div class="total">
+        <div class="k">Approved total</div>
+        <div class="v" id="totalV">$0</div>
+      </div>
+    </div>
+
+    <div class="panes">
+      <div>
+        <div class="col-head">Pending queue</div>
+        <div class="queue" id="queue"></div>
+        <div class="reset-row" id="resetRow">
+          <span class="done-note">Queue is clear — all proposals reviewed.</span>
+          <button class="btn btn-reset" id="resetBtn">↺ Reset demo</button>
+        </div>
+      </div>
+      <div>
+        <div class="col-head">Activity log</div>
+        <div class="log" id="log">
+          <div class="log-empty" id="logEmpty">Nothing reviewed yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scaffold">62 · approval-queue &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var PROPOSALS_SEED = [
+    {id:'a1', intent:'Renew Figma team seats', price:210, qty:7, unit:'seats', tag:'software', rationale:'Current plan expires in 3 days; 7 active editors this month.'},
+    {id:'a2', intent:'Order replacement laptop chargers', price:145, qty:5, unit:'units', tag:'hardware', rationale:'IT flagged 5 frayed cables during the last equipment audit.'},
+    {id:'a3', intent:'Book conference booth — Nov summit', price:2400, qty:1, unit:'booth', tag:'events', rationale:'Marketing requested presence; early-bird pricing ends this week.'},
+    {id:'a4', intent:'Restock office coffee subscription', price:64, qty:2, unit:'boxes', tag:'facilities', rationale:'Pantry inventory below reorder threshold as of this morning.'}
+  ];
+
+  var queueEl   = document.getElementById('queue');
+  var logEl     = document.getElementById('log');
+  var logEmpty  = document.getElementById('logEmpty');
+  var totalV    = document.getElementById('totalV');
+  var agentbar  = document.getElementById('agentbar');
+  var agentState= document.getElementById('agentState');
+  var resetRow  = document.getElementById('resetRow');
+  var resetBtn  = document.getElementById('resetBtn');
+
+  var dripTimer = null;
+  var pending = [];
+  var approvedTotal = 0;
+  var seedIndex = 0;
+
+  function money(n){ return '$' + n.toLocaleString('en-US'); }
+
+  function setAgentState(text, idle){
+    agentState.textContent = text;
+    agentbar.classList.toggle('idle', !!idle);
+  }
+
+  function renderQueueEmptyState(){
+    var empty = queueEl.querySelector('.queue-empty');
+    if(pending.length === 0){
+      if(!empty){
+        var div = document.createElement('div');
+        div.className = 'queue-empty';
+        div.textContent = 'Waiting on the agent for the next proposal…';
+        queueEl.appendChild(div);
+      }
+    } else if(empty){
+      empty.remove();
+    }
+  }
+
+  function proposalCard(p){
+    var card = document.createElement('div');
+    card.className = 'proposal';
+    card.setAttribute('data-id', p.id);
+    card.innerHTML =
+      '<div class="proposal-top">' +
+        '<div class="intent">' + p.intent + '</div>' +
+        '<div class="price" data-price>' + money(p.price) + '</div>' +
+      '</div>' +
+      '<div class="rationale">' + p.rationale + '</div>' +
+      '<div class="meta"><span class="tag">' + p.tag + '</span></div>' +
+      '<div class="proposal-actions">' +
+        '<button class="btn btn-approve" data-act="approve">✓ Approve</button>' +
+        '<button class="btn btn-edit" data-act="edit">Edit</button>' +
+        '<button class="btn btn-reject" data-act="reject">✗ Reject</button>' +
+      '</div>' +
+      '<div class="editor">' +
+        '<div class="field"><label>Qty</label><input type="number" min="1" data-field="qty" value="' + p.qty + '" /></div>' +
+        '<div class="field"><label>Budget cap ($)</label><input type="number" min="1" data-field="cap" value="' + p.price + '" /></div>' +
+        '<span class="editor-repriced"></span>' +
+        '<button class="btn btn-save" data-act="save">Save &amp; approve</button>' +
+      '</div>';
+    return card;
+  }
+
+  function logItem(p, kind){
+    var item = document.createElement('div');
+    item.className = 'log-item ' + kind;
+    item.innerHTML =
+      '<span class="mark">' + (kind === 'approved' ? '✓' : '✗') + '</span>' +
+      '<div class="body">' +
+        '<div class="li-intent">' + p.intent + '</div>' +
+        '<div class="li-price">' + (kind === 'approved' ? money(p.price) : 'declined') + '</div>' +
+      '</div>';
+    return item;
+  }
+
+  function pushLog(p, kind){
+    if(logEmpty && logEmpty.parentNode){ logEmpty.remove(); }
+    logEl.appendChild(logItem(p, kind));
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function removeCard(card, cb){
+    card.classList.add('leaving');
+    setTimeout(function(){
+      card.remove();
+      cb();
+    }, 300);
+  }
+
+  function checkQueueDone(){
+    renderQueueEmptyState();
+    if(pending.length === 0 && seedIndex >= PROPOSALS_SEED.length){
+      setAgentState('done — queue clear', true);
+      resetRow.classList.add('show');
+    }
+  }
+
+  /* ── actions ── */
+  function approveProposal(card, p){
+    setAgentState('executing…');
+    removeCard(card, function(){
+      approvedTotal += p.price;
+      totalV.textContent = money(approvedTotal);
+      pushLog(p, 'approved');
+      pending = pending.filter(function(x){ return x.id !== p.id; });
+      checkQueueDone();
+      if(pending.length > 0){ setAgentState('waiting for review…'); }
+    });
+  }
+
+  function rejectProposal(card, p){
+    removeCard(card, function(){
+      pushLog(p, 'rejected');
+      pending = pending.filter(function(x){ return x.id !== p.id; });
+      checkQueueDone();
+      if(pending.length > 0){ setAgentState('waiting for review…'); }
+    });
+  }
+
+  queueEl.addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-act]');
+    if(!btn) return;
+    var card = btn.closest('.proposal');
+    var id = card.getAttribute('data-id');
+    var p = pending.filter(function(x){ return x.id === id; })[0];
+    if(!p) return;
+    var act = btn.getAttribute('data-act');
+
+    if(act === 'approve'){
+      approveProposal(card, p);
+    } else if(act === 'reject'){
+      rejectProposal(card, p);
+    } else if(act === 'edit'){
+      var ed = card.querySelector('.editor');
+      ed.classList.toggle('open');
+    } else if(act === 'save'){
+      var ed2 = card.querySelector('.editor');
+      var qtyInput = ed2.querySelector('[data-field="qty"]');
+      var capInput = ed2.querySelector('[data-field="cap"]');
+      var qty = Math.max(1, parseInt(qtyInput.value, 10) || p.qty);
+      var cap = Math.max(1, parseInt(capInput.value, 10) || p.price);
+      var unitPrice = p.price / p.qty;
+      var repriced = Math.round(Math.min(cap, unitPrice * qty));
+      p.qty = qty;
+      p.price = repriced;
+      card.querySelector('[data-price]').textContent = money(repriced);
+      ed2.querySelector('.editor-repriced').textContent = 'Repriced to ' + money(repriced);
+      approveProposal(card, p);
+    }
+  });
+
+  /* ── drip feed ── */
+  function dripNext(){
+    if(seedIndex >= PROPOSALS_SEED.length){
+      checkQueueDone();
+      return;
+    }
+    setAgentState('proposing…');
+    dripTimer = setTimeout(function(){
+      var p = Object.assign({}, PROPOSALS_SEED[seedIndex]);
+      seedIndex++;
+      pending.push(p);
+      queueEl.appendChild(proposalCard(p));
+      renderQueueEmptyState();
+      setAgentState('waiting for review…');
+      dripNext();
+    }, seedIndex === 0 ? 200 : 2600);
+  }
+
+  function clearDrip(){
+    if(dripTimer){ clearTimeout(dripTimer); dripTimer = null; }
+  }
+
+  resetBtn.addEventListener('click', function(){
+    clearDrip();
+    pending = [];
+    seedIndex = 0;
+    approvedTotal = 0;
+    totalV.textContent = money(0);
+    queueEl.innerHTML = '';
+    logEl.innerHTML = '';
+    var empty = document.createElement('div');
+    empty.className = 'log-empty';
+    empty.id = 'logEmpty';
+    empty.textContent = 'Nothing reviewed yet.';
+    logEl.appendChild(empty);
+    logEmpty = empty;
+    resetRow.classList.remove('show');
+    dripNext();
+  });
+
+  dripNext();
+})();
+</script>
+</body>
+</html>

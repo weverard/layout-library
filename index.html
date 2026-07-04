@@ -7,7 +7,7 @@
 <!--
   A library of reusable, standalone layout + navigation scaffolds. Each file is
   self-contained (inline CSS/JS, no build, no deps) and neutrally themed with
-  CSS variables at :root — fork one as the basis for a new build. 60 scaffolds
+  CSS variables at :root — fork one as the basis for a new build. 63 scaffolds
   across 7 categories of navigation paradigm.
 -->
 <style>
@@ -288,6 +288,24 @@
   .t-gptm .pc .ln{height:4px;width:60%;border-radius:2px;background:#d8dade;display:block}
   .t-gptm .pc .buy{height:8px;border-radius:3px;background:var(--accent);display:block}
   .t-gptm .composer{margin-top:auto;height:11px;border-radius:7px;background:#f0f0ee;border:1px solid var(--line);display:block}
+  .t-agentcanvas{gap:6px}
+  .t-agentcanvas .rail{flex:0 0 30%;background:#1a1c22;border-radius:5px;display:flex;flex-direction:column;gap:4px;padding:6px 5px}
+  .t-agentcanvas .rail i{height:6px;border-radius:3px;background:#3a3e48;display:block}
+  .t-agentcanvas .rail i.a{background:var(--accent);width:70%;align-self:flex-end}
+  .t-agentcanvas .board{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:4px;align-content:start;background:#fff;border:1px solid var(--line);border-radius:5px;padding:5px}
+  .t-agentcanvas .board i{height:18px;border-radius:3px;background:#e3e5ea;display:block}
+  .t-agentcanvas .board i.a{background:var(--accent)}
+  .t-queue{flex-direction:column;gap:5px;padding:0 14px;justify-content:center}
+  .t-queue .p{height:22px;border-radius:5px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;gap:5px;padding:0 6px}
+  .t-queue .p .ln{flex:1;height:5px;border-radius:2px;background:#e7e9ec;display:block}
+  .t-queue .p i{width:11px;height:8px;border-radius:2px;display:block;flex:0 0 auto}
+  .t-queue .p i.ok{background:var(--accent)}
+  .t-queue .p i.no{background:rgba(220,38,38,.35)}
+  .t-compare{gap:5px;padding:12px 14px}
+  .t-compare .col{flex:1;border:1px solid var(--line);border-radius:4px;background:#fff;display:flex;flex-direction:column;gap:3px;padding:4px}
+  .t-compare .col i{height:5px;border-radius:2px;background:#e3e5ea;display:block}
+  .t-compare .col.w{background:var(--accent);border-color:transparent}
+  .t-compare .col.w i{background:rgba(255,255,255,.72)}
 
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
@@ -296,8 +314,8 @@
 <body>
   <div class="wrap">
     <header class="intro">
-      <p class="kicker">Reusable scaffolds · 60 layouts · info design coming</p>
-      <h1>Sixty ways to navigate.</h1>
+      <p class="kicker">Reusable scaffolds · 63 layouts · info design coming</p>
+      <h1>Sixty-three ways to navigate.</h1>
       <p>Standalone HTML templates — self-contained, no build, neutral tokens in
       <code>:root</code>. Fork one as a starting point. Each file opens with a comment
       describing its pattern, nav model, and regions; the <code>.scaffold</code> badge is safe to delete.</p>
@@ -395,6 +413,9 @@
       <a class="card" href="layouts/54-agent-handoff.html" style="--accent:#F43F5E"><div class="thumb"><div class="tw t-handoff"><span class="bar"><i></i><i class="a"></i><i></i></span><span class="m"></span><span class="hand"></span><span class="m2"></span></div></div><div class="b"><p class="n">54</p><h3>Multi-Agent Handoff</h3><p class="nav"><b>Agents hand off</b> — shopper → payments → fulfilment.</p><div class="tags"><span class="tag">orchestration</span><span class="tag">workflow</span></div></div></a>
       <a class="card" href="layouts/55-chatgpt-commerce.html" style="--accent:#10A37F"><div class="thumb"><div class="tw t-gpt"><div class="side"><i class="a"></i><i></i><i></i><i></i></div><div class="main"><span class="l"></span><span class="l s"></span><span class="l"></span><span class="buy"></span></div></div></div><div class="b"><p class="n">55</p><h3>ChatGPT Agentic Commerce</h3><p class="nav"><b>Research → buy in chat</b> — buyer's guide, then inline checkout.</p><div class="tags"><span class="tag">ChatGPT-style</span><span class="tag">instant checkout</span></div></div></a>
       <a class="card" href="layouts/60-chatgpt-mobile.html" style="--accent:#10A37F"><div class="thumb" style="background:#17171c"><div class="tw t-gptm"><div class="scr"><span class="bar"></span><div class="pc"><span class="img"></span><span class="ln"></span><span class="buy"></span></div><span class="composer"></span></div></div></div><div class="b"><p class="n">60</p><h3>ChatGPT Mobile Commerce</h3><p class="nav"><b>Buy in the chat</b> — mobile ChatGPT; checkout slides up as a sheet.</p><div class="tags"><span class="tag">mobile</span><span class="tag">instant checkout</span></div></div></a>
+      <a class="card" href="layouts/61-agent-canvas.html" style="--accent:#22D3EE"><div class="thumb"><div class="tw t-agentcanvas"><div class="rail"><i></i><i class="a"></i><i></i></div><div class="board"><i class="a"></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">61</p><h3>Chat + Live Product Canvas</h3><p class="nav"><b>Chat drives a canvas</b> — each agent reply lands product tiles; hover a message to see its tiles.</p><div class="tags"><span class="tag">curation</span><span class="tag">artifacts</span></div></div></a>
+      <a class="card" href="layouts/62-approval-queue.html" style="--accent:#F97316"><div class="thumb"><div class="tw t-queue"><span class="p"><span class="ln"></span><i class="ok"></i></span><span class="p"><span class="ln"></span><i class="ok"></i><i class="no"></i></span><span class="p"><span class="ln"></span><i class="no"></i></span></div></div><div class="b"><p class="n">62</p><h3>Human-in-the-Loop Approvals</h3><p class="nav"><b>Approve the agent</b> — proposals queue up; you approve, edit, or reject each.</p><div class="tags"><span class="tag">guardrails</span><span class="tag">moderation</span></div></div></a>
+      <a class="card" href="layouts/63-comparison-chat.html" style="--accent:#6366F1"><div class="thumb"><div class="tw t-compare"><div class="col"><i></i><i></i><i></i><i></i></div><div class="col w"><i></i><i></i><i></i><i></i></div><div class="col"><i></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">63</p><h3>Comparison-in-Chat</h3><p class="nav"><b>Mentions become columns</b> — chat grows a comparison tray; toggle diffs, pick a winner.</p><div class="tags"><span class="tag">comparison</span><span class="tag">tier chooser</span></div></div></a>
     </div>
     </div>
 
