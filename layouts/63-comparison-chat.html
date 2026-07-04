@@ -215,7 +215,7 @@
 
   function addTyping(){
     var row = document.createElement('div');
-    row.className = 'msg agent';
+    row.className = 'msg agent is-typing';
     var b = document.createElement('div');
     b.className = 'bubble';
     b.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span>';
@@ -223,6 +223,10 @@
     threadEl.appendChild(row);
     scrollThread();
     return row;
+  }
+
+  function sweepTyping(){
+    threadEl.querySelectorAll('.msg.is-typing').forEach(function(r){ r.remove(); });
   }
 
   /* ── build the table on demand ── */
@@ -317,7 +321,7 @@
       pushTimer(function(){
         addTyping();
         pushTimer(function(){
-          threadEl.querySelector('.msg.agent:last-child').remove();
+          sweepTyping();
           addMsg('agent', 'Good call — the ' + winnerName + ' looks like the best fit. Want to compare anything else?');
         }, 500);
       }, 120);
@@ -329,7 +333,7 @@
     if(turnIndex >= TURNS.length){
       addTyping();
       pushTimer(function(){
-        threadEl.querySelector('.msg.agent:last-child').remove();
+        sweepTyping();
         addMsg('agent', CLOSER);
         busy = false;
         sendBtn.disabled = false;
@@ -339,7 +343,7 @@
     var turn = TURNS[turnIndex];
     addTyping();
     pushTimer(function(){
-      threadEl.querySelector('.msg.agent:last-child').remove();
+      sweepTyping();
       addMsg('agent', turn.reply);
       addColumn(turn.p);
       turnIndex++;
