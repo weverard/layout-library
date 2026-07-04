@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>68 · 2×2 Quadrant Matrix — Layout scaffold</title>
+<!--
+  PATTERN    2x2 Quadrant Matrix
+  NAV MODEL  The consulting classic — labeled axes, four quadrants, plotted
+             items. Hovering an item surfaces its note; clicking a quadrant's
+             corner label dims the other three so the focus quadrant reads on
+             its own. Escape, or clicking the same quadrant again, clears it.
+  BEST FOR   Positioning, prioritisation (effort/impact), portfolio reviews.
+  REGIONS    .stage · .axes (x/y labels + arrows) · .quad x4 (corner labels) ·
+             .dot (plotted items) · .legend
+  RE-SKIN    --accent = focus quadrant + dots; matrix stays square, legend
+             drops below the matrix under ~640px.
+-->
+<style>
+  :root{
+    --bg:#F3F0FA; --surface:#fff; --ink:#1D1830; --muted:#6B6478; --line:rgba(29,24,48,.12);
+    --accent:#7C3AED;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
+       line-height:1.5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px}
+
+  .stage{
+    position:relative;width:min(1180px,94vw);aspect-ratio:16/9;
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 24px 64px rgba(20,10,40,.14);overflow:hidden;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(24px,4vw,52px) clamp(32px,6vw,72px);
+  }
+
+  .kicker{font-family:var(--mono);font-size:clamp(11px,1.2vw,13px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:4px}
+  .title{font-size:clamp(19px,2.6vw,28px);font-weight:800;letter-spacing:-.03em;margin-bottom:clamp(14px,2.6vw,26px)}
+
+  .body-row{display:flex;gap:clamp(20px,3.6vw,44px);align-items:center;flex:1;min-height:0}
+
+  .axes-wrap{display:flex;align-items:center;gap:8px}
+  .y-axis{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;font-family:var(--mono);
+    letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+
+  .matrix-col{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .matrix{
+    position:relative;width:clamp(200px,28vw,360px);aspect-ratio:1;
+    border-radius:12px;overflow:hidden;border:1px solid var(--line);
+    display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+    background:var(--line);gap:1px;
+  }
+  .quad{
+    position:relative;background:var(--surface);appearance:none;border:0;font:inherit;color:inherit;
+    text-align:left;padding:10px 12px;cursor:pointer;transition:opacity .25s,background .25s;
+  }
+  .quad .qlabel{font-size:clamp(10px,1.1vw,12px);font-weight:700;color:var(--muted);letter-spacing:.02em;
+    transition:color .2s}
+  .quad.focus{background:#F6F1FF}
+  .quad.focus .qlabel{color:var(--accent)}
+  .quad.dim{opacity:.32}
+  .x-axis{font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+  .dot{
+    position:absolute;width:12px;height:12px;border-radius:50%;background:var(--accent);
+    border:2px solid #fff;box-shadow:0 0 0 1px var(--line);transform:translate(-50%,-50%);
+    cursor:pointer;transition:opacity .25s,transform .15s;z-index:2;
+  }
+  .dot:hover{transform:translate(-50%,-50%) scale(1.35)}
+  .dot.dim{opacity:.25}
+
+  .tooltip{
+    position:absolute;z-index:5;background:var(--ink);color:#fff;font-size:12px;line-height:1.4;
+    padding:8px 11px;border-radius:8px;max-width:220px;pointer-events:none;
+    transform:translate(-50%,calc(-100% - 14px));opacity:0;transition:opacity .12s;
+  }
+  .tooltip.on{opacity:1}
+  .tooltip b{display:block;margin-bottom:2px}
+
+  .legend{display:flex;flex-direction:column;gap:9px;min-width:150px}
+  .legend .lrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+  .legend .badge{width:16px;height:16px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex:0 0 auto}
+  .legend .lrow b{color:var(--ink);font-weight:600}
+
+  .foot{position:absolute;left:clamp(32px,6vw,72px);bottom:18px;font-size:12px;color:var(--muted)}
+  .hint{position:absolute;right:clamp(24px,5vw,52px);bottom:18px;font-size:12px;color:var(--muted)}
+
+  @media (max-width:640px){
+    .stage{aspect-ratio:auto;padding:24px 20px 56px}
+    .body-row{flex-direction:column;align-items:stretch}
+    .axes-wrap{align-self:center}
+    .matrix{width:min(80vw,320px)}
+    .legend{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:10px 16px}
+    .foot,.hint{position:static;margin-top:14px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <p class="kicker">Prioritisation</p>
+    <h1 class="title">Where the roadmap actually pays off.</h1>
+
+    <div class="body-row">
+      <div class="axes-wrap">
+        <span class="y-axis">Impact ↑</span>
+        <div class="matrix-col">
+          <div class="matrix" id="matrix">
+            <button class="quad" id="q-tl" data-quad="tl"><span class="qlabel">Quick wins</span></button>
+            <button class="quad" id="q-tr" data-quad="tr"><span class="qlabel">Major projects</span></button>
+            <button class="quad" id="q-bl" data-quad="bl"><span class="qlabel">Fill-ins</span></button>
+            <button class="quad" id="q-br" data-quad="br"><span class="qlabel">Thankless tasks</span></button>
+            <!-- dots injected here -->
+          </div>
+          <span class="x-axis">Effort →</span>
+        </div>
+      </div>
+
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+
+    <p class="foot">Source: portfolio review workshop, 2026 · illustrative</p>
+    <p class="hint">Click a quadrant to focus · Esc to clear</p>
+  </div>
+
+  <div class="scaffold">68 · quadrant-matrix &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  /* x = effort (0 low → 1 high), y = impact (0 low → 1 high) */
+  var ITEMS = [
+    {label:'Self-serve onboarding', x:0.18, y:0.82, note:'Cuts support tickets fast; mostly config work.'},
+    {label:'Billing rework',        x:0.78, y:0.86, note:'High payoff but touches every downstream system.'},
+    {label:'Dark mode',             x:0.30, y:0.28, note:'Nice-to-have; low effort, low measurable impact.'},
+    {label:'Legacy API migration',  x:0.84, y:0.22, note:'Necessary eventually — thankless, high-effort cleanup.'},
+    {label:'Inline help tooltips',  x:0.14, y:0.60, note:'Cheap to ship; measurably reduces first-week confusion.'},
+    {label:'Realtime collaboration',x:0.70, y:0.68, note:'Big bet — a major project, not a quick add.'},
+    {label:'Export to CSV',        x:0.22, y:0.40, note:'Low lift, modest but steady usage.'},
+    {label:'Custom permissions',   x:0.62, y:0.34, note:'Costly to build right; impact is narrow (enterprise only).'}
+  ];
+
+  var matrixEl = document.getElementById('matrix');
+  var tooltipEl = document.getElementById('tooltip');
+  var legendEl = document.getElementById('legend');
+  var quadEls = Array.prototype.slice.call(document.querySelectorAll('.quad'));
+  var focusQuad = null;
+
+  function quadOf(item){
+    var tb = item.y >= 0.5 ? 't' : 'b';
+    var lr = item.x < 0.5 ? 'l' : 'r';
+    return tb + lr;
+  }
+
+  var dotEls = [];
+  ITEMS.forEach(function(item, i){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.style.left = (item.x * 100) + '%';
+    d.style.top = ((1 - item.y) * 100) + '%';
+    d.setAttribute('aria-label', item.label + ': ' + item.note);
+    d.dataset.quad = quadOf(item);
+    d.dataset.index = i;
+    matrixEl.appendChild(d);
+    dotEls.push(d);
+
+    var row = document.createElement('div');
+    row.className = 'lrow';
+    row.innerHTML = '<span class="badge">' + (i + 1) + '</span><span><b>' + item.label + '</b></span>';
+    legendEl.appendChild(row);
+
+    d.textContent = '';
+    d.title = '';
+
+    d.addEventListener('mouseenter', function(){ showTip(d, item); });
+    d.addEventListener('mouseleave', hideTip);
+    d.addEventListener('focus', function(){ showTip(d, item); });
+    d.addEventListener('blur', hideTip);
+  });
+
+  var stageEl = document.getElementById('stage');
+  function showTip(d, item){
+    tooltipEl.innerHTML = '<b>' + item.label + '</b>' + item.note;
+    var dotRect = d.getBoundingClientRect();
+    var stageRect = stageEl.getBoundingClientRect();
+    tooltipEl.style.left = (dotRect.left + dotRect.width / 2 - stageRect.left) + 'px';
+    tooltipEl.style.top = (dotRect.top - stageRect.top) + 'px';
+    tooltipEl.classList.add('on');
+  }
+  function hideTip(){ tooltipEl.classList.remove('on'); }
+
+  function applyFocus(){
+    quadEls.forEach(function(q){
+      var isFocus = focusQuad !== null && q.dataset.quad === focusQuad;
+      var anyFocus = focusQuad !== null;
+      q.classList.toggle('focus', isFocus);
+      q.classList.toggle('dim', anyFocus && !isFocus);
+    });
+    dotEls.forEach(function(d){
+      var isFocus = focusQuad !== null && d.dataset.quad === focusQuad;
+      var anyFocus = focusQuad !== null;
+      d.classList.toggle('dim', anyFocus && !isFocus);
+    });
+  }
+
+  quadEls.forEach(function(q){
+    q.addEventListener('click', function(){
+      focusQuad = (focusQuad === q.dataset.quad) ? null : q.dataset.quad;
+      applyFocus();
+    });
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ focusQuad = null; applyFocus(); }
+  });
+
+  applyFocus();
+})();
+</script>
+</body>
+</html>

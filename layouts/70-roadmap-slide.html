@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>70 · Roadmap / Timeline Slide — Layout scaffold</title>
+<!--
+  PATTERN    Roadmap / Timeline Slide
+  NAV MODEL  Horizontal phased lanes — Now / Next / Later — with items sitting
+             on workstream lanes. Clicking a phase header zooms that phase
+             (the other two compress) via an animated flex-grow reflow; a
+             today-marker rule crosses the lanes inside the Now column.
+  BEST FOR   Product roadmaps, programme plans, investor timelines.
+  REGIONS    .stage · .phases (3 column headers) · .lane x3 (workstream rows
+             with item chips) · .today (marker rule)
+  RE-SKIN    --accent = current (zoomed) phase + today rule + Now-phase chips;
+             lanes scroll horizontally under ~700px instead of zooming.
+-->
+<style>
+  :root{
+    --bg:#E6F4F2; --surface:#fff; --ink:#0F2622; --muted:#5C726E; --line:rgba(13,40,35,.12);
+    --accent:#0D9488; --next:#64748B; --later:#CBD5E1;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
+       line-height:1.5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px}
+
+  .stage{
+    position:relative;width:min(1180px,94vw);aspect-ratio:16/9;
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 24px 64px rgba(8,26,22,.14);overflow:hidden;
+    display:flex;flex-direction:column;
+    padding:clamp(24px,4vw,44px) clamp(28px,5vw,56px);
+  }
+
+  .kicker{font-family:var(--mono);font-size:clamp(11px,1.2vw,13px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:4px}
+  .title{font-size:clamp(18px,2.4vw,26px);font-weight:800;letter-spacing:-.03em;margin-bottom:clamp(14px,2.4vw,22px)}
+
+  .board{flex:1;display:flex;flex-direction:column;min-height:0;min-width:280px}
+
+  .phases{display:flex;gap:3px;margin-bottom:6px}
+  .phase{
+    position:relative;flex-grow:1;flex-basis:0;min-width:0;appearance:none;border:0;font:inherit;text-align:left;
+    background:#F1F5F4;color:var(--muted);padding:9px 14px;border-radius:8px 8px 0 0;cursor:pointer;
+    transition:flex-grow .45s cubic-bezier(.22,.8,.32,1),background .25s,color .25s;
+  }
+  .phase .pname{font-weight:800;font-size:clamp(12.5px,1.5vw,15px)}
+  .phase .pcount{font-size:11px;font-family:var(--mono);opacity:.7}
+  .phase.zoom{background:var(--accent);color:#fff}
+
+  .lanes{flex:1;display:flex;flex-direction:column;gap:3px;min-height:0}
+  .lane{flex:1;display:flex;gap:3px;min-height:0}
+  .cell{
+    position:relative;flex-grow:1;flex-basis:0;min-width:0;background:#FAFBFA;border-radius:6px;
+    padding:6px 8px;display:flex;flex-direction:column;gap:6px;justify-content:center;overflow:hidden;
+    transition:flex-grow .45s cubic-bezier(.22,.8,.32,1);
+  }
+  .lane-label{position:absolute;left:8px;top:4px;font-size:10px;font-family:var(--mono);
+    color:var(--muted);opacity:.6;letter-spacing:.06em;text-transform:uppercase}
+
+  .chip{
+    border-left:3px solid var(--next);background:#fff;border-radius:4px;padding:5px 8px 5px 8px;
+    font-size:clamp(11px,1.3vw,12.5px);font-weight:600;box-shadow:0 1px 2px rgba(15,38,34,.08);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .chip[data-phase="0"]{border-left-color:var(--accent)}
+  .chip[data-phase="2"]{border-left-color:var(--later)}
+
+  .today-seg{position:absolute;left:16%;top:-2px;bottom:-2px;width:2px;background:var(--accent);z-index:3}
+  .today-cap{position:absolute;left:16%;bottom:-8px;transform:translate(-50%,100%);font-size:9px;
+    font-family:var(--mono);letter-spacing:.06em;color:var(--accent);font-weight:700;white-space:nowrap;z-index:3;
+    background:var(--accent);color:#fff;padding:1px 5px;border-radius:3px}
+
+  .foot{margin-top:12px;font-size:12px;color:var(--muted)}
+
+  @media (max-width:700px){
+    .stage{aspect-ratio:auto;padding:22px 20px 28px}
+    .board{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .phases,.lane{min-width:640px}
+    .phases .phase,.lane .cell{flex:1 0 33.33%!important}
+    .lanes{min-height:220px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <p class="kicker">Programme roadmap</p>
+    <h1 class="title">Three quarters, three workstreams.</h1>
+
+    <div class="board">
+      <div class="phases" id="phases"></div>
+      <div class="lanes" id="lanes"></div>
+    </div>
+
+    <p class="foot">Source: programme plan, 2026 · illustrative &nbsp;·&nbsp; click a phase to focus it</p>
+  </div>
+
+  <div class="scaffold">70 · roadmap-slide &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var PHASES = ['Now', 'Next', 'Later'];
+  var LANES = ['Platform', 'Growth', 'Design'];
+  var ITEMS = [
+    {lane:0, phase:0, label:'Auth revamp'},
+    {lane:0, phase:1, label:'Billing v2'},
+    {lane:0, phase:2, label:'Multi-region'},
+    {lane:1, phase:0, label:'Referral loop'},
+    {lane:1, phase:0, label:'Pricing test'},
+    {lane:1, phase:1, label:'Lifecycle emails'},
+    {lane:1, phase:2, label:'Partner API'},
+    {lane:2, phase:0, label:'Design tokens'},
+    {lane:2, phase:1, label:'Dark mode'},
+    {lane:2, phase:1, label:'Motion pass'},
+    {lane:2, phase:2, label:'Accessibility audit'}
+  ];
+
+  var phasesEl = document.getElementById('phases');
+  var lanesEl = document.getElementById('lanes');
+  var zoomed = null;
+
+  var phaseEls = [];
+  PHASES.forEach(function(name, i){
+    var count = ITEMS.filter(function(it){ return it.phase === i; }).length;
+    var p = document.createElement('button');
+    p.className = 'phase';
+    p.dataset.phase = i;
+    p.innerHTML = '<div class="pname">' + name + '</div><div class="pcount">' + count + ' items</div>';
+    if(i === 0){
+      var cap = document.createElement('span');
+      cap.className = 'today-cap';
+      cap.textContent = 'TODAY';
+      p.appendChild(cap);
+    }
+    p.addEventListener('click', function(){ toggleZoom(i); });
+    phasesEl.appendChild(p);
+    phaseEls.push(p);
+  });
+
+  var cellEls = [];
+  LANES.forEach(function(laneName, laneIdx){
+    var lane = document.createElement('div');
+    lane.className = 'lane';
+    var laneCells = [];
+    PHASES.forEach(function(_, phaseIdx){
+      var cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.phase = phaseIdx;
+      cell.innerHTML = '<span class="lane-label">' + laneName + '</span>';
+      if(phaseIdx === 0){
+        var seg = document.createElement('div');
+        seg.className = 'today-seg';
+        cell.appendChild(seg);
+      }
+      ITEMS.filter(function(it){ return it.lane === laneIdx && it.phase === phaseIdx; }).forEach(function(it){
+        var chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.dataset.phase = phaseIdx;
+        chip.textContent = it.label;
+        chip.style.marginTop = '14px';
+        cell.appendChild(chip);
+      });
+      lane.appendChild(cell);
+      laneCells.push(cell);
+    });
+    lanesEl.appendChild(lane);
+    cellEls.push(laneCells);
+  });
+
+  function toggleZoom(i){
+    zoomed = (zoomed === i) ? null : i;
+    phaseEls.forEach(function(p, idx){
+      p.classList.toggle('zoom', zoomed === idx);
+      p.style.flexGrow = zoomed === null ? 1 : (zoomed === idx ? 2.4 : 0.8);
+    });
+    cellEls.forEach(function(laneCells){
+      laneCells.forEach(function(cell, idx){
+        cell.style.flexGrow = zoomed === null ? 1 : (zoomed === idx ? 2.4 : 0.8);
+      });
+    });
+  }
+
+})();
+</script>
+</body>
+</html>

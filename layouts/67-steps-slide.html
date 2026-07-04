@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>67 · Numbered-Steps Slide — Layout scaffold</title>
+<!--
+  PATTERN    Numbered-Steps Slide
+  NAV MODEL  A 1-2-3 process frame. Clicking a step (or ArrowLeft/Right)
+             advances an accent highlight along the sequence — the connector
+             line fills up to the active step — and swaps the detail caption
+             below.
+  BEST FOR   How-it-works slides, onboarding decks, process pitches.
+  REGIONS    .stage · .kicker · .steps (numbered cards + connector line) ·
+             .caption
+  RE-SKIN    --accent = active step + connector fill; steps stack vertically
+             under ~640px (connector line becomes vertical).
+-->
+<style>
+  :root{
+    --bg:#EEF1F6; --surface:#fff; --ink:#161A22; --muted:#6B7280; --line:rgba(15,20,30,.12);
+    --accent:#2563EB; --track:#E3E7EF;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
+       line-height:1.5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px}
+
+  .stage{
+    position:relative;width:min(1180px,94vw);aspect-ratio:16/9;
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 24px 64px rgba(10,14,24,.14);overflow:hidden;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(28px,5vw,64px) clamp(32px,7vw,88px);
+  }
+
+  .kicker{font-family:var(--mono);font-size:clamp(11px,1.3vw,14px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:6px}
+  .title{font-size:clamp(22px,3.4vw,38px);font-weight:800;letter-spacing:-.03em;margin-bottom:clamp(22px,4vw,44px)}
+
+  .steps{display:flex;align-items:flex-start;gap:0;position:relative}
+  .step{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative;
+    cursor:pointer;appearance:none;background:none;border:0;font:inherit;color:inherit;padding:0}
+  .step:not(:last-child)::after{
+    content:'';position:absolute;top:clamp(17px,2.2vw,24px);left:56%;right:-44%;height:3px;
+    background:var(--track);z-index:0;border-radius:2px
+  }
+  .step.done:not(:last-child)::after{background:var(--accent)}
+  .node{
+    width:clamp(34px,4.4vw,48px);height:clamp(34px,4.4vw,48px);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;position:relative;z-index:1;
+    font-size:clamp(13px,1.6vw,18px);font-weight:700;border:2px solid var(--track);
+    background:var(--surface);color:var(--muted);transition:background .25s,border-color .25s,color .25s
+  }
+  .step.active .node{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(1.06)}
+  .step.done .node{border-color:var(--accent);color:var(--accent)}
+  .step-label{font-size:clamp(12px,1.4vw,16px);font-weight:600;color:var(--muted);text-align:center;
+    transition:color .2s}
+  .step.active .step-label{color:var(--ink)}
+
+  .caption{margin-top:clamp(22px,4vw,44px);min-height:64px}
+  .caption h2{font-size:clamp(16px,2vw,22px);font-weight:700;margin-bottom:6px}
+  .caption p{color:var(--muted);font-size:clamp(13px,1.6vw,16px);max-width:56ch}
+
+  .foot{position:absolute;left:clamp(32px,7vw,88px);bottom:20px;font-size:12px;color:var(--muted)}
+  .pager{position:absolute;right:clamp(24px,5vw,56px);bottom:20px;display:flex;gap:8px}
+  .arrow-btn{appearance:none;background:var(--bg);border:1px solid var(--line);border-radius:50%;
+    width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;
+    color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s}
+  .arrow-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  @media (max-width:640px){
+    .stage{aspect-ratio:auto;padding:24px 22px 60px}
+    .steps{flex-direction:column;gap:18px;align-items:stretch}
+    .step{flex-direction:row;align-items:center;gap:14px;text-align:left}
+    .step:not(:last-child)::after{
+      top:44px;left:clamp(17px,2.2vw,24px);right:auto;width:3px;height:calc(100% - 20px);bottom:auto
+    }
+    .step-label{text-align:left}
+    .foot{position:static;margin-top:18px}
+    .pager{position:static;margin-top:8px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="stage" id="stage" tabindex="0" aria-roledescription="slide" aria-label="Numbered steps slide, use arrow keys to advance">
+    <p class="kicker">How it works</p>
+    <h1 class="title">Three steps, start to finish.</h1>
+
+    <nav class="steps" id="steps" aria-label="Process steps"></nav>
+
+    <div class="caption" id="caption">
+      <h2 id="capTitle"></h2>
+      <p id="capBody"></p>
+    </div>
+
+    <p class="foot">Source: onboarding flow spec, 2026 · illustrative</p>
+    <div class="pager">
+      <button class="arrow-btn" id="prev" aria-label="Previous step">←</button>
+      <button class="arrow-btn" id="next" aria-label="Next step">→</button>
+    </div>
+  </div>
+
+  <div class="scaffold">67 · steps-slide &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var STEPS = [
+    {label:'Connect', title:'Connect your account', body:'Sign in once with SSO — no separate password to manage, no extra app to install.'},
+    {label:'Configure', title:'Configure the workspace', body:'Pick a template, invite the team, and set the defaults that match how you already work.'},
+    {label:'Go live', title:'Go live in minutes', body:'Publish the workspace — every teammate you invited gets access immediately.'}
+  ];
+  var total = STEPS.length;
+  var active = 0;
+
+  var stepsEl = document.getElementById('steps');
+  var capTitle = document.getElementById('capTitle');
+  var capBody = document.getElementById('capBody');
+  var prevBtn = document.getElementById('prev');
+  var nextBtn = document.getElementById('next');
+
+  var stepEls = [];
+  STEPS.forEach(function(s, i){
+    var btn = document.createElement('button');
+    btn.className = 'step';
+    btn.innerHTML = '<span class="node">' + (i + 1) + '</span><span class="step-label">' + s.label + '</span>';
+    btn.addEventListener('click', function(){ goTo(i); });
+    stepsEl.appendChild(btn);
+    stepEls.push(btn);
+  });
+
+  function render(){
+    stepEls.forEach(function(el, i){
+      el.classList.toggle('active', i === active);
+      el.classList.toggle('done', i < active);
+      el.setAttribute('aria-current', i === active ? 'step' : 'false');
+    });
+    capTitle.textContent = STEPS[active].title;
+    capBody.textContent = STEPS[active].body;
+  }
+
+  function goTo(i){
+    active = Math.max(0, Math.min(total - 1, i));
+    render();
+  }
+
+  prevBtn.addEventListener('click', function(){ goTo(active - 1); });
+  nextBtn.addEventListener('click', function(){ goTo(active + 1); });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); goTo(active - 1); }
+    else if(e.key === 'ArrowRight'){ e.preventDefault(); goTo(active + 1); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

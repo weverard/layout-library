@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>66 · KPI Big-Number Slide — Layout scaffold</title>
+<!--
+  PATTERN    KPI Big-Number Slide
+  NAV MODEL  A single-message stat slide — one hero number carries the point,
+             two supporting mini-bars ground it in context. Arrow keys, click-
+             through, or the dot indicator cycle three example variants; each
+             switch re-animates the number counting up and the bars filling.
+  BEST FOR   Exec summaries, QBRs, launch-metric slides.
+  REGIONS    .stage · .kicker · .bignum · .support (two labeled bars) · .foot
+             (source line) · .pager (dots + arrows)
+  RE-SKIN    --accent = number + bar fills; stage letterboxes on narrow
+             (~640px, no restack — a single-message slide has nowhere to go).
+-->
+<style>
+  :root{
+    --bg:#EFEDE8; --surface:#fff; --ink:#181611; --muted:#716C63; --line:rgba(24,22,17,.12);
+    --accent:#B45309; --track:#EAE5DB;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
+       line-height:1.5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px}
+
+  .stage{
+    position:relative;width:min(1180px,94vw);aspect-ratio:16/9;
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 24px 64px rgba(20,16,8,.14);overflow:hidden;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(28px,5vw,72px) clamp(32px,7vw,88px);
+  }
+
+  .kicker{font-family:var(--mono);font-size:clamp(11px,1.3vw,14px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600}
+
+  .bignum-row{display:flex;align-items:baseline;gap:clamp(6px,1vw,12px);margin:clamp(10px,2vw,18px) 0 clamp(18px,3vw,30px)}
+  .bignum{font-size:clamp(56px,11vw,140px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--ink);
+    font-variant-numeric:tabular-nums}
+  .unit{font-size:clamp(20px,3vw,36px);font-weight:700;color:var(--accent)}
+  .label{font-size:clamp(14px,1.8vw,20px);color:var(--muted);max-width:46ch;margin-bottom:clamp(20px,4vw,40px)}
+
+  .support{display:flex;gap:clamp(20px,4vw,56px);flex-wrap:wrap}
+  .bar-item{flex:1;min-width:180px}
+  .bar-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
+    font-size:clamp(12px,1.4vw,15px)}
+  .bar-head .bl{color:var(--muted)}
+  .bar-head .bv{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .bar-track{height:10px;border-radius:6px;background:var(--track);overflow:hidden}
+  .bar-fill{height:100%;border-radius:6px;background:var(--accent);width:0%;
+    transition:width .6s cubic-bezier(.22,.8,.32,1)}
+
+  .foot{position:absolute;left:clamp(32px,7vw,88px);bottom:20px;font-size:12px;color:var(--muted)}
+
+  .pager{position:absolute;right:clamp(24px,5vw,56px);bottom:20px;display:flex;align-items:center;gap:14px}
+  .arrows{display:flex;gap:8px}
+  .arrow-btn{appearance:none;background:var(--bg);border:1px solid var(--line);border-radius:50%;
+    width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;
+    color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s}
+  .arrow-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .dots{display:flex;gap:7px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--track);display:block;cursor:pointer;
+    border:0;padding:0;transition:background .2s,transform .2s}
+  .dot.on{background:var(--accent);transform:scale(1.25)}
+
+  @media (max-width:640px){
+    /* A 16:9 box is too short to hold this much text at a legible size once
+       the viewport itself is this narrow — fall back to an intrinsic-height
+       card so nothing clips; the page scrolls if needed. */
+    .stage{aspect-ratio:auto;padding:24px 22px}
+    .support{gap:16px}
+    .bar-item{min-width:130px}
+    .foot{position:static;margin-top:16px}
+    .pager{position:static;margin-top:10px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="stage" id="stage" tabindex="0" aria-roledescription="slide" aria-label="KPI slide, use arrow keys to cycle">
+    <p class="kicker" id="kicker"></p>
+    <div class="bignum-row">
+      <span class="bignum" id="bignum">0</span><span class="unit" id="unit"></span>
+    </div>
+    <p class="label" id="label"></p>
+
+    <div class="support">
+      <div class="bar-item">
+        <div class="bar-head"><span class="bl" id="bar1label"></span><span class="bv" id="bar1val"></span></div>
+        <div class="bar-track"><div class="bar-fill" id="bar1fill"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-head"><span class="bl" id="bar2label"></span><span class="bv" id="bar2val"></span></div>
+        <div class="bar-track"><div class="bar-fill" id="bar2fill"></div></div>
+      </div>
+    </div>
+
+    <p class="foot" id="foot"></p>
+
+    <div class="pager">
+      <div class="dots" id="dots" role="tablist" aria-label="Variants"></div>
+      <div class="arrows">
+        <button class="arrow-btn" id="prev" aria-label="Previous variant">←</button>
+        <button class="arrow-btn" id="next" aria-label="Next variant">→</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scaffold">66 · kpi-slide &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var VARIANTS = [
+    {
+      kicker:'Q3 · Revenue',
+      number:2.4, unit:'M', decimals:1, prefix:'$',
+      label:'Quarterly recurring revenue, up from $1.9M last quarter.',
+      bars:[{label:'vs. target',value:96},{label:'vs. last quarter',value:78}],
+      foot:'Source: internal finance dashboard, 2026 · illustrative'
+    },
+    {
+      kicker:'Launch Week · Signups',
+      number:18400, unit:'', decimals:0, prefix:'',
+      label:'New accounts created in the first seven days after launch.',
+      bars:[{label:'activation rate',value:64},{label:'of signup goal',value:184}],
+      foot:'Source: product analytics, 2026 · illustrative'
+    },
+    {
+      kicker:'Reliability · Uptime',
+      number:99.98, unit:'%', decimals:2, prefix:'',
+      label:'Trailing 90-day platform uptime across all regions.',
+      bars:[{label:'incidents resolved <1hr',value:92},{label:'SLA headroom',value:48}],
+      foot:'Source: status page history, 2026 · illustrative'
+    }
+  ];
+
+  var idx = 0;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var countRaf = null;
+
+  var els = {
+    kicker: document.getElementById('kicker'),
+    bignum: document.getElementById('bignum'),
+    unit: document.getElementById('unit'),
+    label: document.getElementById('label'),
+    bar1label: document.getElementById('bar1label'),
+    bar1val: document.getElementById('bar1val'),
+    bar1fill: document.getElementById('bar1fill'),
+    bar2label: document.getElementById('bar2label'),
+    bar2val: document.getElementById('bar2val'),
+    bar2fill: document.getElementById('bar2fill'),
+    foot: document.getElementById('foot'),
+    dots: document.getElementById('dots'),
+    prev: document.getElementById('prev'),
+    next: document.getElementById('next'),
+    stage: document.getElementById('stage')
+  };
+
+  var dotEls = [];
+  VARIANTS.forEach(function(v, i){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.setAttribute('aria-label', 'Show variant ' + (i + 1));
+    d.addEventListener('click', function(){ goTo(i); });
+    els.dots.appendChild(d);
+    dotEls.push(d);
+  });
+
+  function formatNum(n, decimals){
+    return n.toLocaleString(undefined, {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+  }
+
+  function cancelCount(){
+    if(countRaf !== null){ cancelAnimationFrame(countRaf); countRaf = null; }
+  }
+
+  function animateCount(target, decimals, prefix){
+    cancelCount();
+    if(reduceMotion){
+      els.bignum.textContent = prefix + formatNum(target, decimals);
+      return;
+    }
+    var start = performance.now();
+    var duration = 600;
+    function tick(now){
+      var t = Math.min(1, (now - start) / duration);
+      var eased = 1 - Math.pow(1 - t, 3);
+      var val = target * eased;
+      els.bignum.textContent = prefix + formatNum(val, decimals);
+      if(t < 1){
+        countRaf = requestAnimationFrame(tick);
+      } else {
+        els.bignum.textContent = prefix + formatNum(target, decimals);
+        countRaf = null;
+      }
+    }
+    countRaf = requestAnimationFrame(tick);
+  }
+
+  function render(){
+    var v = VARIANTS[idx];
+    els.kicker.textContent = v.kicker;
+    els.unit.textContent = v.unit;
+    els.label.textContent = v.label;
+    els.foot.textContent = v.foot;
+
+    els.bar1label.textContent = v.bars[0].label;
+    els.bar1val.textContent = v.bars[0].value + '%';
+    els.bar2label.textContent = v.bars[1].label;
+    els.bar2val.textContent = v.bars[1].value + '%';
+
+    /* Reset bars to 0 then animate to width (re-animate on every switch) */
+    els.bar1fill.style.transition = 'none';
+    els.bar2fill.style.transition = 'none';
+    els.bar1fill.style.width = '0%';
+    els.bar2fill.style.width = '0%';
+    /* Force reflow so the transition re-triggers */
+    void els.bar1fill.offsetWidth;
+    els.bar1fill.style.transition = '';
+    els.bar2fill.style.transition = '';
+    requestAnimationFrame(function(){
+      els.bar1fill.style.width = Math.min(100, v.bars[0].value) + '%';
+      els.bar2fill.style.width = Math.min(100, v.bars[1].value) + '%';
+    });
+
+    animateCount(v.number, v.decimals, v.prefix);
+
+    dotEls.forEach(function(d, i){ d.classList.toggle('on', i === idx); });
+  }
+
+  function goTo(i){
+    idx = ((i % VARIANTS.length) + VARIANTS.length) % VARIANTS.length;
+    render();
+  }
+
+  els.prev.addEventListener('click', function(){ goTo(idx - 1); });
+  els.next.addEventListener('click', function(){ goTo(idx + 1); });
+  els.stage.addEventListener('click', function(e){
+    if(e.target === els.stage){ goTo(idx + 1); }
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); goTo(idx - 1); }
+    else if(e.key === 'ArrowRight'){ e.preventDefault(); goTo(idx + 1); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

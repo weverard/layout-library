@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>69 · Versus / Comparison Slide — Layout scaffold</title>
+<!--
+  PATTERN    Versus / Comparison Slide
+  NAV MODEL  A split A-vs-B frame. A center divider handle drags to give one
+             side more room (rows stay aligned across the divide for
+             point-by-point contrast); double-click the handle resets 50/50.
+  BEST FOR   Before/after, us-vs-them, build-vs-buy.
+  REGIONS    .stage · .side.a / .side.b (header + matched rows) · .divider
+             (drag handle) · .verdict (footer line)
+  RE-SKIN    --accent = side A tint (B stays neutral); sides stack under
+             ~640px and the divider hides (nothing left to drag).
+-->
+<style>
+  :root{
+    --bg:#FBEDEF; --surface:#fff; --ink:#1C1417; --muted:#75636A; --line:rgba(28,20,23,.12);
+    --accent:#E11D48; --a-tint:#FDF1F3;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --split:50;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
+       line-height:1.5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px}
+
+  .stage{
+    position:relative;width:min(1180px,94vw);aspect-ratio:16/9;
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 24px 64px rgba(28,10,16,.14);overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+
+  .head{padding:clamp(24px,4vw,44px) clamp(28px,5vw,60px) 0}
+  .kicker{font-family:var(--mono);font-size:clamp(11px,1.2vw,13px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:4px}
+  .title{font-size:clamp(19px,2.6vw,28px);font-weight:800;letter-spacing:-.03em}
+
+  .compare{position:relative;flex:1;display:flex;margin-top:clamp(16px,3vw,28px);min-height:0}
+  .side{padding:clamp(16px,2.6vw,26px) clamp(20px,3.4vw,40px);display:flex;flex-direction:column;
+    overflow:hidden;transition:width .05s linear}
+  .side.a{width:calc(var(--split) * 1%);background:var(--a-tint)}
+  .side.b{width:calc((100 - var(--split)) * 1%);background:var(--surface)}
+  .side-head{font-size:clamp(14px,1.8vw,19px);font-weight:800;margin-bottom:clamp(10px,2vw,18px);
+    letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .side.a .side-head{color:var(--accent)}
+  .side.b .side-head{color:var(--ink)}
+
+  .rows{display:flex;flex-direction:column;gap:2px}
+  .row{min-height:clamp(36px,5vw,48px);display:flex;flex-direction:column;justify-content:center;
+    border-bottom:1px solid var(--line);padding:4px 0}
+  .row .rk{font-size:11px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .row .rv{font-size:clamp(12.5px,1.5vw,15px);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .divider{
+    position:absolute;top:0;bottom:0;left:calc(var(--split) * 1%);width:22px;transform:translateX(-50%);
+    cursor:col-resize;display:flex;align-items:center;justify-content:center;z-index:4;touch-action:none;
+  }
+  .divider::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--line);
+    transform:translateX(-50%)}
+  .divider .grip{
+    width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+    box-shadow:0 4px 12px rgba(28,10,16,.25);position:relative;
+  }
+
+  .verdict{padding:16px clamp(28px,5vw,60px) clamp(18px,3vw,28px);font-size:clamp(12.5px,1.5vw,14.5px);
+    color:var(--muted);border-top:1px solid var(--line)}
+  .verdict b{color:var(--ink)}
+
+  @media (max-width:640px){
+    .stage{aspect-ratio:auto}
+    .compare{flex-direction:column;gap:14px}
+    .side.a,.side.b{width:100% !important}
+    .divider{display:none}
+    .verdict{padding-bottom:20px}
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="head">
+      <p class="kicker">Build vs. buy</p>
+      <h1 class="title">Two paths to the same launch date.</h1>
+    </div>
+
+    <div class="compare" id="compare">
+      <div class="side a">
+        <div class="side-head">Build in-house</div>
+        <div class="rows" id="rowsA"></div>
+      </div>
+      <div class="side b">
+        <div class="side-head">Buy a platform</div>
+        <div class="rows" id="rowsB"></div>
+      </div>
+      <div class="divider" id="divider" role="slider" aria-label="Comparison split"
+           aria-valuemin="30" aria-valuemax="70" aria-valuenow="50" tabindex="0">
+        <div class="grip">⇔</div>
+      </div>
+    </div>
+
+    <p class="verdict"><b>Verdict:</b> buy if you need to launch this quarter; build only once the product is proven and the platform becomes the constraint.</p>
+  </div>
+
+  <div class="scaffold">69 · versus-slide &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var ROWS = [
+    {label:'Time to launch',   a:'4–6 months',     b:'2–3 weeks'},
+    {label:'Upfront cost',     a:'High (eng time)', b:'Low (subscription)'},
+    {label:'Customization',    a:'Unlimited',        b:'Within the platform'},
+    {label:'Ongoing maintenance', a:'Owned by your team', b:'Handled by vendor'},
+    {label:'Data ownership',  a:'Fully yours',      b:'Shared with vendor'}
+  ];
+
+  var rowsA = document.getElementById('rowsA');
+  var rowsB = document.getElementById('rowsB');
+  ROWS.forEach(function(r){
+    var ra = document.createElement('div');
+    ra.className = 'row';
+    ra.innerHTML = '<span class="rk">' + r.label + '</span><span class="rv">' + r.a + '</span>';
+    rowsA.appendChild(ra);
+
+    var rb = document.createElement('div');
+    rb.className = 'row';
+    rb.innerHTML = '<span class="rk">' + r.label + '</span><span class="rv">' + r.b + '</span>';
+    rowsB.appendChild(rb);
+  });
+
+  var stageEl = document.getElementById('stage');
+  var compareEl = document.getElementById('compare');
+  var dividerEl = document.getElementById('divider');
+  var MIN_SPLIT = 30, MAX_SPLIT = 70;
+  var dragging = false;
+
+  function setSplit(pct){
+    pct = Math.max(MIN_SPLIT, Math.min(MAX_SPLIT, pct));
+    document.documentElement.style.setProperty('--split', pct.toFixed(1));
+    dividerEl.setAttribute('aria-valuenow', Math.round(pct));
+  }
+
+  function splitFromClientX(clientX){
+    var rect = compareEl.getBoundingClientRect();
+    var pct = ((clientX - rect.left) / rect.width) * 100;
+    return pct;
+  }
+
+  dividerEl.addEventListener('pointerdown', function(e){
+    dragging = true;
+    dividerEl.setPointerCapture(e.pointerId);
+  });
+  dividerEl.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    setSplit(splitFromClientX(e.clientX));
+  });
+  dividerEl.addEventListener('pointerup', function(e){
+    dragging = false;
+    if(dividerEl.hasPointerCapture && dividerEl.hasPointerCapture(e.pointerId)){
+      dividerEl.releasePointerCapture(e.pointerId);
+    }
+  });
+  dividerEl.addEventListener('pointercancel', function(){ dragging = false; });
+
+  dividerEl.addEventListener('dblclick', function(){ setSplit(50); });
+
+  dividerEl.addEventListener('keydown', function(e){
+    var current = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--split')) || 50;
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); setSplit(current - 5); }
+    else if(e.key === 'ArrowRight'){ e.preventDefault(); setSplit(current + 5); }
+    else if(e.key === 'Home'){ e.preventDefault(); setSplit(50); }
+  });
+
+  setSplit(50);
+})();
+</script>
+</body>
+</html>
