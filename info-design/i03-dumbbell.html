@@ -119,7 +119,7 @@ Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or th
 
 <script>
 (function(){
-  var RAW = [
+  var DATA = [
     {label:'Search',        from:42, to:61},
     {label:'Checkout',      from:55, to:78},
     {label:'Onboarding',    from:38, to:70},
@@ -129,11 +129,6 @@ Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or th
     {label:'Support',       from:50, to:58},
     {label:'Settings',      from:58, to:60}
   ];
-  var DATA = RAW.slice().sort(function(a, b){
-    return (b.to - b.from) - (a.to - a.from);
-  });
-  var standoutIndex = 0; // largest delta, after sort
-  DATA[standoutIndex].note = DATA[standoutIndex].label + ' saw the biggest lift after the redesign.';
 
   var NICE_MIN = 30, NICE_MAX = 85;
   var W = 640, H = 400;
@@ -174,43 +169,54 @@ Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or th
 
     function xOf(v){ return M.left + plotW * (v - NICE_MIN) / (NICE_MAX - NICE_MIN); }
 
-    DATA.forEach(function(d, i){
+    // Sort by delta at render time so DATA stays the single, unsorted fork
+    // point — editing it keeps the sorted-by-delta and annotate-largest
+    // guarantees without touching any other constant.
+    var rows = DATA.slice().sort(function(a, b){
+      return (b.to - b.from) - (a.to - a.from);
+    });
+
+    rows.forEach(function(d, i){
       var cy = M.top + rowH * (i + 0.5);
       var x1 = xOf(d.from), x2 = xOf(d.to);
       var delta = d.to - d.from;
+      var note = i === 0 ? d.label + ' saw the biggest lift after the redesign.' : null; // largest delta, after sort
+
+      var row = el('g', {class:'row'});
+      svg.appendChild(row);
 
       var band = el('rect', {class:'rowband', x:0, y:M.top + rowH * i, width:W, height:rowH});
-      svg.appendChild(band);
+      row.appendChild(band);
 
       var label = el('text', {class:'rowlabel', x:M.left - 14, y:cy + 4, 'text-anchor':'end'});
-      svg.appendChild(label);
+      row.appendChild(label);
       fitLabel(d.label, labelBudget, label);
       var titleEl = el('title', {});
       titleEl.textContent = d.label;
       label.appendChild(titleEl);
 
-      svg.appendChild(el('line', {class:'track', x1:x1, x2:x2, y1:cy, y2:cy}));
-      svg.appendChild(el('circle', {class:'dot-from', cx:x1, cy:cy, r:5}));
-      svg.appendChild(el('circle', {class:'dot-to', cx:x2, cy:cy, r:5}));
+      row.appendChild(el('line', {class:'track', x1:x1, x2:x2, y1:cy, y2:cy}));
+      row.appendChild(el('circle', {class:'dot-from', cx:x1, cy:cy, r:5}));
+      row.appendChild(el('circle', {class:'dot-to', cx:x2, cy:cy, r:5}));
 
       var deltaLbl = el('text', {class:'delta' + (delta < 0 ? ' neg' : ''), x:xOf(NICE_MAX) + 14, y:cy + 4});
       deltaLbl.textContent = (delta >= 0 ? '+' : '') + delta + ' pts';
-      svg.appendChild(deltaLbl);
+      row.appendChild(deltaLbl);
 
       var fromPop = el('text', {class:'valuepop', x:x1, y:cy - 12, 'text-anchor':'middle'});
       fromPop.textContent = d.from;
       var toPop = el('text', {class:'valuepop', x:x2, y:cy - 12, 'text-anchor':'middle'});
       toPop.textContent = d.to;
-      svg.appendChild(fromPop);
-      svg.appendChild(toPop);
+      row.appendChild(fromPop);
+      row.appendChild(toPop);
 
-      if(d.note){
+      if(note){
         var annoY = cy - rowH * 0.36;
         var annoX = (x1 + x2) / 2;
-        svg.appendChild(el('line', {class:'callout-line', x1:annoX, y1:cy - 7, x2:annoX, y2:annoY + 4}));
+        row.appendChild(el('line', {class:'callout-line', x1:annoX, y1:cy - 7, x2:annoX, y2:annoY + 4}));
         var anno = el('text', {class:'annotation', x:annoX, y:annoY, 'text-anchor':'middle'});
-        anno.textContent = d.note;
-        svg.appendChild(anno);
+        anno.textContent = note;
+        row.appendChild(anno);
       }
 
       function enter(){
@@ -223,8 +229,8 @@ Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or th
         fromPop.classList.remove('show');
         toPop.classList.remove('show');
       }
-      band.addEventListener('mouseenter', enter);
-      band.addEventListener('mouseleave', leave);
+      row.addEventListener('mouseenter', enter);
+      row.addEventListener('mouseleave', leave);
     });
   }
 
@@ -234,14 +240,13 @@ Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or th
   if(mq.addEventListener){ mq.addEventListener('change', relayout); }
   else if(mq.addListener){ mq.addListener(relayout); }
 
-  var btn = document.getElementById('copy');
-  btn.addEventListener('click', function(){
-    var txt = document.getElementById('prompt-text').textContent;
-    var done = function(){ btn.textContent = 'Copied ✓'; setTimeout(function(){ btn.textContent = 'Copy prompt'; }, 1600); };
-    if(navigator.clipboard && window.isSecureContext){
-      navigator.clipboard.writeText(txt).then(done);
-    } else {
-      var ta = document.createElement('textarea'); ta.value = txt;
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
       document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
     }
   });
