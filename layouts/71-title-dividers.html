@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>71 · Title + Section-Divider System — Layout scaffold</title>
+<!--
+  PATTERN    Title + Section-Divider System
+  NAV MODEL  A mini deck of reusable frame types — cover → section dividers →
+             content stub → closing — paged like a real presentation.
+             ArrowLeft/Right, the pager dots, and clicking the left/right
+             edges of the stage all page; frames cross-fade.
+  BEST FOR   Deck skeletons, template systems, brand reviews.
+  REGIONS    .deck (16:9 stage) · .frame variants (.cover kicker/title/meta ·
+             .divider giant section number/title · .content-stub · .closing
+             CTA/contact) · .pager (dots + arrows) · .pageno
+  RE-SKIN    --accent = divider numerals + rules; frames letterbox on narrow
+             (~640px: the 16:9 deck simply scales down, text sizes clamp).
+-->
+<style>
+  :root{
+    --bg:#E9EBEF; --surface:#fff; --ink:#0F172A; --muted:#64748B; --line:rgba(15,23,42,.12);
+    --accent:#0F172A;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
+       line-height:1.5;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+       padding:32px 20px;gap:16px}
+
+  .deck{
+    position:relative;width:min(1180px,94vw);aspect-ratio:16/9;
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 24px 64px rgba(10,16,30,.16);overflow:hidden;
+  }
+
+  .frame{
+    position:absolute;inset:0;padding:clamp(28px,5vw,72px) clamp(32px,7vw,88px);
+    display:flex;flex-direction:column;opacity:0;pointer-events:none;
+    transition:opacity .35s ease;
+  }
+  .frame.on{opacity:1;pointer-events:auto}
+  @media (prefers-reduced-motion: reduce){ .frame{transition:none} }
+
+  .pageno{position:absolute;right:clamp(24px,4vw,44px);bottom:18px;font-family:var(--mono);
+    font-size:12px;color:var(--muted);z-index:3}
+
+  /* — cover — */
+  .cover{justify-content:center}
+  .cover .kicker{font-family:var(--mono);font-size:clamp(11px,1.3vw,14px);letter-spacing:.18em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:clamp(12px,2vw,20px)}
+  .cover .title{font-size:clamp(34px,6.4vw,76px);font-weight:800;letter-spacing:-.04em;line-height:1.02;
+    max-width:16ch}
+  .cover .rule{width:clamp(48px,7vw,84px);height:5px;background:var(--accent);border-radius:3px;
+    margin:clamp(18px,3vw,30px) 0}
+  .cover .meta{font-size:clamp(12.5px,1.5vw,15px);color:var(--muted)}
+  .cover .meta b{color:var(--ink)}
+
+  /* — section divider — */
+  .divider-frame{flex-direction:row;align-items:center;gap:clamp(24px,4.5vw,56px)}
+  .divider-frame .bignum{font-size:clamp(90px,19vw,230px);font-weight:800;letter-spacing:-.05em;
+    line-height:.85;color:var(--accent);opacity:.14;flex:0 0 auto;font-variant-numeric:tabular-nums}
+  .divider-frame .dv-body{border-left:4px solid var(--accent);padding-left:clamp(18px,3vw,32px)}
+  .divider-frame .dv-kicker{font-family:var(--mono);font-size:clamp(11px,1.2vw,13px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .divider-frame .dv-title{font-size:clamp(26px,4.4vw,52px);font-weight:800;letter-spacing:-.035em;line-height:1.05}
+
+  /* — content stub — */
+  .content-stub .cs-kicker{font-family:var(--mono);font-size:clamp(11px,1.2vw,13px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .content-stub .cs-title{font-size:clamp(20px,3vw,34px);font-weight:800;letter-spacing:-.03em;
+    margin-bottom:clamp(18px,3vw,30px)}
+  .content-stub .ph-grid{flex:1;display:grid;grid-template-columns:1.4fr 1fr;gap:clamp(12px,2vw,20px);min-height:0}
+  .content-stub .ph{border:2px dashed var(--line);border-radius:12px;display:flex;align-items:center;
+    justify-content:center;color:var(--muted);font-size:clamp(11px,1.3vw,13px);font-family:var(--mono);
+    letter-spacing:.06em;text-transform:uppercase}
+
+  /* — closing — */
+  .closing{justify-content:center;align-items:flex-start}
+  .closing .cta{font-size:clamp(30px,5.4vw,64px);font-weight:800;letter-spacing:-.04em;line-height:1.05;
+    max-width:18ch}
+  .closing .rule{width:clamp(48px,7vw,84px);height:5px;background:var(--accent);border-radius:3px;
+    margin:clamp(18px,3vw,30px) 0}
+  .closing .contact{font-size:clamp(13px,1.6vw,16px);color:var(--muted)}
+  .closing .contact b{color:var(--ink)}
+
+  /* — edge click zones — */
+  .edge{position:absolute;top:0;bottom:0;width:16%;z-index:2;appearance:none;background:none;border:0;
+    cursor:pointer;opacity:0}
+  .edge.left{left:0}
+  .edge.right{right:0}
+
+  /* — pager — */
+  .pager{display:flex;align-items:center;gap:16px}
+  .arrow-btn{appearance:none;background:var(--surface);border:1px solid var(--line);border-radius:50%;
+    width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:15px;
+    color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
+  .arrow-btn:hover{border-color:var(--accent)}
+  .dots{display:flex;gap:8px}
+  .dot{appearance:none;border:0;padding:0;width:8px;height:8px;border-radius:50%;background:#C6CBD4;
+    display:block;cursor:pointer;transition:background .2s,width .25s}
+  .dot.on{background:var(--accent);width:24px;border-radius:99px}
+
+  @media (max-width:640px){
+    .pageno{display:none} /* too little stage height at letterbox scale — dots carry position */
+  }
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}.scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+  <div class="deck" id="deck" aria-roledescription="slide deck" aria-label="Deck frame system, use arrow keys to page">
+    <!-- 1 · cover -->
+    <section class="frame cover" data-name="Cover">
+      <p class="kicker">Quarterly review · 2026</p>
+      <h1 class="title">A deck skeleton you can reuse.</h1>
+      <div class="rule"></div>
+      <p class="meta"><b>Presented by</b> the placeholder team &nbsp;·&nbsp; June 2026</p>
+    </section>
+
+    <!-- 2 · divider 01 -->
+    <section class="frame divider-frame" data-name="Section 01">
+      <div class="bignum">01</div>
+      <div class="dv-body">
+        <p class="dv-kicker">Section one</p>
+        <h2 class="dv-title">Where we are</h2>
+      </div>
+    </section>
+
+    <!-- 3 · divider 02 -->
+    <section class="frame divider-frame" data-name="Section 02">
+      <div class="bignum">02</div>
+      <div class="dv-body">
+        <p class="dv-kicker">Section two</p>
+        <h2 class="dv-title">Where we're going</h2>
+      </div>
+    </section>
+
+    <!-- 4 · content stub -->
+    <section class="frame content-stub" data-name="Content">
+      <p class="cs-kicker">Section two · content</p>
+      <h2 class="cs-title">A content frame sits between dividers.</h2>
+      <div class="ph-grid">
+        <div class="ph">Chart / exhibit placeholder</div>
+        <div class="ph">Takeaways placeholder</div>
+      </div>
+    </section>
+
+    <!-- 5 · closing -->
+    <section class="frame closing" data-name="Closing">
+      <h2 class="cta">Questions? Let's talk.</h2>
+      <div class="rule"></div>
+      <p class="contact"><b>hello@example.com</b> &nbsp;·&nbsp; example.com/deck</p>
+    </section>
+
+    <button class="edge left" id="edgeLeft" aria-label="Previous frame"></button>
+    <button class="edge right" id="edgeRight" aria-label="Next frame"></button>
+    <p class="pageno" id="pageno"></p>
+  </div>
+
+  <div class="pager">
+    <button class="arrow-btn" id="prev" aria-label="Previous frame">←</button>
+    <div class="dots" id="dots" role="tablist" aria-label="Frames"></div>
+    <button class="arrow-btn" id="next" aria-label="Next frame">→</button>
+  </div>
+
+  <div class="scaffold">71 · title-dividers &nbsp;<a href="../index.html">↔ gallery</a></div>
+
+<script>
+(function(){
+  var frames = Array.prototype.slice.call(document.querySelectorAll('.frame'));
+  var total = frames.length;
+  var idx = 0;
+
+  var dotsEl = document.getElementById('dots');
+  var pagenoEl = document.getElementById('pageno');
+
+  var dotEls = [];
+  frames.forEach(function(f, i){
+    var d = document.createElement('button');
+    d.className = 'dot';
+    d.setAttribute('role','tab');
+    d.setAttribute('aria-label', 'Go to frame ' + (i + 1) + ': ' + f.dataset.name);
+    d.addEventListener('click', function(){ goTo(i); });
+    dotsEl.appendChild(d);
+    dotEls.push(d);
+  });
+
+  function goTo(i){
+    idx = Math.max(0, Math.min(total - 1, i));
+    frames.forEach(function(f, k){ f.classList.toggle('on', k === idx); });
+    dotEls.forEach(function(d, k){
+      d.classList.toggle('on', k === idx);
+      d.setAttribute('aria-selected', k === idx ? 'true' : 'false');
+    });
+    pagenoEl.textContent = (idx + 1) + ' / ' + total + ' · ' + frames[idx].dataset.name;
+  }
+
+  document.getElementById('prev').addEventListener('click', function(){ goTo(idx - 1); });
+  document.getElementById('next').addEventListener('click', function(){ goTo(idx + 1); });
+  document.getElementById('edgeLeft').addEventListener('click', function(){ goTo(idx - 1); });
+  document.getElementById('edgeRight').addEventListener('click', function(){ goTo(idx + 1); });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); goTo(idx - 1); }
+    else if(e.key === 'ArrowRight'){ e.preventDefault(); goTo(idx + 1); }
+  });
+
+  goTo(0);
+})();
+</script>
+</body>
+</html>

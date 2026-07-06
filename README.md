@@ -162,6 +162,15 @@ fresh load in the browser.
 `29` Marquee Index · `30` Spotlight Scroll · `56` Parallax Mouse Hero ·
 `57` Diagonal / Skewed Editorial · `58` Particle Starfield Hero · `59` Cursor-Mask Reveal
 
+**Slides & frames — presentation layouts**
+`66` KPI Big-Number Slide · `67` Numbered-Steps Slide · `68` 2×2 Quadrant Matrix ·
+`69` Versus / Comparison Slide · `70` Roadmap / Timeline Slide ·
+`71` Title + Section-Divider System
+> 16:9 slide *frames* — each renders as a centered slide stage
+> (`aspect-ratio: 16/9`, scales to the viewport). These are layout mechanics
+> for presentation-shaped pages; data *figures* (charts) are info-design
+> territory and live in the separate info-design collection, not here.
+
 **Agentic commerce — chat that buys**
 `51` Mobile Shopping Chat · `52` Agentic Checkout Journey (deck) ·
 `53` Streaming Agent Trace · `54` Multi-Agent Handoff ·

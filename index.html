@@ -315,6 +315,34 @@
   .t-board .brow .chip{width:16px;height:8px;border-radius:3px;display:block;flex:0 0 auto}
   .t-board .brow .chip.up{background:var(--accent)}
   .t-board .brow .chip.down{background:rgba(220,38,38,.45)}
+  .t-kpi{flex-direction:column;gap:8px;justify-content:center;padding:0 16px}
+  .t-kpi .num{height:26px;width:46%;border-radius:5px;background:var(--accent);display:block}
+  .t-kpi .bar{height:7px;border-radius:4px;background:#dfe1e6;display:block;position:relative;overflow:hidden}
+  .t-kpi .bar::after{content:"";position:absolute;left:0;top:0;bottom:0;width:72%;background:var(--accent);opacity:.55;border-radius:4px}
+  .t-kpi .bar.lo::after{width:44%}
+  .t-steps{align-items:center;gap:0;padding:0 18px}
+  .t-steps .sq{width:17px;height:17px;border-radius:5px;background:#dfe1e6;flex:0 0 auto;display:block}
+  .t-steps .sq.a{background:var(--accent)}
+  .t-steps .ln{flex:1;height:2px;background:#d8dade;display:block}
+  .t-steps .ln.a{background:var(--accent)}
+  .t-quad{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px}
+  .t-quad i{background:#fff;border:1px solid var(--line);border-radius:4px;display:block}
+  .t-quad i.f{background:var(--accent);opacity:.16}
+  .t-vs{gap:4px}
+  .t-vs .b2{flex:1}
+  .t-vs .b2.a{background:var(--accent);opacity:.85;border:0}
+  .t-vs .knob{position:absolute;left:50%;top:50%;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid #fff;transform:translate(-50%,-50%);display:block;z-index:1}
+  .t-roadmap{flex-direction:column;gap:5px;justify-content:center}
+  .t-roadmap .lane{display:flex;gap:4px;flex:none;height:13px}
+  .t-roadmap .lane i{border-radius:3px;background:#dfe1e6;display:block}
+  .t-roadmap .lane i.a{background:var(--accent)}
+  .t-frames{flex-direction:column;gap:6px;align-items:center;justify-content:center}
+  .t-frames .pane{width:82%;height:54%;border-radius:6px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:8px}
+  .t-frames .pane .gn{width:20px;align-self:stretch;border-radius:3px;background:var(--accent);opacity:.22;display:block}
+  .t-frames .pane .t{flex:1;height:8px;border-radius:3px;background:var(--accent);display:block}
+  .t-frames .dots{display:flex;gap:5px}
+  .t-frames .dots i{width:5px;height:5px;border-radius:50%;background:#cfd2d8;display:block}
+  .t-frames .dots i.a{background:var(--accent)}
 
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
@@ -414,6 +442,16 @@
       <a class="card" href="layouts/57-diagonal-editorial.html" style="--accent:#F97316"><div class="thumb"><div class="tw t-diag"><span class="band a"></span><span class="band b"></span><span class="ttl"></span></div></div><div class="b"><p class="n">57</p><h3>Diagonal / Skewed Editorial</h3><p class="nav"><b>Skewed sections</b> + rotated type reveal on scroll.</p><div class="tags"><span class="tag">editorial</span><span class="tag">fashion</span></div></div></a>
       <a class="card" href="layouts/58-starfield.html" style="--accent:#6366F1"><div class="thumb" style="background:#0b1020"><div class="tw t-stars"><span class="s" style="left:14%;top:22%"></span><span class="s a" style="left:62%;top:30%"></span><span class="s" style="left:80%;top:18%"></span><span class="s" style="left:30%;top:66%"></span><span class="s a" style="left:74%;top:70%"></span><span class="s" style="left:48%;top:14%"></span><span class="ttl"></span></div></div><div class="b"><p class="n">58</p><h3>Particle Starfield Hero</h3><p class="nav"><b>Animated star field</b> drifts behind bold type.</p><div class="tags"><span class="tag">tech</span><span class="tag">launch</span></div></div></a>
       <a class="card" href="layouts/59-cursor-mask.html" style="--accent:#EF4444"><div class="thumb"><div class="tw t-mask"><span class="under"></span><span class="cur"></span></div></div><div class="b"><p class="n">59</p><h3>Cursor-Mask Reveal</h3><p class="nav"><b>A mask follows the cursor</b>, revealing a different layer beneath.</p><div class="tags"><span class="tag">before/after</span><span class="tag">teaser</span></div></div></a>
+    </div>
+
+    <p class="cat">Slides &amp; frames — presentation layouts</p>
+    <div class="grid">
+      <a class="card" href="layouts/66-kpi-slide.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-kpi"><span class="num"></span><span class="bar"></span><span class="bar lo"></span></div></div><div class="b"><p class="n">66</p><h3>KPI Big-Number Slide</h3><p class="nav"><b>One number leads</b> — arrows cycle variants; the stat counts up, bars re-fill.</p><div class="tags"><span class="tag">QBR</span><span class="tag">exec summary</span></div></div></a>
+      <a class="card" href="layouts/67-steps-slide.html" style="--accent:#2563EB"><div class="thumb"><div class="tw t-steps"><span class="sq a"></span><span class="ln a"></span><span class="sq"></span><span class="ln"></span><span class="sq"></span></div></div><div class="b"><p class="n">67</p><h3>Numbered-Steps Slide</h3><p class="nav"><b>1-2-3 highlight</b> — click a step or arrow along; the caption swaps.</p><div class="tags"><span class="tag">how-it-works</span><span class="tag">process</span></div></div></a>
+      <a class="card" href="layouts/68-quadrant-matrix.html" style="--accent:#7C3AED"><div class="thumb"><div class="tw t-quad"><i class="f"></i><i></i><i></i><i></i><span class="dot" style="left:28%;top:30%"></span><span class="dot" style="left:66%;top:38%"></span><span class="dot" style="left:40%;top:70%"></span></div></div><div class="b"><p class="n">68</p><h3>2×2 Quadrant Matrix</h3><p class="nav"><b>Four quadrants</b> — hover a dot for its note; click a quadrant to focus it.</p><div class="tags"><span class="tag">prioritisation</span><span class="tag">positioning</span></div></div></a>
+      <a class="card" href="layouts/69-versus-slide.html" style="--accent:#E11D48"><div class="thumb"><div class="tw t-vs"><div class="b2 a"></div><div class="b2"></div><span class="knob"></span></div></div><div class="b"><p class="n">69</p><h3>Versus / Comparison Slide</h3><p class="nav"><b>Drag the divider</b> — A-vs-B rows stay aligned; double-click resets 50/50.</p><div class="tags"><span class="tag">before/after</span><span class="tag">build-vs-buy</span></div></div></a>
+      <a class="card" href="layouts/70-roadmap-slide.html" style="--accent:#0D9488"><div class="thumb"><div class="tw t-roadmap"><div class="lane"><i class="a" style="width:34%"></i><i style="width:26%"></i></div><div class="lane"><i class="a" style="width:22%"></i><i style="width:38%"></i><i style="width:18%"></i></div><div class="lane"><i class="a" style="width:44%"></i><i style="width:20%"></i></div></div></div><div class="b"><p class="n">70</p><h3>Roadmap / Timeline Slide</h3><p class="nav"><b>Click a phase to zoom</b> — Now / Next / Later lanes re-flow around it.</p><div class="tags"><span class="tag">roadmap</span><span class="tag">programme</span></div></div></a>
+      <a class="card" href="layouts/71-title-dividers.html" style="--accent:#0F172A"><div class="thumb"><div class="tw t-frames"><div class="pane"><span class="gn"></span><span class="t"></span></div><span class="dots"><i class="a"></i><i></i><i></i><i></i><i></i></span></div></div><div class="b"><p class="n">71</p><h3>Title + Section-Divider System</h3><p class="nav"><b>Page a mini deck</b> — cover, dividers, closing; arrows, dots, edge-click.</p><div class="tags"><span class="tag">deck skeleton</span><span class="tag">template</span></div></div></a>
     </div>
 
     <p class="cat">Agentic commerce — chat that buys</p>
