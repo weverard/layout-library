@@ -344,6 +344,21 @@
   .t-frames .dots i{width:5px;height:5px;border-radius:50%;background:#cfd2d8;display:block}
   .t-frames .dots i.a{background:var(--accent)}
 
+  .t-i-bars{align-items:flex-end;gap:6px;padding:0 12px 10px}
+  .t-i-bars i{flex:1;border-radius:2px 2px 0 0;background:#dfe1e6;display:block}
+  .t-i-bars i.a{background:var(--accent)}
+  .t-i-slope{display:block}
+  .t-i-slope .post{position:absolute;top:10%;bottom:10%;width:1px;background:var(--line);display:block}
+  .t-i-slope .post.l{left:14%}
+  .t-i-slope .post.r{right:14%}
+  .t-i-slope .lns{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:#c7c2b6;stroke-width:2.4}
+  .t-i-slope .lns .a{stroke:var(--accent)}
+  .t-i-dumbbell{flex-direction:column;gap:9px;justify-content:center;padding:0 12px}
+  .t-i-dumbbell .drow{position:relative;height:2px;background:var(--line);display:block}
+  .t-i-dumbbell .drow i{position:absolute;top:50%;width:8px;height:8px;border-radius:50%;transform:translate(-50%,-50%);display:block}
+  .t-i-dumbbell .drow i.o{background:#fff;border:1.5px solid #9C978D}
+  .t-i-dumbbell .drow i.f{background:var(--accent);border:1.5px solid var(--accent)}
+
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
 </style>
@@ -469,8 +484,12 @@
     </div>
 
     <div class="pane" id="info-design" hidden>
-      <p class="cat">Info design — live chart scaffolds</p>
-      <div class="grid"></div>
+    <p class="cat">Comparison — set side by side</p>
+    <div class="grid">
+      <a class="card" href="info-design/i01-grouped-bars.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-bars"><i class="a" style="height:70px"></i><i style="height:46px"></i><i class="a" style="height:52px"></i><i style="height:48px"></i><i class="a" style="height:82px"></i><i style="height:34px"></i></div></div><div class="b"><p class="n">i01</p><h3>Grouped Bars with Annotation</h3><p class="nav"><b>Hover a bar</b> for its value; one callout points at the standout category.</p><div class="tags"><span class="tag">comparison</span><span class="tag">plan-vs-actual</span></div></div></a>
+      <a class="card" href="info-design/i02-slope.html" style="--accent:#1D4ED8"><div class="thumb"><div class="tw t-i-slope"><span class="post l"></span><span class="post r"></span><svg class="lns" viewBox="0 0 100 100" preserveAspectRatio="none"><path class="a" d="M14,78 L86,20"/><path d="M14,30 L86,55"/><path d="M14,55 L86,68"/></svg></div></div><div class="b"><p class="n">i02</p><h3>Slope Chart</h3><p class="nav"><b>Hover a line</b> to isolate it; risers and fallers split by color.</p><div class="tags"><span class="tag">before/after</span><span class="tag">rank shift</span></div></div></a>
+      <a class="card" href="info-design/i03-dumbbell.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-i-dumbbell"><div class="drow"><i class="o" style="left:14%"></i><i class="f" style="left:64%"></i></div><div class="drow"><i class="o" style="left:30%"></i><i class="f" style="left:56%"></i></div><div class="drow"><i class="o" style="left:44%"></i><i class="f" style="left:52%"></i></div></div></div><div class="b"><p class="n">i03</p><h3>Dumbbell / Dot-Range</h3><p class="nav"><b>Hover a row</b> for exact values; sorted so the biggest gap leads.</p><div class="tags"><span class="tag">gap analysis</span><span class="tag">before/after</span></div></div></a>
+    </div>
     </div>
 
     <footer>

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i01 · Grouped Bars with Annotation — Info design scaffold</title>
+<!--
+  CHART       Grouped Bars with Annotation
+  DATA SHAPE  4 categories x 2 series — {label, a, b}[]
+  INSIGHT     compare
+  BEST FOR    Two-series category comparisons; plan-vs-actual.
+  RE-SKIN     --accent = series A + the annotation (series B stays neutral
+              gray). Bars go thinner and category labels rotate under ~520px.
+-->
+<style>
+  :root{
+    --accent:#B45309;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .gridline{stroke:var(--line);stroke-width:1}
+  .gridlabel{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+  .bar-a{fill:var(--accent)}
+  .bar-b{fill:#CBC4B6}
+  .bar{transition:opacity .15s}
+  .bar:hover{opacity:.82}
+  .catlabel{font-size:12px;fill:var(--muted);text-anchor:middle}
+  .directlabel{font-size:11.5px;font-weight:600}
+  .directlabel.a{fill:var(--accent)}
+  .directlabel.b{fill:#8F897C}
+  .leader{stroke:var(--line);stroke-width:1;stroke-dasharray:2 2}
+  .callout-line{stroke:var(--muted);stroke-width:1}
+  .callout-dot{fill:var(--accent)}
+  .annotation{font-size:12.5px;fill:var(--ink)}
+  .annotation tspan{fill:var(--muted)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:520px){
+    .catlabel{transform-box:fill-box;transform-origin:center;transform:rotate(-34deg);text-anchor:end}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .bar,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Comparison · i01</p>
+    <h1>Referrals is the growth story this quarter.</h1>
+    <p class="dek">Signup share by channel, this quarter vs. last quarter (points of a 100-point mix, illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Grouped bar chart comparing signup share by channel, this quarter versus last quarter"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A grouped (paired) vertical bar chart: each category shows two side-by-side bars, one per series.</dd>
+    <dt>When to use it</dt><dd>Comparing two measures across a handful of categories — plan vs. actual, this period vs. last, us vs. benchmark.</dd>
+    <dt>Data shape</dt><dd><code>{label, a, b}[]</code> — 3-6 categories keeps groups legible; more than that, consider small multiples instead.</dd>
+    <dt>Visual style</dt><dd>Direct labels replace a legend; one hairline-gridline y-axis with top-hung labels; a single annotated bar carries the takeaway.</dd>
+  </dl>
+  <p class="tags"><span>comparison</span><span>bars</span><span>annotation</span><span>plan-vs-actual</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a grouped bar chart comparing two series across four categories, drawn as thin vertical bar pairs with generous whitespace between groups. The accent color marks the primary series (this quarter); the second series stays a neutral warm gray so it reads as context, not competition. There is no legend box — instead, the two series are named directly above the bars in the first group only, so the key is learned once and then read by color for the rest of the chart. Three hairline horizontal gridlines mark the y-axis, each with its value hung just above the line at the plot's left edge rather than stacked in a vertical axis column. The one bar that breaks the pattern carries a thin callout line up to a short, specific sentence of annotation, so the headline insight is pointed at directly rather than left for the reader to spot in the shape of the bars.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i01 · grouped-bars &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {label:'Onboarding', a:82, b:58},
+    {label:'Support',    a:65, b:60},
+    {label:'Billing',    a:54, b:50},
+    {label:'Referrals',  a:91, b:40, standout:true,
+      note:'Referrals nearly doubled versus last quarter.'}
+  ];
+  var SERIES_A_NAME = 'This quarter';
+  var SERIES_B_NAME = 'Last quarter';
+  var NICE_MAX = 100;
+  var GRID_VALUES = [0, 50, 100];
+
+  var W = 640, H = 400;
+  var M = {top:74, right:20, bottom:56, left:26};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+
+  function yOf(v){ return M.top + plotH * (1 - v / NICE_MAX); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  // gridlines + top-aligned value labels
+  GRID_VALUES.forEach(function(v){
+    var y = yOf(v);
+    svg.appendChild(el('line', {
+      class:'gridline', x1:M.left, x2:W - M.right, y1:y, y2:y
+    }));
+    var t = el('text', {class:'gridlabel', x:M.left, y:y - 7});
+    t.textContent = v;
+    svg.appendChild(t);
+  });
+
+  var n = DATA.length;
+  var groupW = plotW / n;
+  var barW = 20, gap = 6;
+
+  DATA.forEach(function(d, i){
+    var center = M.left + groupW * (i + 0.5);
+    var aX = center - (barW + gap / 2);
+    var bX = center + gap / 2;
+
+    var aY = yOf(d.a), aH = yOf(0) - aY;
+    var bY = yOf(d.b), bH = yOf(0) - bY;
+
+    var aBar = el('rect', {class:'bar bar-a', x:aX, y:aY, width:barW, height:aH, rx:1.5});
+    var bBar = el('rect', {class:'bar bar-b', x:bX, y:bY, width:barW, height:bH, rx:1.5});
+    svg.appendChild(aBar);
+    svg.appendChild(bBar);
+
+    attachHover(aBar, d.label + ' · ' + SERIES_A_NAME, d.a);
+    attachHover(bBar, d.label + ' · ' + SERIES_B_NAME, d.b);
+
+    var cat = el('text', {class:'catlabel', x:center, y:yOf(0) + 20});
+    cat.textContent = d.label;
+    svg.appendChild(cat);
+
+    if(i === 0){
+      // direct labels in place of a legend box, tied only to the first group
+      var aLabelY = 26;
+      svg.appendChild(el('line', {class:'leader', x1:aX + barW/2, x2:aX + barW/2, y1:aLabelY + 6, y2:aY}));
+      svg.appendChild(el('line', {class:'leader', x1:bX + barW/2, x2:bX + barW/2, y1:aLabelY + 6, y2:bY}));
+      var aLbl = el('text', {class:'directlabel a', x:center - 6, y:aLabelY, 'text-anchor':'end'});
+      aLbl.textContent = SERIES_A_NAME;
+      svg.appendChild(aLbl);
+      var bLbl = el('text', {class:'directlabel b', x:center + 6, y:aLabelY, 'text-anchor':'start'});
+      bLbl.textContent = SERIES_B_NAME;
+      svg.appendChild(bLbl);
+    }
+
+    if(d.standout){
+      var dotX = aX + barW/2, dotY = aY;
+      var annoX = center - 34, annoY = aY - 26;
+      svg.appendChild(el('circle', {class:'callout-dot', cx:dotX, cy:dotY, r:2.6}));
+      svg.appendChild(el('line', {class:'callout-line', x1:dotX, y1:dotY, x2:annoX, y2:annoY + 4}));
+      var words = d.note.split(' ');
+      var line1 = words.slice(0, 4).join(' ');
+      var line2 = words.slice(4).join(' ');
+      var t1 = el('text', {class:'annotation', x:annoX, y:annoY, 'text-anchor':'end'});
+      t1.textContent = line1;
+      var t2 = el('text', {class:'annotation', x:annoX, y:annoY + 15, 'text-anchor':'end'});
+      var tspan = el('tspan', {});
+      tspan.textContent = line2;
+      t2.appendChild(tspan);
+      svg.appendChild(t1);
+      svg.appendChild(t2);
+    }
+  });
+
+  function attachHover(barEl, label, value){
+    barEl.addEventListener('mouseenter', function(){ showChip(barEl, label, value); });
+    barEl.addEventListener('mouseleave', hideChip);
+    barEl.addEventListener('mousemove', function(){ showChip(barEl, label, value); });
+  }
+
+  function showChip(barEl, label, value){
+    var r = barEl.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = label + ': ' + value;
+    chip.style.left = (r.left + r.width/2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  var btn = document.getElementById('copy');
+  btn.addEventListener('click', function(){
+    var txt = document.getElementById('prompt-text').textContent;
+    var done = function(){ btn.textContent = 'Copied ✓'; setTimeout(function(){ btn.textContent = 'Copy prompt'; }, 1600); };
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(txt).then(done);
+    } else {
+      var ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

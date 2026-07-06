@@ -187,6 +187,47 @@ fresh load in the browser.
 
 ---
 
+## Info-design contract
+
+A second collection, `info-design/`, sits alongside `layouts/`. These are
+**figures** (live hand-coded SVG charts), not navigation scaffolds — same
+self-contained ethos, different anatomy. Every `info-design/iNN-slug.html`
+follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
+
+1. **Page anatomy:** `<main class="fig">` (kicker → serif `h1` headline that
+   states the *insight*, not the axis names → sans `.dek` → `<figure>` holding
+   an inline `<svg viewBox="…">` → `.source` line), then a `<details class="spec">`
+   drawer (What it is / When to use it / Data shape / Visual style, tags, and a
+   "Recreate prompt" box with a `#copy` button), then the `.scaffold` badge
+   linking `../index.html#info-design`.
+2. **Shared `:root` tokens** (identical across every file but `--accent`):
+   `--bg --panel --ink --muted --line`, `--pos`/`--neg`, `--serif`/`--sans`/`--mono`,
+   `--s1`–`--s4` spacing scale.
+3. **Doc-header comment fields:** `CHART / DATA SHAPE / INSIGHT / BEST FOR / RE-SKIN`
+   (not the layouts' PATTERN/NAV MODEL/REGIONS set).
+4. **Editorial conventions:** horizontal-only hairline gridlines, direct labels
+   over legend boxes, one `--accent` hue against warm neutrals, generous
+   whitespace, a placeholder `const DATA = …` at the top of the script (the
+   thing a forker replaces).
+5. **Copy-prompt JS is identical in every file**, including the `file://`
+   `execCommand('copy')` fallback (clipboard API needs a secure context, which
+   `file://` is not).
+6. **Body layout gotcha:** don't set `display:flex` on `<body>` — `main` and
+   `details` are siblings and will lay out side-by-side. Center each block
+   individually (`margin:0 auto` + `width:min(…, 94vw)`).
+
+## Info-design catalog
+
+**Comparison — set side by side**
+
+| # | Chart | Data shape | Best for |
+|---|---|---|---|
+| `i01` | Grouped Bars with Annotation | 4 categories x 2 series | Two-series comparisons, plan-vs-actual |
+| `i02` | Slope Chart | 6 entities x 2 time points | Before/after across many entities, rank shifts |
+| `i03` | Dumbbell / Dot-Range | 8 rows x 2 values, sorted by delta | Gap analysis, before/after by group |
+
+---
+
 ## Backlog — ideas not yet built
 
 Agentic-commerce ideas not yet built: chat-assembled cart drawer ·

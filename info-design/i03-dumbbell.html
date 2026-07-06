@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i03 · Dumbbell / Dot-Range — Info design scaffold</title>
+<!--
+  CHART       Dumbbell / Dot-Range
+  DATA SHAPE  8 rows x 2 values, sorted by delta — {label, from, to}[]
+  INSIGHT     compare
+  BEST FOR    Gap analysis; before/after by group.
+  RE-SKIN     --accent = the "to" dot + the delta label. Under ~520px rows
+              compress and labels truncate (full text still in a title attr).
+-->
+<style>
+  :root{
+    --accent:#0F766E;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 8px}
+  .key{color:var(--muted);font-size:12.5px;margin:0 0 var(--s3)}
+  .key .swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 2px -1px 0;vertical-align:baseline}
+  .key .swatch.open{border:1.5px solid var(--muted);background:var(--panel)}
+  .key .swatch.filled{background:var(--accent);border:1.5px solid var(--accent)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .rowband{fill:transparent;transition:fill .15s}
+  .rowband.hover{fill:#F0EEE7}
+  @media (prefers-reduced-motion:reduce){ .rowband{transition:none} }
+
+  .track{stroke:var(--line);stroke-width:2}
+  .dot-from{fill:var(--panel);stroke:var(--muted);stroke-width:1.6}
+  .dot-to{fill:var(--accent);stroke:var(--accent)}
+  .rowlabel{font-size:12.5px;fill:var(--ink)}
+  .delta{font-family:var(--mono);font-size:12px;fill:var(--accent);font-weight:600}
+  .delta.neg{fill:var(--neg)}
+
+  .annotation{font-size:12px;fill:var(--muted)}
+  .callout-line{stroke:var(--muted);stroke-width:1}
+
+  .valuepop{font-family:var(--mono);font-size:11px;fill:var(--ink);opacity:0;transition:opacity .15s}
+  .valuepop.show{opacity:1}
+  @media (prefers-reduced-motion:reduce){ .valuepop{transition:none} }
+
+  @media (max-width:520px){
+    .rowlabel{font-size:11.5px}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Comparison · i03</p>
+    <h1>Onboarding improved more than any other feature.</h1>
+    <p class="dek">Task-completion rate before vs. after the redesign, by feature (points, illustrative).</p>
+    <p class="key"><span class="swatch open"></span> before &nbsp;→&nbsp; <span class="swatch filled"></span> after</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Dumbbell chart comparing task-completion rate before and after a redesign, by feature, sorted by size of improvement"></svg>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A dumbbell (dot-range) chart: two dots per row, joined by a track, showing a from-value and a to-value.</dd>
+    <dt>When to use it</dt><dd>Gap analysis and before/after comparisons across a group of items, sorted so the biggest movers lead.</dd>
+    <dt>Data shape</dt><dd><code>{label, from, to}[]</code>, sorted by delta — 6-10 rows keeps the ranking readable.</dd>
+    <dt>Visual style</dt><dd>Open vs. filled dot stands in for before/after (stated once in a key line, not a legend box); the delta is labeled at the row's end, and the largest one is annotated.</dd>
+  </dl>
+  <p class="tags"><span>comparison</span><span>gap analysis</span><span>before/after</span><span>dumbbell</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a dumbbell chart: horizontal rows, each holding two dots on a shared track, one for a before-value and one for an after-value, sorted so the row with the biggest gap sits at the top and the rest fall off in order. Instead of a legend box, an open dot for "before" and a filled, accent-colored dot for "after" are explained once in a short key sentence beneath the dek, then read by shape and fill for every row after that. Each row's exact gap is labeled in the accent color at the end of its track, so the ranking reads as a column of numbers as well as a column of shapes. The row with the largest gap gets a short annotation pointing at it directly, naming the headline finding instead of leaving the reader to spot the longest track. Hovering a row lifts a soft band behind it and reveals the two precise values beside their dots.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i03 · dumbbell &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var RAW = [
+    {label:'Search',        from:42, to:61},
+    {label:'Checkout',      from:55, to:78},
+    {label:'Onboarding',    from:38, to:70},
+    {label:'Notifications', from:60, to:66},
+    {label:'Profile',       from:47, to:52},
+    {label:'Billing',       from:64, to:69},
+    {label:'Support',       from:50, to:58},
+    {label:'Settings',      from:58, to:60}
+  ];
+  var DATA = RAW.slice().sort(function(a, b){
+    return (b.to - b.from) - (a.to - a.from);
+  });
+  var standoutIndex = 0; // largest delta, after sort
+  DATA[standoutIndex].note = DATA[standoutIndex].label + ' saw the biggest lift after the redesign.';
+
+  var NICE_MIN = 30, NICE_MAX = 85;
+  var W = 640, H = 400;
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+
+  // Fit a label into `maxWidth` user-units by trimming and adding an
+  // ellipsis; the untruncated text always survives in a <title> for a11y
+  // and as a native tooltip.
+  function fitLabel(text, maxWidth, node){
+    node.textContent = text;
+    if(node.getComputedTextLength() <= maxWidth) return text;
+    var lo = 0, hi = text.length, best = '';
+    while(lo <= hi){
+      var mid = (lo + hi) >> 1;
+      var candidate = text.slice(0, mid).trim() + '…';
+      node.textContent = candidate;
+      if(node.getComputedTextLength() <= maxWidth){ best = candidate; lo = mid + 1; }
+      else { hi = mid - 1; }
+    }
+    node.textContent = best || '…';
+    return best || '…';
+  }
+
+  function render(compact){
+    svg.innerHTML = '';
+    var M = {top:16, right:64, bottom:16, left: compact ? 84 : 118};
+    var plotW = W - M.left - M.right;
+    var rowH = (H - M.top - M.bottom) / DATA.length;
+    var labelBudget = M.left - 24;
+
+    function xOf(v){ return M.left + plotW * (v - NICE_MIN) / (NICE_MAX - NICE_MIN); }
+
+    DATA.forEach(function(d, i){
+      var cy = M.top + rowH * (i + 0.5);
+      var x1 = xOf(d.from), x2 = xOf(d.to);
+      var delta = d.to - d.from;
+
+      var band = el('rect', {class:'rowband', x:0, y:M.top + rowH * i, width:W, height:rowH});
+      svg.appendChild(band);
+
+      var label = el('text', {class:'rowlabel', x:M.left - 14, y:cy + 4, 'text-anchor':'end'});
+      svg.appendChild(label);
+      fitLabel(d.label, labelBudget, label);
+      var titleEl = el('title', {});
+      titleEl.textContent = d.label;
+      label.appendChild(titleEl);
+
+      svg.appendChild(el('line', {class:'track', x1:x1, x2:x2, y1:cy, y2:cy}));
+      svg.appendChild(el('circle', {class:'dot-from', cx:x1, cy:cy, r:5}));
+      svg.appendChild(el('circle', {class:'dot-to', cx:x2, cy:cy, r:5}));
+
+      var deltaLbl = el('text', {class:'delta' + (delta < 0 ? ' neg' : ''), x:xOf(NICE_MAX) + 14, y:cy + 4});
+      deltaLbl.textContent = (delta >= 0 ? '+' : '') + delta + ' pts';
+      svg.appendChild(deltaLbl);
+
+      var fromPop = el('text', {class:'valuepop', x:x1, y:cy - 12, 'text-anchor':'middle'});
+      fromPop.textContent = d.from;
+      var toPop = el('text', {class:'valuepop', x:x2, y:cy - 12, 'text-anchor':'middle'});
+      toPop.textContent = d.to;
+      svg.appendChild(fromPop);
+      svg.appendChild(toPop);
+
+      if(d.note){
+        var annoY = cy - rowH * 0.36;
+        var annoX = (x1 + x2) / 2;
+        svg.appendChild(el('line', {class:'callout-line', x1:annoX, y1:cy - 7, x2:annoX, y2:annoY + 4}));
+        var anno = el('text', {class:'annotation', x:annoX, y:annoY, 'text-anchor':'middle'});
+        anno.textContent = d.note;
+        svg.appendChild(anno);
+      }
+
+      function enter(){
+        band.classList.add('hover');
+        fromPop.classList.add('show');
+        toPop.classList.add('show');
+      }
+      function leave(){
+        band.classList.remove('hover');
+        fromPop.classList.remove('show');
+        toPop.classList.remove('show');
+      }
+      band.addEventListener('mouseenter', enter);
+      band.addEventListener('mouseleave', leave);
+    });
+  }
+
+  var mq = window.matchMedia('(max-width:520px)');
+  render(mq.matches);
+  var relayout = function(){ render(mq.matches); };
+  if(mq.addEventListener){ mq.addEventListener('change', relayout); }
+  else if(mq.addListener){ mq.addListener(relayout); }
+
+  var btn = document.getElementById('copy');
+  btn.addEventListener('click', function(){
+    var txt = document.getElementById('prompt-text').textContent;
+    var done = function(){ btn.textContent = 'Copied ✓'; setTimeout(function(){ btn.textContent = 'Copy prompt'; }, 1600); };
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(txt).then(done);
+    } else {
+      var ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i02 · Slope Chart — Info design scaffold</title>
+<!--
+  CHART       Slope Chart
+  DATA SHAPE  6 entities x 2 time points — {label, then, now}[]
+  INSIGHT     compare / reveal change
+  BEST FOR    Before/after across many entities; rank shifts.
+  RE-SKIN     Swap the focal entity by flipping its `focal` flag in DATA.
+              Under ~520px labels stack in two side columns with leader
+              ticks back to their real value, instead of sitting beside it.
+-->
+<style>
+  :root{
+    --accent:#1D4ED8;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .baseline{stroke:var(--line);stroke-width:1}
+  .colhead{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;fill:var(--muted);text-anchor:middle}
+
+  .entity{cursor:pointer}
+  .entity .hit{stroke:transparent;stroke-width:16;fill:none}
+  .entity .line{fill:none;stroke-width:1.6;transition:opacity .18s,stroke-width .18s}
+  .entity .dot{transition:opacity .18s}
+  .entity .lbl{font-size:12px;transition:opacity .18s}
+  .entity .val{font-family:var(--mono);font-size:11px;transition:opacity .18s}
+  .entity.riser .line,.entity.riser .dot{stroke:var(--accent);fill:var(--accent)}
+  .entity.faller .line,.entity.faller .dot{stroke:#9C978D;fill:#9C978D}
+  .entity.riser .lbl,.entity.riser .val{fill:var(--accent)}
+  .entity.faller .lbl,.entity.faller .val{fill:#6E6A63}
+  .entity.focal .line{stroke-width:3}
+  .entity.focal .dot{r:4}
+
+  .entity.dim .line{opacity:.16}
+  .entity.dim .dot{opacity:.16}
+  .entity.dim .lbl{opacity:.3}
+  .entity.dim .val{opacity:.3}
+
+  .annotation{font-size:12.5px;fill:var(--ink)}
+  .annotation tspan{fill:var(--muted)}
+  .callout-line{stroke:var(--muted);stroke-width:1}
+  .callout-dot{fill:var(--panel);stroke:var(--accent);stroke-width:1.5}
+
+  .leader{stroke:var(--line);stroke-width:1;stroke-dasharray:2 2;opacity:0}
+  .leader.show{opacity:1}
+  @media (prefers-reduced-motion:reduce){
+    .entity .line,.entity .dot,.entity .lbl,.entity .val{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Comparison · i02</p>
+    <h1>Meetings have doubled their share of the workday.</h1>
+    <p class="dek">Average minutes spent per activity across a workday, 2019 vs. 2024 (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 420" role="img" aria-label="Slope chart comparing time allocation across a workday in 2019 versus 2024"></svg>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A slope chart: two vertical baselines, one per time point, joined by a straight line per entity.</dd>
+    <dt>When to use it</dt><dd>Before/after comparisons across enough entities that a grouped-bar chart would get crowded — rank shifts, share changes, gains and losses at a glance.</dd>
+    <dt>Data shape</dt><dd><code>{label, then, now}[]</code> — works well from about 5 up to 10-12 entities before lines start to overlap.</dd>
+    <dt>Visual style</dt><dd>Direct end labels instead of a legend; steepening or shallowing slope is the whole story; risers and fallers split by color, and one focal entity gets a heavier line and a note.</dd>
+  </dl>
+  <p class="tags"><span>comparison</span><span>before/after</span><span>rank shift</span><span>slope</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a slope chart: two vertical baselines stand for two moments in time, and one straight line per entity connects its value at each moment, so the slope itself — not a bar, not a bubble — carries the whole story. Every line ends in a small dot with its label and exact value sitting right beside it, so nothing needs a legend; the eye reads the identity and the number from the same spot as the shape. Lines that rose are drawn in the accent color, lines that fell stay a neutral warm gray, splitting the field into two readable groups at a glance. One entity is marked as the focal point: its line runs heavier than the rest and carries a short annotation, so the single most important shift is impossible to miss even in a crowd of six lines. Hovering any line or its label brings that entity forward at full strength and fades the other five back, turning a busy chart into an on-demand single-series view.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i02 · slope &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {label:'Deep work',    then:195, now:150},
+    {label:'Meetings',     then:80,  now:190, focal:true,
+      note:'Meetings now take more than double the time they did in 2019.'},
+    {label:'Email triage', then:70,  now:55},
+    {label:'Admin',        then:55,  now:40},
+    {label:'Learning',     then:35,  now:22},
+    {label:'Breaks',       then:20,  now:13}
+  ];
+  var NICE_MAX = 200;
+  var MIN_GAP_NORMAL = 24;
+  var MIN_GAP_COMPACT = 52;
+  var LABEL_BLOCK = 21; // vertical span a label+value pair occupies
+
+  var W = 640, H = 420;
+  var M = {top:40, right:104, bottom:34, left:104};
+  var plotH = H - M.top - M.bottom;
+  var xThen = M.left, xNow = W - M.right;
+
+  function yOf(v){ return M.top + plotH * (1 - v / NICE_MAX); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+
+  svg.appendChild(el('line', {class:'baseline', x1:xThen, x2:xThen, y1:M.top - 4, y2:H - M.bottom + 4}));
+  svg.appendChild(el('line', {class:'baseline', x1:xNow, x2:xNow, y1:M.top - 4, y2:H - M.bottom + 4}));
+  var h1 = el('text', {class:'colhead', x:xThen, y:20});
+  h1.textContent = '2019';
+  var h2 = el('text', {class:'colhead', x:xNow, y:20});
+  h2.textContent = '2024';
+  svg.appendChild(h1);
+  svg.appendChild(h2);
+
+  var entityEls = [];
+  var rows = [];
+
+  DATA.forEach(function(d, i){
+    var y1 = yOf(d.then), y2 = yOf(d.now);
+    var riser = d.now >= d.then;
+    var g = el('g', {class:'entity ' + (riser ? 'riser' : 'faller') + (d.focal ? ' focal' : '')});
+
+    g.appendChild(el('line', {class:'hit', x1:xThen, y1:y1, x2:xNow, y2:y2}));
+    g.appendChild(el('line', {class:'line', x1:xThen, y1:y1, x2:xNow, y2:y2}));
+    g.appendChild(el('circle', {class:'dot', cx:xThen, cy:y1, r:3}));
+    g.appendChild(el('circle', {class:'dot', cx:xNow, cy:y2, r:3}));
+
+    var leftTick = el('line', {class:'leader'});
+    var rightTick = el('line', {class:'leader'});
+    var leftLbl = el('text', {class:'lbl', x:xThen - 12, 'text-anchor':'end'});
+    leftLbl.textContent = d.label;
+    var leftVal = el('text', {class:'val', x:xThen - 12, 'text-anchor':'end'});
+    leftVal.textContent = d.then + ' min';
+    var rightLbl = el('text', {class:'lbl', x:xNow + 12, 'text-anchor':'start'});
+    rightLbl.textContent = d.label;
+    var rightVal = el('text', {class:'val', x:xNow + 12, 'text-anchor':'start'});
+    rightVal.textContent = d.now + ' min';
+
+    g.appendChild(leftTick);
+    g.appendChild(rightTick);
+    g.appendChild(leftLbl);
+    g.appendChild(leftVal);
+    g.appendChild(rightLbl);
+    g.appendChild(rightVal);
+
+    if(d.focal){
+      var midX = xThen + (xNow - xThen) * 0.36;
+      var midY = y1 + (y2 - y1) * 0.36;
+      var annoX = midX + 30, annoY = midY - 46;
+      g.appendChild(el('circle', {class:'callout-dot', cx:midX, cy:midY, r:3}));
+      g.appendChild(el('line', {class:'callout-line', x1:midX, y1:midY, x2:annoX - 4, y2:annoY + 8}));
+      var words = d.note.split(' ');
+      var line1 = words.slice(0, 5).join(' ');
+      var line2 = words.slice(5).join(' ');
+      var t1 = el('text', {class:'annotation', x:annoX, y:annoY, 'text-anchor':'start'});
+      t1.textContent = line1;
+      var t2 = el('text', {class:'annotation', x:annoX, y:annoY + 15, 'text-anchor':'start'});
+      var tspan = el('tspan', {});
+      tspan.textContent = line2;
+      t2.appendChild(tspan);
+      g.appendChild(t1);
+      g.appendChild(t2);
+    }
+
+    svg.appendChild(g);
+    entityEls.push(g);
+    rows.push({i:i, y1:y1, y2:y2, leftTick:leftTick, rightTick:rightTick,
+      leftLbl:leftLbl, leftVal:leftVal, rightLbl:rightLbl, rightVal:rightVal});
+
+    function focus(){
+      entityEls.forEach(function(other){ other.classList.toggle('dim', other !== g); });
+    }
+    function clear(){
+      entityEls.forEach(function(other){ other.classList.remove('dim'); });
+    }
+    g.addEventListener('mouseenter', focus);
+    g.addEventListener('mouseleave', clear);
+    g.addEventListener('focus', focus);
+    g.addEventListener('blur', clear);
+  });
+
+  // Resolve label collisions independently on each side: sort by the dot's
+  // actual position, then push overlapping labels apart by a minimum gap.
+  // A visible tick line is drawn whenever a label had to move off its dot.
+  function resolveSide(key, tickKey, labelKey, valueKey, minGap){
+    var items = rows.map(function(r){ return {r:r, y:r[key]}; });
+    items.sort(function(a, b){ return a.y - b.y; });
+    for(var i = 1; i < items.length; i++){
+      if(items[i].y - items[i - 1].y < minGap){
+        items[i].y = items[i - 1].y + minGap;
+      }
+    }
+    var maxY = H - M.bottom - 6;
+    var overflow = items.length ? items[items.length - 1].y - maxY : 0;
+    if(overflow > 0){
+      items.forEach(function(it){ it.y -= overflow; });
+    }
+    items.forEach(function(it){
+      var r = it.r;
+      var labelY = it.y;
+      r[labelKey].setAttribute('y', labelY + 4);
+      r[valueKey].setAttribute('y', labelY + 17);
+      var moved = Math.abs(labelY - r[key]) > 2;
+      var tickX = key === 'y1' ? xThen : xNow;
+      var labelTickX = key === 'y1' ? xThen - 8 : xNow + 8;
+      r[tickKey].setAttribute('x1', tickX);
+      r[tickKey].setAttribute('y1', r[key]);
+      r[tickKey].setAttribute('x2', labelTickX);
+      r[tickKey].setAttribute('y2', labelY);
+      r[tickKey].classList.toggle('show', moved);
+    });
+  }
+
+  var mq = window.matchMedia('(max-width:520px)');
+  function relayout(){
+    var minGap = mq.matches ? MIN_GAP_COMPACT : MIN_GAP_NORMAL;
+    resolveSide('y1', 'leftTick', 'leftLbl', 'leftVal', minGap);
+    resolveSide('y2', 'rightTick', 'rightLbl', 'rightVal', minGap);
+  }
+  relayout();
+  if(mq.addEventListener){ mq.addEventListener('change', relayout); }
+  else if(mq.addListener){ mq.addListener(relayout); }
+
+  var btn = document.getElementById('copy');
+  btn.addEventListener('click', function(){
+    var txt = document.getElementById('prompt-text').textContent;
+    var done = function(){ btn.textContent = 'Copied ✓'; setTimeout(function(){ btn.textContent = 'Copy prompt'; }, 1600); };
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(txt).then(done);
+    } else {
+      var ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
