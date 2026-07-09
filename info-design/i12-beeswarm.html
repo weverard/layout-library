@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i12 · Beeswarm / Dot Strip — Info design scaffold</title>
+<!--
+  CHART       Beeswarm / Dot Strip
+  DATA SHAPE  3 categories x ~40 values, jitter precomputed —
+              {cat, v, dy}[] (120 points) plus a small named OUTLIER
+              constant {cat, v, label} pointing at one of those points
+  INSIGHT     distribute (every point shown)
+  BEST FOR    Small-n distributions where individual points matter.
+  RE-SKIN     Dot radius (R) + --accent (the focal category, via
+              FOCAL_CAT) are the knobs. Under ~520px rows stack taller
+              and the value-axis gridlines thin out.
+-->
+<style>
+  :root{
+    --accent:#115E59;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .gridline{stroke:var(--line);stroke-width:1}
+  .xtick{font-family:var(--mono);font-size:11px;fill:var(--muted);text-anchor:middle}
+
+  .rowlabel{font-size:12.5px;fill:var(--ink);text-anchor:end}
+  .rowlabel.focal{fill:var(--accent);font-weight:600}
+
+  .dot{fill:#B7B0A1;transition:opacity .12s, r .12s}
+  .dot.focal{fill:var(--accent)}
+  .dot:hover{opacity:.75}
+
+  .mtick{stroke:var(--ink);stroke-width:2.2}
+  .mtick.focal{stroke:var(--accent)}
+  .mticklabel{font-size:11px;font-weight:600;fill:var(--ink)}
+  .mticklabel.focal{fill:var(--accent)}
+
+  .leader{stroke:var(--muted);stroke-width:1}
+  .outlierlabel{font-size:11.5px;fill:var(--ink)}
+  .outlierlabel .muted{fill:var(--muted)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    .dot,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Distribution · i12</p>
+    <h1>One outsized deal makes West look bigger than it really was this quarter.</h1>
+    <p class="dek">Individual deal sizes by region — each dot is one deal, in thousands of dollars (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 360" role="img" aria-label="Beeswarm dot strip of individual deal sizes across three regions, with one outlier deal called out in West"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A beeswarm / dot strip — every individual value plotted as its own dot along a shared value axis, jittered vertically within its category's row so overlapping points stay visible instead of stacking exactly on top of each other.</dd>
+    <dt>When to use it</dt><dd>Small-n distributions where each point is a real, nameable thing — deals, tickets, applicants — and collapsing them into a bar or box would hide the individuals that matter.</dd>
+    <dt>Data shape</dt><dd><code>{cat, v, dy}[]</code> — 3 categories x ~40 values (120 points); the vertical jitter (<code>dy</code>) is hardcoded per point, never randomized at runtime. A separate small <code>OUTLIER</code> constant names the one point that gets a leader-line callout.</dd>
+    <dt>Visual style</dt><dd>One category in <code>--accent</code>, the other two in neutral gray; a heavy tick plus label marks each row's median; the named outlier gets a thin leader line to a short caption instead of being left for the reader to spot.</dd>
+  </dl>
+  <p class="tags"><span>distribution</span><span>beeswarm</span><span>dot-strip</span><span>outlier</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a beeswarm (dot strip): three horizontal bands, one per category, each holding roughly forty small dots plotted at their true value along one shared value axis and jittered vertically so that nearby points fan out instead of overlapping into an unreadable smear. One category's dots are drawn in the accent color; the other two stay a neutral gray, so a single glance shows which group the story is about. A heavy tick crosses each band at its median with a small value label, giving every row a fixed reference point the individual dots scatter around. One dot — a genuine outlier, far past where the rest of its category clusters — carries a thin leader line out to a short caption naming it directly, since a chart of ~120 individual points is exactly the place where the one unusual value deserves its own sentence rather than being folded into an average. Hovering any dot reveals a small chip with its exact value. Below roughly 520px the rows grow taller and the vertical reference gridlines thin out to keep the now-larger dots legible at a small size.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i12 · beeswarm &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {cat:'West', v:16, dy:-20.5}, {cat:'West', v:19, dy:19.5}, {cat:'West', v:20, dy:14.8},
+    {cat:'West', v:20, dy:-13.7}, {cat:'West', v:26, dy:-0.3}, {cat:'West', v:26, dy:-2.8},
+    {cat:'West', v:26, dy:8.5}, {cat:'West', v:30, dy:16.2}, {cat:'West', v:33, dy:-22.7},
+    {cat:'West', v:34, dy:-26.4}, {cat:'West', v:34, dy:18.8}, {cat:'West', v:34, dy:-3.8},
+    {cat:'West', v:36, dy:14.7}, {cat:'West', v:39, dy:-27.9}, {cat:'West', v:39, dy:-3.1},
+    {cat:'West', v:41, dy:12.4}, {cat:'West', v:43, dy:-15.2}, {cat:'West', v:47, dy:24.9},
+    {cat:'West', v:48, dy:22.5}, {cat:'West', v:49, dy:-26.3}, {cat:'West', v:49, dy:-26.6},
+    {cat:'West', v:51, dy:2.3}, {cat:'West', v:52, dy:24.6}, {cat:'West', v:53, dy:-6.7},
+    {cat:'West', v:54, dy:-15.9}, {cat:'West', v:54, dy:-4.4}, {cat:'West', v:56, dy:-26.4},
+    {cat:'West', v:57, dy:-15.6}, {cat:'West', v:59, dy:-3.5}, {cat:'West', v:60, dy:-0.2},
+    {cat:'West', v:65, dy:-14.9}, {cat:'West', v:65, dy:-15.1}, {cat:'West', v:65, dy:-15.7},
+    {cat:'West', v:67, dy:-2.3}, {cat:'West', v:68, dy:-11.8}, {cat:'West', v:69, dy:-26.8},
+    {cat:'West', v:72, dy:18.9}, {cat:'West', v:81, dy:3.2}, {cat:'West', v:84, dy:8.0},
+    {cat:'West', v:180, dy:-17.6},
+    {cat:'Central', v:17, dy:25.5}, {cat:'Central', v:19, dy:25.1}, {cat:'Central', v:21, dy:-24.8},
+    {cat:'Central', v:23, dy:-23.2}, {cat:'Central', v:26, dy:18.8}, {cat:'Central', v:27, dy:13.2},
+    {cat:'Central', v:28, dy:9.5}, {cat:'Central', v:29, dy:-10.7}, {cat:'Central', v:29, dy:5.9},
+    {cat:'Central', v:29, dy:6.0}, {cat:'Central', v:29, dy:4.5}, {cat:'Central', v:31, dy:-19.1},
+    {cat:'Central', v:31, dy:-3.9}, {cat:'Central', v:31, dy:-6.0}, {cat:'Central', v:31, dy:12.5},
+    {cat:'Central', v:32, dy:27.7}, {cat:'Central', v:33, dy:25.2}, {cat:'Central', v:33, dy:2.5},
+    {cat:'Central', v:34, dy:-3.1}, {cat:'Central', v:35, dy:-13.0}, {cat:'Central', v:35, dy:-26.0},
+    {cat:'Central', v:35, dy:-26.5}, {cat:'Central', v:38, dy:-2.0}, {cat:'Central', v:42, dy:-10.2},
+    {cat:'Central', v:42, dy:-6.7}, {cat:'Central', v:44, dy:21.9}, {cat:'Central', v:45, dy:1.4},
+    {cat:'Central', v:45, dy:3.4}, {cat:'Central', v:46, dy:-14.8}, {cat:'Central', v:46, dy:-26.7},
+    {cat:'Central', v:47, dy:-9.8}, {cat:'Central', v:48, dy:-20.3}, {cat:'Central', v:50, dy:0.6},
+    {cat:'Central', v:52, dy:27.9}, {cat:'Central', v:56, dy:9.8}, {cat:'Central', v:59, dy:-17.8},
+    {cat:'Central', v:62, dy:22.0}, {cat:'Central', v:64, dy:16.6}, {cat:'Central', v:65, dy:13.1},
+    {cat:'Central', v:72, dy:22.8},
+    {cat:'East', v:25, dy:-14.7}, {cat:'East', v:31, dy:2.5}, {cat:'East', v:32, dy:-7.3},
+    {cat:'East', v:35, dy:5.8}, {cat:'East', v:36, dy:7.0}, {cat:'East', v:36, dy:-24.3},
+    {cat:'East', v:41, dy:-27.3}, {cat:'East', v:43, dy:18.9}, {cat:'East', v:44, dy:-13.5},
+    {cat:'East', v:45, dy:-14.9}, {cat:'East', v:45, dy:27.8}, {cat:'East', v:45, dy:-1.7},
+    {cat:'East', v:47, dy:18.8}, {cat:'East', v:50, dy:-1.3}, {cat:'East', v:51, dy:7.8},
+    {cat:'East', v:52, dy:-19.6}, {cat:'East', v:53, dy:7.6}, {cat:'East', v:53, dy:20.6},
+    {cat:'East', v:55, dy:1.3}, {cat:'East', v:56, dy:13.5}, {cat:'East', v:56, dy:9.6},
+    {cat:'East', v:57, dy:-24.4}, {cat:'East', v:58, dy:14.5}, {cat:'East', v:59, dy:5.1},
+    {cat:'East', v:60, dy:-11.1}, {cat:'East', v:61, dy:-26.3}, {cat:'East', v:61, dy:20.5},
+    {cat:'East', v:61, dy:-1.5}, {cat:'East', v:63, dy:12.3}, {cat:'East', v:65, dy:21.2},
+    {cat:'East', v:70, dy:12.0}, {cat:'East', v:74, dy:23.6}, {cat:'East', v:75, dy:-5.9},
+    {cat:'East', v:76, dy:16.9}, {cat:'East', v:78, dy:-3.1}, {cat:'East', v:79, dy:24.4},
+    {cat:'East', v:84, dy:21.2}, {cat:'East', v:86, dy:-22.5}, {cat:'East', v:92, dy:-20.4},
+    {cat:'East', v:93, dy:-15.8}
+  ];
+  var CATS = ['West', 'Central', 'East'];
+  var FOCAL_CAT = 'West';
+  var OUTLIER = {cat:'West', v:180, label:'Northwind Traders — $180k'};
+  var R = 3.4;
+  var UNIT = 'k';
+  var DOMAIN_MAX = 200;
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  function median(vals){
+    var s = vals.slice().sort(function(a, b){ return a - b; });
+    var n = s.length;
+    return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+  }
+
+  function showChip(target, d){
+    var r = target.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = d.cat + ' · $' + d.v + UNIT;
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  function render(compact){
+    svg.innerHTML = '';
+
+    var W = 640;
+    var M = {top:24, right:30, bottom:44, left:96};
+    var bandH = compact ? 130 : 90;
+    var H = M.top + bandH * CATS.length + M.bottom;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+    var plotW = W - M.left - M.right;
+    function xOf(v){ return M.left + plotW * v / DOMAIN_MAX; }
+
+    var dyScale = compact ? 1.5 : 1;
+
+    var ticks = compact ? [0, 100, 200] : [0, 50, 100, 150, 200];
+    ticks.forEach(function(v){
+      var x = xOf(v);
+      svg.appendChild(el('line', {class:'gridline', x1:x, x2:x, y1:M.top, y2:H - M.bottom}));
+      var t = el('text', {class:'xtick', x:x, y:H - M.bottom + 18});
+      t.textContent = '$' + v + UNIT;
+      svg.appendChild(t);
+    });
+
+    CATS.forEach(function(cat, i){
+      var rowCenter = M.top + bandH * (i + 0.5);
+      var isFocal = cat === FOCAL_CAT;
+      var rowVals = [];
+
+      var label = el('text', {class:'rowlabel' + (isFocal ? ' focal' : ''), x:M.left - 14, y:rowCenter + 4});
+      label.textContent = cat;
+      svg.appendChild(label);
+
+      DATA.filter(function(d){ return d.cat === cat; }).forEach(function(d){
+        rowVals.push(d.v);
+        var cx = xOf(d.v);
+        var cy = rowCenter + d.dy * dyScale;
+        var dot = el('circle', {class:'dot' + (isFocal ? ' focal' : ''), cx:cx, cy:cy, r:R});
+        svg.appendChild(dot);
+        dot.addEventListener('mouseenter', function(){ showChip(dot, d); });
+        dot.addEventListener('mousemove', function(){ showChip(dot, d); });
+        dot.addEventListener('mouseleave', hideChip);
+      });
+
+      var med = median(rowVals);
+      var mx = xOf(med);
+      var half = bandH * 0.3;
+      svg.appendChild(el('line', {class:'mtick' + (isFocal ? ' focal' : ''), x1:mx, x2:mx, y1:rowCenter - half, y2:rowCenter + half}));
+      var mLabel = el('text', {class:'mticklabel' + (isFocal ? ' focal' : ''), x:mx, y:rowCenter - half - 6, 'text-anchor':'middle'});
+      mLabel.textContent = 'median $' + med + UNIT;
+      svg.appendChild(mLabel);
+    });
+
+    // outlier callout
+    var outRowIdx = CATS.indexOf(OUTLIER.cat);
+    var outRowCenter = M.top + bandH * (outRowIdx + 0.5);
+    var outPoint = DATA.filter(function(d){ return d.cat === OUTLIER.cat && d.v === OUTLIER.v; })[0];
+    var ox = xOf(outPoint.v), oy = outRowCenter + outPoint.dy * dyScale;
+    var lx = ox - 90, ly = oy - 22;
+    svg.appendChild(el('line', {class:'leader', x1:ox, y1:oy, x2:lx + 4, y2:ly + 4}));
+    var t1 = el('text', {class:'outlierlabel', x:lx, y:ly, 'text-anchor':'end'});
+    t1.textContent = OUTLIER.label.split(' — ')[0];
+    var t2 = el('text', {class:'outlierlabel', x:lx, y:ly + 14, 'text-anchor':'end'});
+    var tspan = el('tspan', {class:'muted'});
+    tspan.textContent = OUTLIER.label.split(' — ')[1];
+    t2.appendChild(tspan);
+    svg.appendChild(t1);
+    svg.appendChild(t2);
+  }
+
+  var mq = window.matchMedia('(max-width:520px)');
+  render(mq.matches);
+  var relayout = function(){ render(mq.matches); };
+  if(mq.addEventListener){ mq.addEventListener('change', relayout); }
+  else if(mq.addListener){ mq.addListener(relayout); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

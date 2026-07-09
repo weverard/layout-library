@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i10 · Histogram with Summary Stats — Info design scaffold</title>
+<!--
+  CHART       Histogram with Summary Stats
+  DATA SHAPE  ~200 values pre-binned into 20 equal-width buckets —
+              {bins:number[20], binWidth, min, unit, stats:{n,mean,median,p90}}
+              (bin counts and stats precomputed offline, not binned live)
+  INSIGHT     distribute
+  BEST FOR    Response times, prices, scores.
+  RE-SKIN     --accent = bars. The stat-chips row above the chart wraps under
+              narrow widths (plain CSS flex-wrap, no re-render needed).
+-->
+<style>
+  :root{
+    --accent:#1E40AF;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s2)}
+
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 var(--s3)}
+  .stats .stat{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px;background:var(--panel);white-space:nowrap}
+  .stats .stat b{color:var(--ink);font-weight:600;margin-right:5px;font-family:var(--sans)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .gridline{stroke:var(--line);stroke-width:1}
+  .gridlabel{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+  .xtick{font-family:var(--mono);font-size:11px;fill:var(--muted);text-anchor:middle}
+
+  .bar{fill:var(--accent);transition:opacity .15s}
+  .bar:hover{opacity:.8}
+
+  .refline{stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3}
+  .refdot{fill:var(--ink)}
+  .reflabel{font-size:11.5px;font-weight:600;fill:var(--ink)}
+
+  .annotation{font-size:12.5px;fill:var(--muted)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    .bar,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Distribution · i10</p>
+    <h1>Most requests finish fast — a slow tail drags the average past the typical case.</h1>
+    <p class="dek">API response time distribution across 200 requests this week, in milliseconds (illustrative).</p>
+  </header>
+  <div class="stats" id="stats"></div>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Histogram of API response times across 200 requests, with dashed lines marking the mean and median"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A histogram — roughly 200 placeholder values pre-binned into 20 equal-width buckets — with dashed reference lines marking the mean and median, and a row of stat chips summarizing n, mean, median, and p90.</dd>
+    <dt>When to use it</dt><dd>Any single numeric measure where the shape of the spread matters more than any one summary number — response times, prices, test scores, wait times.</dd>
+    <dt>Data shape</dt><dd><code>{bins:number[20], binWidth, min, unit, stats:{n,mean,median,p90}}</code> — bin counts and summary stats are computed once offline and hardcoded; nothing is binned or aggregated at runtime.</dd>
+    <dt>Visual style</dt><dd>Hairline gaps between accent-colored bars stand in for an axis; two dashed vertical lines carry small dot-and-label "flags" for mean and median so the reader doesn't have to eyeball them off the bars; a short note calls the skewed tail out directly.</dd>
+  </dl>
+  <p class="tags"><span>distribution</span><span>histogram</span><span>response-time</span><span>skew</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a histogram: twenty thin vertical bars in a single accent color, separated by hairline gaps, rising and falling across the value range with a clear peak and a long, thinning tail to the right. Two dashed vertical reference lines cross the bars — one for the mean, one for the median — each topped with a small dot and a short text flag naming the line and its value, positioned so the two flags read left-to-right without colliding. A short note sits above the sparse bars in the tail and simply states what's happening there, rather than leaving the reader to infer the skew from the shape alone. Above the chart, a row of small pill-shaped stat chips states the sample size and the three key summary numbers at a glance, wrapping onto a second line on narrow screens. There is no legend and no y-axis title — three hairline horizontal gridlines carry their values hung at the plot's left edge, and hovering any bar reveals a chip with that bucket's exact range and count.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i10 · histogram &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = {
+    bins: [2,8,22,38,34,26,18,13,9,7,5,4,3,3,2,2,2,1,1,0],
+    binWidth: 50,
+    min: 0,
+    unit: 'ms',
+    stats: {n:200, mean:290, median:244, p90:530}
+  };
+  var GRID_VALUES = [0, 10, 20, 30, 40];
+  var NICE_MAX = 40;
+
+  var n = DATA.bins.length;
+  var domainMax = DATA.min + n * DATA.binWidth;
+
+  var W = 640, H = 400;
+  var M = {top:60, right:20, bottom:46, left:30};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+
+  function xOf(v){ return M.left + plotW * (v - DATA.min) / (domainMax - DATA.min); }
+  function yOf(c){ return M.top + plotH * (1 - c / NICE_MAX); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var statsEl = document.getElementById('stats');
+
+  // stat chips, built from the precomputed stats object
+  var s = DATA.stats;
+  var chipDefs = [
+    ['n', s.n],
+    ['mean', s.mean + DATA.unit],
+    ['median', s.median + DATA.unit],
+    ['p90', s.p90 + DATA.unit]
+  ];
+  chipDefs.forEach(function(pair){
+    var span = document.createElement('span');
+    span.className = 'stat';
+    span.innerHTML = '<b>' + pair[0] + '</b>' + pair[1];
+    statsEl.appendChild(span);
+  });
+
+  // gridlines + top-aligned value labels (count axis)
+  GRID_VALUES.forEach(function(v){
+    var y = yOf(v);
+    svg.appendChild(el('line', {class:'gridline', x1:M.left, x2:W - M.right, y1:y, y2:y}));
+    var t = el('text', {class:'gridlabel', x:M.left, y:y - 7});
+    t.textContent = v;
+    svg.appendChild(t);
+  });
+
+  // x-axis ticks
+  [0, 250, 500, 750, 1000].forEach(function(v){
+    var t = el('text', {class:'xtick', x:xOf(v), y:yOf(0) + 20});
+    t.textContent = v === 0 ? '0' : v + DATA.unit;
+    svg.appendChild(t);
+  });
+
+  // bars
+  var gap = 2;
+  DATA.bins.forEach(function(count, i){
+    var lo = DATA.min + i * DATA.binWidth;
+    var hi = lo + DATA.binWidth;
+    var x0 = xOf(lo), x1 = xOf(hi);
+    var barY = yOf(count), barH = yOf(0) - barY;
+    var bar = el('rect', {class:'bar', x:x0, y:barY, width:Math.max(0, x1 - x0 - gap), height:barH, rx:1});
+    svg.appendChild(bar);
+
+    bar.addEventListener('mouseenter', function(){ showChip(bar, lo, hi, count); });
+    bar.addEventListener('mousemove', function(){ showChip(bar, lo, hi, count); });
+    bar.addEventListener('mouseleave', hideChip);
+  });
+
+  function showChip(barEl, lo, hi, count){
+    var r = barEl.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = lo + '–' + hi + DATA.unit + ' · ' + count;
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  // mean / median reference lines, flagged with a dot + label, anchored
+  // away from each other so the two flags never collide
+  var flagY = 30;
+  function drawRef(value, label, anchor, dx){
+    var x = xOf(value);
+    svg.appendChild(el('line', {class:'refline', x1:x, x2:x, y1:flagY, y2:yOf(0)}));
+    svg.appendChild(el('circle', {class:'refdot', cx:x, cy:flagY, r:2.6}));
+    var t = el('text', {class:'reflabel', x:x + dx, y:flagY - 8, 'text-anchor':anchor});
+    t.textContent = label;
+    svg.appendChild(t);
+  }
+  drawRef(DATA.stats.median, 'Median ' + DATA.stats.median + DATA.unit, 'end', -6);
+  drawRef(DATA.stats.mean, 'Mean ' + DATA.stats.mean + DATA.unit, 'start', 6);
+
+  // skew annotation, set above the sparse tail bins
+  var tailX = xOf(725);
+  var note = el('text', {class:'annotation', x:tailX, y:M.top + 34, 'text-anchor':'middle'});
+  note.textContent = 'long tail →';
+  svg.appendChild(note);
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

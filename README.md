@@ -242,6 +242,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i08` | Treemap | 8 leaves x 3 groups, precomputed rects | Budgets, portfolio weights, storage |
 | `i09` | Stacked Bar with Leader Labels | 5 segments of one whole | Single-total breakdowns where each part deserves a sentence |
 
+**Distribution — the shape of the data**
+
+| # | Chart | Data shape | Best for |
+|---|---|---|---|
+| `i10` | Histogram with Summary Stats | ~200 values pre-binned into 20 buckets + n/mean/median/p90 | Response times, prices, scores |
+| `i11` | Ridgeline | 5 groups x 24 precomputed density points | Distributions across groups / time-of-day |
+| `i12` | Beeswarm / Dot Strip | 3 categories x ~40 values, jitter precomputed | Small-n distributions where individual points matter |
+
 ---
 
 ## Backlog — ideas not yet built

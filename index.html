@@ -382,6 +382,18 @@
   .t-i-stackbar .seg-c{fill:#c7c2b6}
   .t-i-stackbar .tick{stroke:#9C978D;stroke-width:1}
   .t-i-stackbar .dot{fill:var(--accent)}
+  .t-i-hist{align-items:flex-end;gap:4px;padding:0 12px 10px}
+  .t-i-hist i{flex:1;border-radius:2px 2px 0 0;background:#dfe1e6;display:block}
+  .t-i-hist i.a{background:var(--accent)}
+  .t-i-ridge svg{width:80%;height:66%;overflow:visible}
+  .t-i-ridge path{stroke:none}
+  .t-i-ridge .r1{fill:var(--accent);opacity:.85}
+  .t-i-ridge .r2{fill:var(--ink);opacity:.16}
+  .t-i-swarm{flex-direction:column;justify-content:center;gap:10px;padding:0 12px}
+  .t-i-swarm .srow{position:relative;height:10px;display:block}
+  .t-i-swarm .srow i{position:absolute;width:7px;height:7px;border-radius:50%;background:#c7c2b6;
+    transform:translate(-50%,-50%);display:block}
+  .t-i-swarm .srow i.a{background:var(--accent)}
 
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
@@ -527,6 +539,13 @@
       <a class="card" href="info-design/i07-waffle.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-waffle"><i class="a"></i><i class="a"></i><i class="a"></i><i class="b"></i><i class="b"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="b"></i><i></i><i class="a"></i><i class="a"></i><i class="b"></i><i></i><i></i><i></i><i class="b"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">i07</p><h3>Waffle Grid</h3><p class="nav"><b>Click a key sentence</b> to pulse its cells; a 10x10 grid stands in for 100.</p><div class="tags"><span class="tag">part-to-whole</span><span class="tag">survey split</span></div></div></a>
       <a class="card" href="info-design/i08-treemap.html" style="--accent:#166534"><div class="thumb"><div class="tw t-i-treemap"><svg viewBox="0 0 60 40"><rect class="g1" x="0" y="0" width="34" height="40"/><rect class="g2" x="34" y="0" width="14" height="24"/><rect class="g3" x="34" y="24" width="14" height="16"/><rect class="g3" x="48" y="0" width="12" height="40"/></svg></div></div><div class="b"><p class="n">i08</p><h3>Treemap</h3><p class="nav"><b>Hover a cell</b> for its share; narrow screens swap to a bar list.</p><div class="tags"><span class="tag">part-to-whole</span><span class="tag">budget</span></div></div></a>
       <a class="card" href="info-design/i09-stacked-leader.html" style="--accent:#9F1239"><div class="thumb"><div class="tw t-i-stackbar"><svg viewBox="0 0 60 40"><line class="tick" x1="14" y1="18" x2="14" y2="8"/><circle class="dot" cx="14" cy="8" r="1.6"/><line class="tick" x1="35" y1="26" x2="35" y2="34"/><circle class="dot" cx="35" cy="34" r="1.6"/><rect class="seg-a" x="2" y="18" width="24" height="8"/><rect class="seg-b" x="26" y="18" width="18" height="8"/><rect class="seg-c" x="44" y="18" width="14" height="8"/></svg></div></div><div class="b"><p class="n">i09</p><h3>Stacked Bar with Leader Labels</h3><p class="nav"><b>Hover a segment or label</b> to pair-highlight; narrow screens collapse to a list.</p><div class="tags"><span class="tag">part-to-whole</span><span class="tag">single total</span></div></div></a>
+    </div>
+
+    <p class="cat">Distribution — the shape of the data</p>
+    <div class="grid">
+      <a class="card" href="info-design/i10-histogram.html" style="--accent:#1E40AF"><div class="thumb"><div class="tw t-i-hist"><i style="height:22px"></i><i style="height:40px"></i><i class="a" style="height:64px"></i><i class="a" style="height:82px"></i><i class="a" style="height:58px"></i><i style="height:36px"></i><i style="height:20px"></i><i style="height:10px"></i></div></div><div class="b"><p class="n">i10</p><h3>Histogram with Summary Stats</h3><p class="nav"><b>Hover a bar</b> for its count; dashed lines flag the mean and median.</p><div class="tags"><span class="tag">distribution</span><span class="tag">skew</span></div></div></a>
+      <a class="card" href="info-design/i11-ridgeline.html" style="--accent:#7C2D12"><div class="thumb"><div class="tw t-i-ridge"><svg viewBox="0 0 60 40"><path class="r1" d="M0,30 C10,26 16,10 24,10 C32,10 38,26 48,30 L48,34 C38,30 32,14 24,14 C16,14 10,30 0,34 Z"/><path class="r2" d="M4,34 C14,30 20,18 30,18 C40,18 46,30 56,34 L56,38 C46,34 40,22 30,22 C20,22 14,38 4,38 Z"/></svg></div></div><div class="b"><p class="n">i11</p><h3>Ridgeline</h3><p class="nav"><b>Hover a row</b> to lift it forward; a tick marks its median.</p><div class="tags"><span class="tag">distribution</span><span class="tag">compare-groups</span></div></div></a>
+      <a class="card" href="info-design/i12-beeswarm.html" style="--accent:#115E59"><div class="thumb"><div class="tw t-i-swarm"><div class="srow"><i class="a" style="left:20%;top:30%"></i><i class="a" style="left:34%;top:60%"></i><i class="a" style="left:44%;top:20%"></i><i style="left:58%;top:70%"></i><i style="left:80%;top:40%"></i></div><div class="srow"><i style="left:15%;top:50%"></i><i style="left:28%;top:20%"></i><i style="left:40%;top:65%"></i><i style="left:52%;top:35%"></i><i style="left:66%;top:60%"></i></div></div></div><div class="b"><p class="n">i12</p><h3>Beeswarm / Dot Strip</h3><p class="nav"><b>Hover a dot</b> for its value; one named outlier gets a leader line.</p><div class="tags"><span class="tag">distribution</span><span class="tag">outlier</span></div></div></a>
     </div>
     </div>
 

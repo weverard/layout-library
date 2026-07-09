@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i11 · Ridgeline — Info design scaffold</title>
+<!--
+  CHART       Ridgeline (joyplot)
+  DATA SHAPE  5 groups x smooth density points, precomputed —
+              {label, pts, focal}[] where pts = number[24] density
+              heights 0-1 sampled across a shared x-domain
+  INSIGHT     distribute / compare distributions
+  BEST FOR    Distributions across groups / time-of-day.
+  RE-SKIN     Overlap amount + the focal row are the knobs (peakH/rowStep
+              constants + the one `focal:true` entry). Under ~560px rows
+              separate fully — matchMedia re-render, same pattern as i08.
+-->
+<style>
+  :root{
+    --accent:#7C2D12;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .ridge{fill:var(--ink);opacity:.16;transition:opacity .18s}
+  .ridge.focal{fill:var(--accent);opacity:.88}
+  .ridge.active{opacity:.85}
+  .ridge.focal.active{opacity:1}
+
+  .rowlabel{font-size:12px;fill:var(--muted)}
+  .rowlabel.focal{fill:var(--accent);font-weight:600}
+
+  .mtick{stroke:var(--ink);stroke-width:1.6}
+  .mtick.focal{stroke:var(--accent)}
+  .mticklabel{font-size:11px;font-weight:600;fill:var(--ink)}
+  .mticklabel.focal{fill:var(--accent)}
+
+  .xtick{font-family:var(--mono);font-size:11px;fill:var(--muted);text-anchor:middle}
+
+  @media (prefers-reduced-motion:reduce){
+    .ridge{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Distribution · i11</p>
+    <h1>The AI-assisted lane checks shoppers out faster, and more consistently, than any other lane.</h1>
+    <p class="dek">Checkout time distribution by lane type, one week of transactions (minutes, illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 340" role="img" aria-label="Ridgeline plot of checkout time distribution across five lane types"></svg>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A ridgeline (joyplot) — five overlapping density curves, one per group, stacked with a shared baseline offset so their shapes can be compared at a glance.</dd>
+    <dt>When to use it</dt><dd>Comparing the shape of a distribution — not just its average — across several groups: checkout time by lane, response time by team, activity by hour.</dd>
+    <dt>Data shape</dt><dd><code>{label, pts, focal}[]</code> — 5 groups x 24 precomputed density heights (0-1) each; each row's median tick is derived from its curve at render time, not stored or estimated from raw samples.</dd>
+    <dt>Visual style</dt><dd>One <code>--accent</code>-filled row for the focal group, translucent ink for the rest; row names sit directly on their own baseline instead of a shared legend.</dd>
+  </dl>
+  <p class="tags"><span>distribution</span><span>ridgeline</span><span>joyplot</span><span>compare-groups</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a ridgeline (joy plot): five smooth, bezier-curved density silhouettes stack top to bottom, each row's baseline offset just enough that adjacent curves overlap by roughly 60%, so the composition still reads as five distinct distributions rather than a blur. One row — the fastest, tightest distribution — is filled in the accent color and kept fully opaque; the other four sit behind it in translucent ink, present for context but clearly secondary. Each row is labeled directly at the left edge of its own baseline rather than in a shared legend box. Hovering a row brings it to the front and lifts it toward full opacity, and a short tick with a value label marks that row's median directly on the curve. Below roughly 560px the rows pull apart into fully separated bands with no overlap, trading compactness for legibility at a small size.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i11 · ridgeline &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var XS = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5];
+
+  var DATA = [
+    {label:'AI-assisted lane', focal:true,
+      pts:[0.01,0.04,0.14,0.36,0.69,0.97,1.0,0.76,0.42,0.17,0.05,0.01,0,0,0,0,0,0,0,0,0,0,0,0]},
+    {label:'Mobile pay',
+      pts:[0.01,0.02,0.08,0.19,0.39,0.66,0.9,1.0,0.9,0.66,0.39,0.19,0.08,0.02,0.01,0,0,0,0,0,0,0,0,0]},
+    {label:'Express lane',
+      pts:[0,0.01,0.03,0.07,0.16,0.31,0.51,0.74,0.93,1.0,0.93,0.74,0.51,0.31,0.16,0.07,0.03,0.01,0,0,0,0,0,0]},
+    {label:'Standard lane',
+      pts:[0,0.01,0.02,0.04,0.08,0.15,0.25,0.38,0.54,0.71,0.86,0.96,1.0,0.96,0.86,0.71,0.54,0.38,0.25,0.15,0.08,0.04,0.02,0.01]},
+    {label:'Self-checkout',
+      pts:[0.01,0.01,0.02,0.04,0.08,0.12,0.19,0.28,0.39,0.52,0.66,0.79,0.9,0.97,1.0,0.97,0.9,0.79,0.66,0.52,0.39,0.28,0.19,0.12]}
+  ];
+
+  var W = 640;
+  var xDomainMax = XS[XS.length - 1];
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+
+  function smoothPath(pts){
+    var d = 'M' + pts[0].x + ',' + pts[0].y;
+    for(var i = 0; i < pts.length - 1; i++){
+      var p0 = pts[i], p1 = pts[i + 1];
+      var mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+      d += ' Q' + p0.x + ',' + p0.y + ' ' + mx + ',' + my;
+    }
+    var last = pts[pts.length - 1];
+    d += ' L' + last.x + ',' + last.y;
+    return d;
+  }
+
+  // median derived from the precomputed curve itself (cumulative weight
+  // crossing 50%), not estimated from raw samples
+  function medianOf(pts){
+    var total = pts.reduce(function(a, b){ return a + b; }, 0);
+    var cum = 0;
+    for(var i = 0; i < pts.length; i++){
+      cum += pts[i];
+      if(cum >= total / 2){ return XS[i]; }
+    }
+    return XS[XS.length - 1];
+  }
+
+  function render(compact){
+    svg.innerHTML = '';
+
+    var M = compact
+      ? {top:16, left:16, right:24}
+      : {top:20, left:16, right:24};
+    var peakH = compact ? 50 : 90;
+    var rowStep = compact ? 64 : 38;
+    var baseline0 = M.top + peakH;
+    var bottomPad = 50;
+    var H = baseline0 + (DATA.length - 1) * rowStep + bottomPad;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+    var plotW = W - M.left - M.right;
+    function xOf(x){ return M.left + plotW * x / xDomainMax; }
+
+    var ridgeEls = [];
+
+    DATA.forEach(function(d, i){
+      var baseline = baseline0 + i * rowStep;
+      var topPts = XS.map(function(x, j){ return {x:xOf(x), y:baseline - peakH * d.pts[j]}; });
+      var last = topPts[topPts.length - 1], first = topPts[0];
+      var dPath = smoothPath(topPts) + ' L' + last.x + ',' + baseline + ' L' + first.x + ',' + baseline + ' Z';
+
+      var path = el('path', {class:'ridge' + (d.focal ? ' focal' : ''), d:dPath});
+      svg.appendChild(path);
+      ridgeEls.push(path);
+
+      var label = el('text', {class:'rowlabel' + (d.focal ? ' focal' : ''), x:M.left + 4, y:baseline - 6});
+      label.textContent = d.label;
+      svg.appendChild(label);
+
+      // median tick + label, shown always for the focal row, on hover for the rest
+      var medianVal = medianOf(d.pts);
+      var mx = xOf(medianVal);
+      var tickTop = baseline - peakH * 0.42;
+      var tick = el('line', {class:'mtick' + (d.focal ? ' focal' : ''), x1:mx, x2:mx, y1:tickTop, y2:baseline});
+      var mLabel = el('text', {class:'mticklabel' + (d.focal ? ' focal' : ''), x:mx, y:tickTop - 5, 'text-anchor':'middle'});
+      mLabel.textContent = medianVal.toFixed(1) + ' min';
+      if(!d.focal){ tick.style.opacity = 0; mLabel.style.opacity = 0; tick.style.transition = mLabel.style.transition = 'opacity .15s'; }
+      svg.appendChild(tick);
+      svg.appendChild(mLabel);
+
+      path.addEventListener('mouseenter', function(){
+        svg.appendChild(path); // bring to front
+        ridgeEls.forEach(function(r){ r.classList.remove('active'); });
+        path.classList.add('active');
+        if(!d.focal){ tick.style.opacity = 1; mLabel.style.opacity = 1; svg.appendChild(tick); svg.appendChild(mLabel); }
+      });
+      path.addEventListener('mouseleave', function(){
+        path.classList.remove('active');
+        if(!d.focal){ tick.style.opacity = 0; mLabel.style.opacity = 0; }
+      });
+    });
+
+    var lastBaseline = baseline0 + (DATA.length - 1) * rowStep;
+    var tickVals = compact ? [0, 6, 11.5] : [0, 3, 6, 9, 11.5];
+    tickVals.forEach(function(v){
+      var t = el('text', {class:'xtick', x:xOf(v), y:lastBaseline + 34});
+      t.textContent = (v === 11.5 ? '11.5' : v) + ' min';
+      svg.appendChild(t);
+    });
+  }
+
+  var mq = window.matchMedia('(max-width:560px)');
+  render(mq.matches);
+  var relayout = function(){ render(mq.matches); };
+  if(mq.addEventListener){ mq.addEventListener('change', relayout); }
+  else if(mq.addListener){ mq.addListener(relayout); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
