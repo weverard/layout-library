@@ -226,6 +226,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i02` | Slope Chart | 6 entities x 2 time points | Before/after across many entities, rank shifts |
 | `i03` | Dumbbell / Dot-Range | 8 rows x 2 values, sorted by delta | Gap analysis, before/after by group |
 
+**Trend / Time-series — the shape of change**
+
+| # | Chart | Data shape | Best for |
+|---|---|---|---|
+| `i04` | Line with Confidence Band + Events | 36 monthly points + band, 2 events | KPIs with uncertainty, forecasts, experiments |
+| `i05` | Streamgraph | 5 series x 12 points, stacked offsets | Evolving share of voice/volume |
+| `i06` | Bump Chart | 6 entities x 6 periods of ranks | League positions, brand rankings |
+
 ---
 
 ## Backlog — ideas not yet built

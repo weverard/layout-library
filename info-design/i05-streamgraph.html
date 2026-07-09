@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i05 · Streamgraph — Info design scaffold</title>
+<!--
+  CHART       Streamgraph
+  DATA SHAPE  5 series x 12 monthly points, precomputed stacked offsets —
+              layers = 5 arrays of 12 {y0, y1}
+  INSIGHT     show composition over time
+  BEST FOR    Evolving share of voice/volume.
+  RE-SKIN     Ramp hues are the knob (color-mix against --accent). Under
+              ~520px the wiggle flattens to a straight-baseline stacked area.
+-->
+<style>
+  :root{
+    --accent:#6D28D9;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  /* Five-step tint ramp derived from one accent hue. Each rule declares a
+     plain fallback hex first, then a color-mix() override — browsers that
+     don't support color-mix() simply ignore the second (invalid) rule and
+     keep the hex, so file:// always shows sane, on-theme colors. */
+  .band{transition:opacity .18s, filter .18s}
+  .band.dim{opacity:.35}
+  .band.active{filter:saturate(1.45)}
+  .band-0{fill:#D3BEF4;fill:color-mix(in oklab, var(--accent) 30%, white);}
+  .band-1{fill:#BD9EEE;fill:color-mix(in oklab, var(--accent) 45%, white);}
+  .band-2{fill:#A77EE8;fill:color-mix(in oklab, var(--accent) 60%, white);}
+  .band-3{fill:#925EE3;fill:color-mix(in oklab, var(--accent) 75%, white);}
+  .band-4{fill:#7C3EDD;fill:color-mix(in oklab, var(--accent) 90%, white);}
+
+  .streamlabel{font-size:11.5px;font-weight:600;fill:var(--ink);text-anchor:middle;
+    paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+
+  .monthlabel{font-family:var(--mono);font-size:11px;fill:var(--muted);text-anchor:middle}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    .band,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Trend · i05</p>
+    <h1>Paid social overtook email as our second-biggest channel this year.</h1>
+    <p class="dek">Monthly active users by acquisition channel, 2025 (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 380" role="img" aria-label="Streamgraph of monthly active users by acquisition channel across 2025"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A streamgraph — five series stacked as smooth wiggle bands around a shifting center baseline, so the whole composition's total width breathes with the data instead of sitting on a flat axis.</dd>
+    <dt>When to use it</dt><dd>Composition that evolves over time — channel mix, content-format mix, any "share of the whole" story across enough time points that a stacked bar chart would flicker.</dd>
+    <dt>Data shape</dt><dd>5 series x 12 points; the script derives stacked <code>{y0, y1}</code> offsets from each series' raw monthly values, centering the stack so the baseline itself wiggles.</dd>
+    <dt>Visual style</dt><dd>A muted five-step tint ramp derived from one accent hue stands in for a legend; each series is labeled directly inside the column where its band is widest.</dd>
+  </dl>
+  <p class="tags"><span>trend</span><span>composition</span><span>streamgraph</span><span>share of whole</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a streamgraph: five series stack into smooth, bezier-curved bands whose combined width breathes wider and narrower across twelve monthly columns, centered on a baseline that wiggles instead of sitting flat at zero, which is what separates it from an ordinary stacked area chart. There is no legend — each band is filled with one step of a muted tint ramp built from a single accent hue, and its name is set directly inside the column where that band happens to be widest, so the label always lands somewhere legible. Hovering any band saturates it and fades the other four back, and a chip follows the cursor reporting that series' name and its percentage share of the total in whichever month sits under the pointer. Below roughly 520px the wiggle collapses to a conventional flat-baseline stacked area with straight segments instead of curves, trading a little visual interest for legibility at a small size.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i05 · streamgraph &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {name:'Organic search', values:[34,35,33,36,38,37,39,40,42,41,43,44]},
+    {name:'Referral',       values:[18,17,19,18,20,19,21,20,19,21,22,23]},
+    {name:'Paid social',    values:[10,11,13,15,17,19,22,25,28,31,34,37]},
+    {name:'Email',          values:[22,21,20,19,18,17,16,15,14,13,12,11]},
+    {name:'Direct',         values:[14,15,14,16,15,14,13,14,13,12,11,10]}
+  ];
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  var W = 640, H = 380;
+  var M = {top:44, right:26, bottom:34, left:26};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+  var m = DATA.length;
+  var n = DATA[0].values.length;
+
+  function xOf(i){ return M.left + plotW * i / (n - 1); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  // Precompute stacked offsets. `compact` stacks from a flat baseline of 0
+  // (an ordinary stacked area); otherwise the stack centers on -total/2 per
+  // column, which is what makes the baseline itself wiggle.
+  function buildLayers(compact){
+    var totals = [];
+    for(var j = 0; j < n; j++){
+      var t = 0;
+      for(var s = 0; s < m; s++){ t += DATA[s].values[j]; }
+      totals.push(t);
+    }
+    var layers = DATA.map(function(){ return new Array(n); });
+    for(var j = 0; j < n; j++){
+      var cum = compact ? 0 : -totals[j] / 2;
+      for(var s = 0; s < m; s++){
+        var v = DATA[s].values[j];
+        layers[s][j] = {y0:cum, y1:cum + v};
+        cum += v;
+      }
+    }
+    var domMin = Infinity, domMax = -Infinity;
+    layers.forEach(function(arr){
+      arr.forEach(function(p){ domMin = Math.min(domMin, p.y0); domMax = Math.max(domMax, p.y1); });
+    });
+    var pad = (domMax - domMin) * 0.06;
+    return {layers:layers, domainMin:domMin - pad, domainMax:domMax + pad};
+  }
+
+  function smoothPath(pts){
+    var d = 'M' + pts[0].x + ',' + pts[0].y;
+    for(var i = 0; i < pts.length - 1; i++){
+      var p0 = pts[i], p1 = pts[i + 1];
+      var mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+      d += ' Q' + p0.x + ',' + p0.y + ' ' + mx + ',' + my;
+    }
+    var last = pts[pts.length - 1];
+    d += ' L' + last.x + ',' + last.y;
+    return d;
+  }
+  function straightPath(pts){
+    return 'M' + pts.map(function(p){ return p.x + ',' + p.y; }).join(' L');
+  }
+
+  function indexFromEvent(e){
+    var r = svg.getBoundingClientRect();
+    var scale = W / r.width;
+    var localX = (e.clientX - r.left) * scale;
+    var idx = Math.round((localX - M.left) / plotW * (n - 1));
+    return Math.max(0, Math.min(n - 1, idx));
+  }
+  function showChip(e, text){
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = text;
+    chip.style.left = (e.clientX - f.left) + 'px';
+    chip.style.top = (e.clientY - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  function render(compact){
+    svg.innerHTML = '';
+    var built = buildLayers(compact);
+    var layers = built.layers;
+    function yOf(v){ return M.top + plotH * (1 - (v - built.domainMin) / (built.domainMax - built.domainMin)); }
+
+    var bandEls = [];
+
+    DATA.forEach(function(series, s){
+      var topPts = [], botPts = [];
+      for(var j = 0; j < n; j++){ topPts.push({x:xOf(j), y:yOf(layers[s][j].y1)}); }
+      for(var j = n - 1; j >= 0; j--){ botPts.push({x:xOf(j), y:yOf(layers[s][j].y0)}); }
+
+      var d;
+      if(compact){
+        d = straightPath(topPts) + ' L' + botPts.map(function(p){ return p.x + ',' + p.y; }).join(' L') + ' Z';
+      } else {
+        d = smoothPath(topPts) + ' ' + smoothPath(botPts).replace('M', 'L') + ' Z';
+      }
+      var path = el('path', {class:'band band-' + s, d:d});
+      svg.appendChild(path);
+      bandEls.push(path);
+
+      // label inside the column where this series' band is widest
+      var bestJ = 0, bestW = -1;
+      for(var j2 = 0; j2 < n; j2++){
+        var w = layers[s][j2].y1 - layers[s][j2].y0;
+        if(w > bestW){ bestW = w; bestJ = j2; }
+      }
+      var midY = (yOf(layers[s][bestJ].y1) + yOf(layers[s][bestJ].y0)) / 2;
+      var lbl = el('text', {class:'streamlabel', x:xOf(bestJ), y:midY + 4});
+      lbl.textContent = series.name;
+      svg.appendChild(lbl);
+    });
+
+    function attach(path, s){
+      function focus(){
+        bandEls.forEach(function(b, i2){
+          b.classList.toggle('active', i2 === s);
+          b.classList.toggle('dim', i2 !== s);
+        });
+      }
+      function clear(){
+        bandEls.forEach(function(b){ b.classList.remove('active'); b.classList.remove('dim'); });
+      }
+      function move(e){
+        focus();
+        var idx = indexFromEvent(e);
+        var v = DATA[s].values[idx];
+        var total = 0;
+        for(var s2 = 0; s2 < m; s2++){ total += DATA[s2].values[idx]; }
+        var share = Math.round(v / total * 100);
+        showChip(e, DATA[s].name + ' · ' + share + '% in ' + MONTHS[idx]);
+      }
+      path.addEventListener('mouseenter', move);
+      path.addEventListener('mousemove', move);
+      path.addEventListener('mouseleave', function(){ clear(); hideChip(); });
+    }
+    bandEls.forEach(function(path, s){ attach(path, s); });
+
+    var tickIdx = compact ? [0, n - 1] : [0, 3, 6, 9];
+    tickIdx.forEach(function(j){
+      var t = el('text', {class:'monthlabel', x:xOf(j), y:H - 12});
+      t.textContent = MONTHS[j];
+      svg.appendChild(t);
+    });
+  }
+
+  var mq = window.matchMedia('(max-width:520px)');
+  render(mq.matches);
+  var relayout = function(){ render(mq.matches); };
+  if(mq.addEventListener){ mq.addEventListener('change', relayout); }
+  else if(mq.addListener){ mq.addListener(relayout); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

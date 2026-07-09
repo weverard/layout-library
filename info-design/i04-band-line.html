@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i04 · Line with Confidence Band + Events — Info design scaffold</title>
+<!--
+  CHART       Line with Confidence Band + Events
+  DATA SHAPE  1 series x 36 monthly points + band — {t, v, lo, hi}[] —
+              plus 2 events — {t, label}[]
+  INSIGHT     reveal change
+  BEST FOR    KPIs with uncertainty, forecasts, experiments.
+  RE-SKIN     --accent = line + band; band opacity is the second knob.
+              Hover crosshair is suppressed on touch / coarse pointers.
+-->
+<style>
+  :root{
+    --accent:#BE123C;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .gridline{stroke:var(--line);stroke-width:1}
+  .gridlabel{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+
+  .band{fill:var(--accent);opacity:.14;stroke:none}
+  .valline{fill:none;stroke:var(--accent);stroke-width:2}
+  .endpoint-dot{fill:var(--accent)}
+  .endpoint-label{font-size:12px;font-weight:600;fill:var(--accent)}
+
+  .eventrule{stroke:var(--muted);stroke-width:1;stroke-dasharray:2 2}
+  .eventlabel{font-size:11px;fill:var(--muted)}
+
+  .yeartick{stroke:var(--line);stroke-width:1}
+  .yearlabel{font-family:var(--mono);font-size:11px;fill:var(--muted);text-anchor:middle}
+
+  .hitrect{fill:transparent}
+  .crosshair{stroke:var(--muted);stroke-width:1;opacity:0;transition:opacity .12s}
+  .crosshair.on{opacity:1}
+  .hoverdot{fill:var(--accent);stroke:var(--panel);stroke-width:1.5;opacity:0;transition:opacity .12s}
+  .hoverdot.on{opacity:1}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:520px){
+    .eventlabel{font-size:10px}
+    .yearlabel{font-size:10px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .crosshair,.hoverdot,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Trend · i04</p>
+    <h1>Activation climbed steadily after we simplified onboarding.</h1>
+    <p class="dek">Monthly activation rate among new signups, with a plausible range band, Jan 2023–Dec 2025 (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Line chart of monthly activation rate from January 2023 to December 2025 with a confidence band and two annotated events"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A single-series line chart with a shaded confidence/range band and annotated event markers.</dd>
+    <dt>When to use it</dt><dd>KPI tracking with uncertainty — forecasts, experiment readouts, noisy metrics — where the range around the number matters as much as the number itself.</dd>
+    <dt>Data shape</dt><dd><code>{t, v, lo, hi}[]</code> monthly points, plus a short list of <code>{t, label}</code> events — three years of history is a good default length.</dd>
+    <dt>Visual style</dt><dd>Direct year ticks instead of a dense x-axis; the band is the accent color at low opacity; two vertical event rules carry short angled labels; the endpoint is called out with its own dot and value.</dd>
+  </dl>
+  <p class="tags"><span>trend</span><span>uncertainty</span><span>forecast</span><span>line chart</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a single line chart with a soft confidence band running behind it: the line tracks one metric across three years of monthly points, and a band in the same accent color at low opacity shows the plausible range around it at every step, so uncertainty is visible without a second series or error bars. Two vertical rules mark real-world events, each carrying a short label set at a slight angle above the line so it reads without a legend or footnote. The x-axis is stripped down to only the three year boundaries — no monthly tick clutter — and the line's final point gets its own dot and a value label in the accent color, so the current number is legible without hunting the axis. Hovering the plot snaps a crosshair and a small dot to the nearest point and opens a chip reporting that month's exact value and band range; on touch devices, where there's no real hover, the crosshair is suppressed entirely rather than showing a broken sticky state.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i04 · band-line &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {v:38, lo:34, hi:42}, {v:37, lo:33, hi:41}, {v:40, lo:36, hi:44}, {v:39, lo:35, hi:43},
+    {v:41, lo:37, hi:45}, {v:43, lo:38, hi:48}, {v:42, lo:37, hi:47}, {v:44, lo:39, hi:49},
+    {v:46, lo:41, hi:51}, {v:47, lo:42, hi:52}, {v:49, lo:44, hi:54}, {v:51, lo:45, hi:57},
+    {v:53, lo:47, hi:59}, {v:52, lo:46, hi:58}, {v:55, lo:48, hi:62}, {v:57, lo:50, hi:64},
+    {v:56, lo:49, hi:63}, {v:59, lo:51, hi:67}, {v:61, lo:53, hi:69}, {v:60, lo:52, hi:68},
+    {v:63, lo:54, hi:72}, {v:65, lo:56, hi:74}, {v:64, lo:55, hi:73}, {v:67, lo:57, hi:77},
+    {v:70, lo:61, hi:79}, {v:72, lo:63, hi:81}, {v:75, lo:66, hi:84}, {v:77, lo:68, hi:86},
+    {v:79, lo:70, hi:88}, {v:81, lo:72, hi:90}, {v:83, lo:74, hi:92}, {v:85, lo:76, hi:94},
+    {v:86, lo:77, hi:95}, {v:88, lo:79, hi:97}, {v:90, lo:81, hi:99}, {v:92, lo:83, hi:100}
+  ];
+  var EVENTS = [
+    {i:8,  label:'Simplified pricing'},
+    {i:24, label:'New onboarding flow'}
+  ];
+  var YEAR_STARTS = [0, 12, 24];
+  var MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var NICE_MIN = 0, NICE_MAX = 100;
+  var GRID_VALUES = [0, 50, 100];
+
+  function labelFor(i){
+    var year = 2023 + Math.floor(i / 12);
+    return MONTH_NAMES[i % 12] + ' ' + year;
+  }
+
+  var W = 640, H = 400;
+  var M = {top:64, right:58, bottom:44, left:30};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+  var n = DATA.length;
+
+  function xOf(i){ return M.left + plotW * i / (n - 1); }
+  function yOf(v){ return M.top + plotH * (1 - (v - NICE_MIN) / (NICE_MAX - NICE_MIN)); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var bottom = yOf(NICE_MIN);
+
+  // gridlines + top-aligned value labels
+  GRID_VALUES.forEach(function(v){
+    var y = yOf(v);
+    svg.appendChild(el('line', {class:'gridline', x1:M.left, x2:W - M.right, y1:y, y2:y}));
+    var t = el('text', {class:'gridlabel', x:M.left, y:y - 7});
+    t.textContent = v;
+    svg.appendChild(t);
+  });
+
+  // band
+  var topPts = DATA.map(function(d, i){ return xOf(i) + ',' + yOf(d.hi); });
+  var botPts = [];
+  for(var i = n - 1; i >= 0; i--){ botPts.push(xOf(i) + ',' + yOf(DATA[i].lo)); }
+  svg.appendChild(el('path', {class:'band', d:'M' + topPts.join(' L') + ' L' + botPts.join(' L') + ' Z'}));
+
+  // line
+  var linePts = DATA.map(function(d, i){ return xOf(i) + ',' + yOf(d.v); });
+  svg.appendChild(el('path', {class:'valline', d:'M' + linePts.join(' L')}));
+
+  // events
+  EVENTS.forEach(function(ev){
+    var x = xOf(ev.i);
+    svg.appendChild(el('line', {class:'eventrule', x1:x, x2:x, y1:M.top - 10, y2:bottom}));
+    var t = el('text', {class:'eventlabel', x:x + 5, y:M.top - 14});
+    t.setAttribute('transform', 'rotate(-30 ' + (x + 5) + ' ' + (M.top - 14) + ')');
+    t.textContent = ev.label;
+    svg.appendChild(t);
+  });
+
+  // endpoint
+  var lastIdx = n - 1;
+  var ex = xOf(lastIdx), ey = yOf(DATA[lastIdx].v);
+  svg.appendChild(el('circle', {class:'endpoint-dot', cx:ex, cy:ey, r:3.5}));
+  var elabel = el('text', {class:'endpoint-label', x:ex + 8, y:ey + 4});
+  elabel.textContent = DATA[lastIdx].v + '%';
+  svg.appendChild(elabel);
+
+  // year ticks
+  YEAR_STARTS.forEach(function(i){
+    var x = xOf(i);
+    svg.appendChild(el('line', {class:'yeartick', x1:x, x2:x, y1:bottom, y2:bottom + 5}));
+    var t = el('text', {class:'yearlabel', x:x, y:bottom + 20});
+    t.textContent = String(2023 + Math.floor(i / 12));
+    svg.appendChild(t);
+  });
+
+  // hover crosshair — only wired up for real hover-capable, fine pointers
+  var crosshair = el('line', {class:'crosshair', y1:M.top - 10, y2:bottom, x1:0, x2:0});
+  var hoverDot = el('circle', {class:'hoverdot', r:3.5, cx:0, cy:0});
+  svg.appendChild(crosshair);
+  svg.appendChild(hoverDot);
+  var hitRect = el('rect', {class:'hitrect', x:M.left, y:M.top - 10, width:plotW, height:(bottom - (M.top - 10))});
+  svg.appendChild(hitRect);
+
+  function indexFromEvent(e){
+    var r = svg.getBoundingClientRect();
+    var scale = W / r.width;
+    var localX = (e.clientX - r.left) * scale;
+    var idx = Math.round((localX - M.left) / plotW * (n - 1));
+    return Math.max(0, Math.min(n - 1, idx));
+  }
+
+  function onMove(e){
+    var idx = indexFromEvent(e);
+    var d = DATA[idx];
+    var x = xOf(idx), y = yOf(d.v);
+    crosshair.setAttribute('x1', x);
+    crosshair.setAttribute('x2', x);
+    crosshair.classList.add('on');
+    hoverDot.setAttribute('cx', x);
+    hoverDot.setAttribute('cy', y);
+    hoverDot.classList.add('on');
+    var r = svg.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    var sx = r.width / W, sy = r.height / H;
+    chip.textContent = labelFor(idx) + ' · ' + d.v + '% (band ' + d.lo + '–' + d.hi + ')';
+    chip.style.left = (r.left - f.left + x * sx) + 'px';
+    chip.style.top = (r.top - f.top + y * sy) + 'px';
+    chip.classList.add('on');
+  }
+  function onLeave(){
+    crosshair.classList.remove('on');
+    hoverDot.classList.remove('on');
+    chip.classList.remove('on');
+  }
+
+  var canHover = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+  if(canHover){
+    hitRect.addEventListener('mousemove', onMove);
+    hitRect.addEventListener('mouseleave', onLeave);
+  }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

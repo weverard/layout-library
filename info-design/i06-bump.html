@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i06 · Bump Chart — Info design scaffold</title>
+<!--
+  CHART       Bump Chart
+  DATA SHAPE  6 entities x 6 periods of ranks — {label, ranks}[] where
+              ranks is number[6], 1 = top
+  INSIGHT     rank over time
+  BEST FOR    League positions, brand rankings.
+  RE-SKIN     Focal entity set by a data flag. Under ~520px shows first/last
+              columns only, connected by arrows.
+-->
+<style>
+  :root{
+    --accent:#0E7490;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .periodlabel{font-family:var(--mono);font-size:11px;fill:var(--muted);text-anchor:middle}
+
+  .leadband{fill:var(--accent);opacity:.08}
+  .leadlabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;fill:var(--muted);text-anchor:middle}
+
+  .entity{cursor:pointer}
+  .entity .hit{stroke:transparent;stroke-width:16;fill:none}
+  .entity .rankline{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:opacity .18s,stroke-width .18s}
+  .entity .node{transition:opacity .18s}
+  .entity .endlbl{font-size:11.5px;transition:opacity .18s}
+  .entity.neutral .rankline{stroke:#B9B4A8}
+  .entity.neutral .node{stroke:#B9B4A8;fill:#B9B4A8}
+  .entity.neutral .endlbl{fill:#6E6A63}
+  .entity.focal .rankline{stroke:var(--accent);stroke-width:3}
+  .entity.focal .node{fill:var(--accent);stroke:var(--accent)}
+  .entity.focal .endlbl{fill:var(--accent);font-weight:600}
+  .entity.dim .rankline,.entity.dim .node,.entity.dim .endlbl{opacity:.18}
+
+  .chipnode{opacity:0;transition:opacity .15s;pointer-events:none}
+  .chipnode.show{opacity:1}
+  .chipnode rect{fill:var(--ink)}
+  .chipnode text{fill:#fff;font-family:var(--mono);font-size:10px;text-anchor:middle}
+
+  .arrow-neutral{fill:#B9B4A8}
+  .arrow-focal{fill:var(--accent)}
+
+  @media (prefers-reduced-motion:reduce){
+    .entity .rankline,.entity .node,.entity .endlbl,.chipnode{transition:none}
+  }
+  @media (max-width:520px){
+    .entity .endlbl{font-size:11px}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Trend · i06</p>
+    <h1>Kepler climbed from last to first in five years.</h1>
+    <p class="dek">Rank by monthly active teams among six project-management tools, 2020–2025 (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 420" role="img" aria-label="Bump chart of six project-management tools ranked by monthly active teams, 2020 to 2025"></svg>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A bump chart — one rounded line per entity moving up and down an inverted 1-N rank scale across periods.</dd>
+    <dt>When to use it</dt><dd>League positions, brand or product rankings — anything where relative order matters more than the underlying number.</dd>
+    <dt>Data shape</dt><dd><code>{label, ranks}[]</code>, <code>ranks</code> is <code>number[6]</code> with 1 = top; each period column is a permutation of 1..N.</dd>
+    <dt>Visual style</dt><dd>Entity labels sit at both ends of each line so identity survives crossings; the focal entity runs heavier in the accent color while the rest stay neutral; a softly shaded column marks the one period where the rank-1 position changed hands.</dd>
+  </dl>
+  <p class="tags"><span>trend</span><span>ranking</span><span>bump chart</span><span>league table</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a bump chart: one rounded line per entity threads up and down an inverted rank scale — rank 1 at the top — across six evenly spaced periods, so crossing lines read directly as lead changes without any numbers needed in the plot itself. Every line carries its entity's name at both the left and right ends, so identity survives even where several lines tangle together in the middle. One entity is marked as focal and drawn heavier in the accent color while the rest stay a neutral gray, and a soft accent-tinted column highlights the single period where the rank-1 position actually changed hands, pointing straight at the headline moment. Hovering any line brings it forward and drops a small rank chip at each of its period nodes, turning the tangle into an on-demand single-line reading. Below roughly 520px the chart collapses to just the first and last periods, connected by a single arrow per entity, so the overall before/after story survives even without room for the full path.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i06 · bump &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {label:'Vantage',   ranks:[1, 1, 1, 1, 2, 3]},
+    {label:'Kepler',    ranks:[5, 4, 3, 2, 1, 1], focal:true},
+    {label:'Northline', ranks:[2, 2, 2, 3, 3, 2]},
+    {label:'Anchor',    ranks:[3, 3, 4, 4, 4, 4]},
+    {label:'Fenwick',   ranks:[4, 5, 5, 5, 5, 5]},
+    {label:'Loom',      ranks:[6, 6, 6, 6, 6, 6]}
+  ];
+  var PERIODS = ['2020', '2021', '2022', '2023', '2024', '2025'];
+  var RANKS_N = 6;
+  var periodsN = PERIODS.length;
+
+  var W = 640, H = 420;
+  var M = {top:34, right:96, bottom:34, left:96};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+
+  function xOf(i){ return M.left + plotW * i / (periodsN - 1); }
+  function yOf(rank){ return M.top + plotH * (rank - 1) / (RANKS_N - 1); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+
+  function findLeadChangeIndex(){
+    for(var i = 1; i < periodsN; i++){
+      var prevLeader = DATA.filter(function(d){ return d.ranks[i - 1] === 1; })[0];
+      var curLeader = DATA.filter(function(d){ return d.ranks[i] === 1; })[0];
+      if(prevLeader.label !== curLeader.label) return i;
+    }
+    return -1;
+  }
+
+  function attachArrowMarkers(){
+    var defs = el('defs', {});
+    ['neutral', 'focal'].forEach(function(kind){
+      var marker = el('marker', {id:'arrow-' + kind, viewBox:'0 0 10 10', refX:8, refY:5, markerWidth:6, markerHeight:6, orient:'auto-start-reverse'});
+      marker.appendChild(el('path', {class:'arrow-' + kind, d:'M0,0 L10,5 L0,10 Z'}));
+      defs.appendChild(marker);
+    });
+    svg.appendChild(defs);
+  }
+
+  function renderFull(){
+    var leadIdx = findLeadChangeIndex();
+    if(leadIdx > -1){
+      var bx = xOf(leadIdx);
+      var gap = plotW / (periodsN - 1);
+      svg.appendChild(el('rect', {class:'leadband', x:bx - gap * 0.42, y:M.top - 6, width:gap * 0.84, height:plotH + 12, rx:6}));
+      var lt = el('text', {class:'leadlabel', x:bx, y:M.top - 12});
+      lt.textContent = 'Lead changes';
+      svg.appendChild(lt);
+    }
+
+    PERIODS.forEach(function(p, i){
+      var t = el('text', {class:'periodlabel', x:xOf(i), y:H - 10});
+      t.textContent = p;
+      svg.appendChild(t);
+    });
+
+    var entityEls = [];
+
+    DATA.forEach(function(d){
+      var g = el('g', {class:'entity ' + (d.focal ? 'focal' : 'neutral')});
+      var pts = d.ranks.map(function(r, i){ return {x:xOf(i), y:yOf(r)}; });
+      var lineD = 'M' + pts.map(function(p){ return p.x + ',' + p.y; }).join(' L');
+
+      g.appendChild(el('path', {class:'hit', d:lineD}));
+      g.appendChild(el('path', {class:'rankline', d:lineD}));
+
+      var chipNodes = [];
+      pts.forEach(function(p, i){
+        g.appendChild(el('circle', {class:'node', cx:p.x, cy:p.y, r: d.focal ? 3.6 : 2.6}));
+        var cg = el('g', {class:'chipnode'});
+        cg.appendChild(el('rect', {x:p.x - 8, y:p.y - 24, width:16, height:14, rx:3}));
+        var ct = el('text', {x:p.x, y:p.y - 14});
+        ct.textContent = d.ranks[i];
+        cg.appendChild(ct);
+        g.appendChild(cg);
+        chipNodes.push(cg);
+      });
+
+      var leftLbl = el('text', {class:'endlbl', x:M.left - 12, y:pts[0].y + 4, 'text-anchor':'end'});
+      leftLbl.textContent = d.label;
+      var rightLbl = el('text', {class:'endlbl', x:M.left + plotW + 12, y:pts[periodsN - 1].y + 4, 'text-anchor':'start'});
+      rightLbl.textContent = d.label;
+      g.appendChild(leftLbl);
+      g.appendChild(rightLbl);
+
+      svg.appendChild(g);
+      entityEls.push(g);
+
+      function focus(){
+        entityEls.forEach(function(other){ other.classList.toggle('dim', other !== g); });
+        chipNodes.forEach(function(cn){ cn.classList.add('show'); });
+      }
+      function clear(){
+        entityEls.forEach(function(other){ other.classList.remove('dim'); });
+        chipNodes.forEach(function(cn){ cn.classList.remove('show'); });
+      }
+      g.addEventListener('mouseenter', focus);
+      g.addEventListener('mouseleave', clear);
+    });
+  }
+
+  function renderCompact(){
+    attachArrowMarkers();
+    var leftX = M.left, rightX = M.left + plotW;
+
+    var lt = el('text', {class:'periodlabel', x:leftX, y:M.top - 12});
+    lt.textContent = PERIODS[0];
+    var rt = el('text', {class:'periodlabel', x:rightX, y:M.top - 12});
+    rt.textContent = PERIODS[periodsN - 1];
+    svg.appendChild(lt);
+    svg.appendChild(rt);
+
+    var entityEls = [];
+
+    DATA.forEach(function(d){
+      var kind = d.focal ? 'focal' : 'neutral';
+      var g = el('g', {class:'entity ' + kind});
+      var y1 = yOf(d.ranks[0]), y2 = yOf(d.ranks[periodsN - 1]);
+
+      g.appendChild(el('line', {class:'hit', x1:leftX, y1:y1, x2:rightX, y2:y2}));
+      g.appendChild(el('line', {class:'rankline', x1:leftX, y1:y1, x2:rightX - 8, y2:y2, 'marker-end':'url(#arrow-' + kind + ')'}));
+      g.appendChild(el('circle', {class:'node', cx:leftX, cy:y1, r: d.focal ? 3.6 : 2.6}));
+
+      var leftLbl = el('text', {class:'endlbl', x:leftX - 12, y:y1 + 4, 'text-anchor':'end'});
+      leftLbl.textContent = d.label + ' · ' + d.ranks[0];
+      var rightLbl = el('text', {class:'endlbl', x:rightX + 12, y:y2 + 4, 'text-anchor':'start'});
+      rightLbl.textContent = d.label + ' · ' + d.ranks[periodsN - 1];
+      g.appendChild(leftLbl);
+      g.appendChild(rightLbl);
+
+      svg.appendChild(g);
+      entityEls.push(g);
+
+      function focus(){ entityEls.forEach(function(other){ other.classList.toggle('dim', other !== g); }); }
+      function clear(){ entityEls.forEach(function(other){ other.classList.remove('dim'); }); }
+      g.addEventListener('mouseenter', focus);
+      g.addEventListener('mouseleave', clear);
+    });
+  }
+
+  function render(compact){
+    svg.innerHTML = '';
+    if(compact){ renderCompact(); } else { renderFull(); }
+  }
+
+  var mq = window.matchMedia('(max-width:520px)');
+  render(mq.matches);
+  var relayout = function(){ render(mq.matches); };
+  if(mq.addEventListener){ mq.addEventListener('change', relayout); }
+  else if(mq.addListener){ mq.addListener(relayout); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
