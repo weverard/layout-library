@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i07 · Waffle Grid — Info design scaffold</title>
+<!--
+  CHART       Waffle Grid
+  DATA SHAPE  3 named segments + an implicit remainder summing to 100 —
+              {label, n}[] where the 3 n values sum to <= 100
+  INSIGHT     show composition
+  BEST FOR    Shares of a population, survey splits.
+  RE-SKIN     Cell size/radius are the knobs (set on .waffle); grid stays
+              square. The key sentence wraps under narrow widths.
+-->
+<style>
+  :root{
+    --accent:#B45309;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s2)}
+
+  /* The key sentence replaces a legend box: each named segment is a plain
+     button (swatch + words), clickable, wrapping naturally on narrow
+     viewports since it is just inline flex items with no fixed width. */
+  .key{margin:0 0 var(--s3);padding:0;list-style:none;display:flex;flex-wrap:wrap;
+    align-items:baseline;gap:6px 10px;font-size:15px;max-width:64ch}
+  .key .sep{color:var(--muted)}
+  .key .rest{color:var(--muted)}
+  .segbtn{display:inline-flex;align-items:center;gap:7px;background:none;border:0;
+    padding:2px 0;margin:0;font:inherit;font-size:15px;color:var(--ink);cursor:pointer}
+  .segbtn:hover, .segbtn:focus-visible{color:var(--accent)}
+  .segbtn .sw{width:11px;height:11px;border-radius:3px;display:inline-block;flex:0 0 auto}
+  .sw.seg-0{background:#B45309;background:var(--accent)}
+  .sw.seg-1{background:#CB8753;background:color-mix(in oklab, var(--accent) 70%, white)}
+  .sw.seg-2{background:#DDB290;background:color-mix(in oklab, var(--accent) 45%, white)}
+
+  figure{margin:0 0 var(--s2)}
+  .waffle{--cell-radius:3px;width:min(360px,78vw);aspect-ratio:1;margin:0 auto;
+    display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);gap:4px}
+  .cell{border-radius:var(--cell-radius);display:block}
+  .cell.seg-0{background:#B45309;background:var(--accent)}
+  .cell.seg-1{background:#CB8753;background:color-mix(in oklab, var(--accent) 70%, white)}
+  .cell.seg-2{background:#DDB290;background:color-mix(in oklab, var(--accent) 45%, white)}
+  .cell.rest{background:var(--line)}
+
+  @keyframes wafflepulse{ 0%{transform:scale(1)} 45%{transform:scale(1.22)} 100%{transform:scale(1)} }
+  .cell.pulse{animation:wafflepulse .5s ease}
+  .cell.emph{outline:2px solid var(--ink);outline-offset:-2px}
+
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  @media (max-width:520px){
+    .key, .segbtn{font-size:13.5px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .cell.pulse{animation:none}
+    .segbtn{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Part-to-whole · i07</p>
+    <h1>Price, not the product, is why most customers actually leave.</h1>
+    <p class="dek">Reasons given by 100 churned customers in exit surveys, this quarter (illustrative).</p>
+  </header>
+  <p class="key" id="key"></p>
+  <figure id="figure">
+    <div class="waffle" id="waffle" role="img" aria-label="Waffle grid of 100 cells: 42 cite price, 31 a missing feature, 14 switched to a competitor, 13 gave no clear reason"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A 10&times;10 waffle grid — one hundred equal cells standing in for one hundred population members, filled bottom-up and left-to-right, colored by segment.</dd>
+    <dt>When to use it</dt><dd>Shares of a whole expressed as "N out of 100" — survey splits, population composition — anywhere every unit should feel countable, not just proportional.</dd>
+    <dt>Data shape</dt><dd><code>{label, n}[]</code> — 3 named segments whose <code>n</code> values sum to at most 100; the script fills the remaining cells with an implicit "rest" group so the grid always totals 100.</dd>
+    <dt>Visual style</dt><dd>Direct labels replace a legend as a single sentence beneath the headline, each segment named inline behind a colored swatch button; the leftover cells stay flat neutral gray.</dd>
+  </dl>
+  <p class="tags"><span>part-to-whole</span><span>waffle</span><span>survey split</span><span>percent of 100</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a waffle chart: a 10x10 grid of 100 small rounded cells stands in for a population of 100, filled from the bottom-left corner upward and left to right within each row, so it reads like a container filling rather than a chart with an axis. There is no legend box — the key is a single sentence directly under the headline that names each of the three segments inline, a small colored swatch first and its exact share of 100 second, so the reading order is: headline, then the sentence that supplies the numbers, then the grid that lets you feel the proportion at a glance. The three named segments use one accent hue at three tint strengths, boldest for the largest group and lightest for the smallest; everyone left over — the implicit fourth group the sentence doesn't need to name — fills the remaining cells in flat neutral gray. Clicking a segment's name in the key sentence briefly pulses just its cells, so a reader can trace a number they just read back into the grid on demand.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i07 · waffle &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {label:'cite price', n:42},
+    {label:'point to a missing feature', n:31},
+    {label:'say they switched to a competitor', n:14}
+  ];
+  var GRID_N = 10;
+  var CELLS = GRID_N * GRID_N;
+
+  var waffleEl = document.getElementById('waffle');
+  var keyEl = document.getElementById('key');
+
+  // cumulative thresholds along the fill order (0..99)
+  var c0 = DATA[0].n;
+  var c1 = c0 + DATA[1].n;
+  var c2 = c1 + DATA[2].n;
+  var rest = CELLS - c2;
+
+  function segOf(fillIndex){
+    if(fillIndex < c0) return 0;
+    if(fillIndex < c1) return 1;
+    if(fillIndex < c2) return 2;
+    return -1; // rest
+  }
+
+  // Build the grid in normal top-to-bottom DOM/row order, but each cell's
+  // "fill index" counts from the bottom-left, so lower counts light up the
+  // bottom rows first — a container filling from the floor.
+  var cellEls = [[], [], []]; // cells grouped by segment index
+  for(var r = 0; r < GRID_N; r++){
+    for(var c = 0; c < GRID_N; c++){
+      var fillIndex = (GRID_N - 1 - r) * GRID_N + c;
+      var seg = segOf(fillIndex);
+      var cell = document.createElement('i');
+      cell.className = 'cell ' + (seg === -1 ? 'rest' : 'seg-' + seg);
+      waffleEl.appendChild(cell);
+      if(seg !== -1){ cellEls[seg].push(cell); }
+    }
+  }
+
+  // Key sentence, built from DATA so the numbers and the grid can never drift apart.
+  var parts = [
+    'cite price', 'point to a missing feature', 'say they switched to a competitor'
+  ];
+  DATA.forEach(function(d, i){
+    if(i > 0){
+      var sep = document.createElement('span');
+      sep.className = 'sep';
+      sep.textContent = '·';
+      keyEl.appendChild(sep);
+    }
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'segbtn';
+    btn.setAttribute('data-seg', i);
+    var sw = document.createElement('i');
+    sw.className = 'sw seg-' + i;
+    btn.appendChild(sw);
+    var txt = document.createElement('span');
+    txt.textContent = d.n + ' of every 100 ' + d.label;
+    btn.appendChild(txt);
+    btn.addEventListener('click', function(){ pulseSegment(i); });
+    keyEl.appendChild(btn);
+  });
+  var restSep = document.createElement('span');
+  restSep.className = 'sep';
+  restSep.textContent = '·';
+  keyEl.appendChild(restSep);
+  var restEl = document.createElement('span');
+  restEl.className = 'rest';
+  restEl.textContent = 'the remaining ' + rest + ' gave no clear reason.';
+  keyEl.appendChild(restEl);
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function pulseSegment(seg){
+    var cells = cellEls[seg];
+    if(reduceMotion.matches){
+      cells.forEach(function(cell){
+        cell.classList.add('emph');
+        setTimeout(function(){ cell.classList.remove('emph'); }, 650);
+      });
+    } else {
+      cells.forEach(function(cell){
+        cell.classList.remove('pulse');
+        void cell.offsetWidth; // restart animation if clicked again quickly
+        cell.classList.add('pulse');
+      });
+    }
+  }
+  waffleEl.addEventListener('animationend', function(e){
+    if(e.target.classList && e.target.classList.contains('pulse')){
+      e.target.classList.remove('pulse');
+    }
+  });
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
+</content>
+</invoke>

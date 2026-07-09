@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i09 · Stacked Bar with Leader Labels — Info design scaffold</title>
+<!--
+  CHART       Stacked Bar with Leader Labels
+  DATA SHAPE  5 segments of one whole — {label, value, note}[], value in
+              points of 100, values sum to 100
+  INSIGHT     show composition
+  BEST FOR    Single-total breakdowns where each part deserves a sentence.
+  RE-SKIN     --accent marks whichever segment has the largest value
+              (computed, not hardcoded to a position). Under ~560px the
+              leaders hide and a stacked legend-list appears below the bar.
+-->
+<style>
+  :root{
+    --accent:#9F1239;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .seg{stroke:var(--bg);stroke-width:2;transition:opacity .15s,filter .15s}
+  .seg.hero{fill:var(--accent)}
+  .seg.neutral-0{fill:#A79C86}
+  .seg.neutral-1{fill:#BCB49F}
+  .seg.neutral-2{fill:#D1CBBC}
+  .seg.neutral-3{fill:#E6E2D8}
+  .seg.dim{opacity:.45}
+  .seg.hi{filter:brightness(1.05)}
+
+  .leadergroup{transition:opacity .15s}
+  .leadergroup.dim{opacity:.4}
+  .elbow{fill:none;stroke:var(--muted);stroke-width:1}
+  .leadergroup.hero .elbow{stroke:var(--accent)}
+  .leaddot{fill:var(--muted)}
+  .leadergroup.hero .leaddot{fill:var(--accent)}
+  .leadname{font-size:12.5px;font-weight:600;fill:var(--ink)}
+  .leadname .pct{fill:var(--muted);font-weight:400}
+  .leadergroup.hero .leadname{fill:var(--accent)}
+  .leadnote{font-size:11.5px;fill:var(--muted)}
+
+  .barlabel{font-size:12px;fill:var(--ink)}
+  .barlabel .muted{fill:var(--muted)}
+
+  .legend-list{display:none;list-style:none;margin:var(--s2) 0 0;padding:0}
+  .legend-list li{display:flex;align-items:baseline;gap:8px;padding:6px 4px;border-radius:6px;cursor:default;transition:background .12s}
+  .legend-list li.hi{background:var(--panel)}
+  .legend-list li.dim{opacity:.5}
+  .legend-list .sw{width:11px;height:11px;border-radius:3px;flex:0 0 auto;margin-top:3px}
+  .legend-list .name{font-weight:600;font-size:13.5px}
+  .legend-list .pct{color:var(--muted);font-weight:400}
+  .legend-list .note{color:var(--muted);font-size:12.5px;display:block}
+
+  @media (max-width:560px){
+    .legend-list{display:block}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .seg,.leadergroup,.legend-list li{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Part-to-whole · i09</p>
+    <h1>Paid media still eats more than a third of the marketing budget.</h1>
+    <p class="dek">Share of the annual marketing budget by category, 2026 (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 270" role="img" aria-label="Stacked bar of the annual marketing budget split five ways, led by paid media at 38 percent"></svg>
+  </figure>
+  <ul class="legend-list" id="legendList"></ul>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A single 100% stacked bar with elbow leader lines running out to a name, a percentage, and a one-line note for every segment.</dd>
+    <dt>When to use it</dt><dd>Single-total breakdowns where each part deserves more than a color in a legend — a budget, a headcount split, a time allocation — and there are few enough parts (four to six) that every one can carry a sentence.</dd>
+    <dt>Data shape</dt><dd><code>{label, value, note}[]</code> — 5 segments; <code>value</code> is points of 100 and the set sums to exactly 100.</dd>
+    <dt>Visual style</dt><dd>The largest segment is computed, not hardcoded, and takes the accent color; the rest sit on a neutral ramp. Right-angle leader lines alternate above and below the bar so five labels can fan out without collisions.</dd>
+  </dl>
+  <p class="tags"><span>part-to-whole</span><span>stacked bar</span><span>leader lines</span><span>single total</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a single horizontal bar, split into five segments that always sum to the whole, sitting alone in the middle of the page with generous empty space above and below it. Thin right-angle leader lines run from the center of each segment out to a label block: up for some segments, down for others, alternating so the five labels can fan out across the available width without ever colliding or needing a legend. Each label carries three things — the segment's name, its exact percentage, and one short sentence of context — so every slice of the whole gets to make its own case instead of being reduced to a number. The largest segment is identified from the data rather than assumed to be first in the list, and it alone carries the accent color and a heavier leader line; the other four sit on a plain light-to-dark neutral ramp. Hovering either a bar segment or its label block highlights both together and fades the rest, so the pairing between a shape and its sentence is never in doubt. Below roughly 560px the leader lines and floating labels disappear entirely and the same five entries reappear as a plain stacked list under the bar, each row still swappable in a hover with its segment above.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i09 · stacked-leader &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {label:'Paid media',  value:38, note:'Search and social ads lead.'},
+    {label:'Content',     value:22, note:'Blog, video, and the newsletter team.'},
+    {label:'Events',      value:18, note:'Two conferences plus meetups.'},
+    {label:'Tools',       value:12, note:'Analytics, CRM, and creative tools.'},
+    {label:'Agency fees', value:10, note:'Brand and PR retainer.'}
+  ];
+
+  var W = 640;
+  var M_LEFT = 20, M_RIGHT = 20;
+  var plotW = W - M_LEFT - M_RIGHT;
+
+  var BAR_TOP = 110, BAR_H = 48, BAR_BOTTOM = BAR_TOP + BAR_H;
+  var TOP_LABEL_Y1 = 34, TOP_LABEL_Y2 = 50, TOP_SHELF_Y = 66;
+  var BOT_SHELF_Y = 200, BOT_LABEL_Y1 = 224, BOT_LABEL_Y2 = 240;
+  var H_FULL = 270;
+
+  var BAR_TOP_C = 21, BAR_BOTTOM_C = BAR_TOP_C + BAR_H;
+  var H_COMPACT = 90;
+
+  // The hero segment is whichever has the largest value, found from the
+  // data rather than assumed to be index 0. Everyone else is ranked by
+  // value for the light-to-dark neutral ramp.
+  var heroIdx = 0;
+  DATA.forEach(function(d, i){ if(d.value > DATA[heroIdx].value) heroIdx = i; });
+  var NEUTRALS = ['#A79C86', '#BCB49F', '#D1CBBC', '#E6E2D8'];
+  var nonHero = DATA.map(function(d, i){ return i; }).filter(function(i){ return i !== heroIdx; });
+  nonHero.sort(function(a, b){ return DATA[b].value - DATA[a].value; });
+  var classForIndex = {};
+  classForIndex[heroIdx] = 'hero';
+  nonHero.forEach(function(i, rank){ classForIndex[i] = 'neutral-' + rank; });
+  var colorForIndex = {};
+  colorForIndex[heroIdx] = null; // uses CSS var(--accent) via the class
+  nonHero.forEach(function(i, rank){ colorForIndex[i] = NEUTRALS[rank]; });
+
+  // segment boundaries, computed from cumulative value share
+  var bounds = [];
+  var cum = 0;
+  DATA.forEach(function(d){
+    var x0 = M_LEFT + plotW * cum / 100;
+    cum += d.value;
+    var x1 = M_LEFT + plotW * cum / 100;
+    bounds.push({x0:x0, x1:x1, cx:(x0 + x1) / 2});
+  });
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var legendList = document.getElementById('legendList');
+
+  var barRectEls = [];
+  var labelGroupEls = [];
+  var legendLiEls = [];
+
+  function pairFocus(i){
+    barRectEls.forEach(function(r, idx){ r.classList.toggle('dim', idx !== i); r.classList.toggle('hi', idx === i); });
+    labelGroupEls.forEach(function(g, idx){ g.classList.toggle('dim', idx !== i); });
+    legendLiEls.forEach(function(li, idx){ li.classList.toggle('dim', idx !== i); li.classList.toggle('hi', idx === i); });
+  }
+  function pairClear(){
+    barRectEls.forEach(function(r){ r.classList.remove('dim'); r.classList.remove('hi'); });
+    labelGroupEls.forEach(function(g){ g.classList.remove('dim'); });
+    legendLiEls.forEach(function(li){ li.classList.remove('dim'); li.classList.remove('hi'); });
+  }
+
+  function anchorFor(x){
+    if(x > W - 70) return 'end';
+    if(x < 70) return 'start';
+    return 'middle';
+  }
+
+  function renderFull(){
+    var aboveIdx = [], belowIdx = [];
+    DATA.forEach(function(d, i){ (i % 2 === 0 ? aboveIdx : belowIdx).push(i); });
+
+    // Labels sit in evenly spaced lanes across the full plot width (rather
+    // than tight to their segment's own center), so a row of two or three
+    // long notes can never collide regardless of how narrow their segment is.
+    function laneX(list, i){
+      var rank = list.indexOf(i);
+      var n = list.length;
+      return M_LEFT + plotW * (rank + 0.5) / n;
+    }
+
+    DATA.forEach(function(d, i){
+      var b = bounds[i];
+      var rect = el('rect', {class:'seg ' + classForIndex[i], x:b.x0, y:BAR_TOP, width:(b.x1 - b.x0), height:BAR_H});
+      if(colorForIndex[i]){ rect.style.fill = colorForIndex[i]; }
+      svg.appendChild(rect);
+      barRectEls.push(rect);
+
+      var above = i % 2 === 0;
+      var labelX = above ? laneX(aboveIdx, i) : laneX(belowIdx, i);
+      var anchor = anchorFor(labelX);
+
+      var g = el('g', {class:'leadergroup ' + classForIndex[i]});
+      var shelfY = above ? TOP_SHELF_Y : BOT_SHELF_Y;
+      var barEdgeY = above ? BAR_TOP : BAR_BOTTOM;
+      var pathD = 'M' + b.cx + ',' + barEdgeY + ' L' + b.cx + ',' + shelfY + ' L' + labelX + ',' + shelfY;
+      g.appendChild(el('path', {class:'elbow', d:pathD}));
+      g.appendChild(el('circle', {class:'leaddot', cx:labelX, cy:shelfY, r:2.6}));
+
+      var y1 = above ? TOP_LABEL_Y1 : BOT_LABEL_Y1;
+      var y2 = above ? TOP_LABEL_Y2 : BOT_LABEL_Y2;
+      var nameEl = el('text', {class:'leadname', x:labelX, y:y1, 'text-anchor':anchor});
+      nameEl.textContent = d.label + ' ';
+      var pctSpan = el('tspan', {class:'pct'});
+      pctSpan.textContent = d.value + '%';
+      nameEl.appendChild(pctSpan);
+      g.appendChild(nameEl);
+
+      var noteEl = el('text', {class:'leadnote', x:labelX, y:y2, 'text-anchor':anchor});
+      noteEl.textContent = d.note;
+      g.appendChild(noteEl);
+
+      svg.appendChild(g);
+      labelGroupEls.push(g);
+
+      rect.addEventListener('mouseenter', function(){ pairFocus(i); });
+      rect.addEventListener('mouseleave', pairClear);
+      g.addEventListener('mouseenter', function(){ pairFocus(i); });
+      g.addEventListener('mouseleave', pairClear);
+    });
+  }
+
+  function renderCompact(){
+    DATA.forEach(function(d, i){
+      var b = bounds[i];
+      var rect = el('rect', {class:'seg ' + classForIndex[i], x:b.x0, y:BAR_TOP_C, width:(b.x1 - b.x0), height:BAR_H});
+      if(colorForIndex[i]){ rect.style.fill = colorForIndex[i]; }
+      svg.appendChild(rect);
+      barRectEls.push(rect);
+
+      rect.addEventListener('mouseenter', function(){ pairFocus(i); });
+      rect.addEventListener('mouseleave', pairClear);
+    });
+  }
+
+  function render(compact){
+    svg.innerHTML = '';
+    barRectEls = [];
+    labelGroupEls = [];
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + (compact ? H_COMPACT : H_FULL));
+    if(compact){ renderCompact(); } else { renderFull(); }
+  }
+
+  // legend list — built once; stays in the DOM across mode switches and is
+  // shown/hidden purely by CSS at ~560px, but its hover always targets
+  // whichever bar segments the current render() call produced.
+  DATA.forEach(function(d, i){
+    var li = document.createElement('li');
+    var sw = document.createElement('i');
+    sw.className = 'sw';
+    sw.style.background = colorForIndex[i] || 'var(--accent)';
+    li.appendChild(sw);
+    var body = document.createElement('span');
+    var nameLine = document.createElement('span');
+    nameLine.className = 'name';
+    nameLine.textContent = d.label + ' ';
+    var pctSpan = document.createElement('span');
+    pctSpan.className = 'pct';
+    pctSpan.textContent = d.value + '%';
+    nameLine.appendChild(pctSpan);
+    body.appendChild(nameLine);
+    var noteLine = document.createElement('span');
+    noteLine.className = 'note';
+    noteLine.textContent = d.note;
+    body.appendChild(noteLine);
+    li.appendChild(body);
+    li.addEventListener('mouseenter', function(){ pairFocus(i); });
+    li.addEventListener('mouseleave', pairClear);
+    legendList.appendChild(li);
+    legendLiEls.push(li);
+  });
+
+  var mq = window.matchMedia('(max-width:560px)');
+  render(mq.matches);
+  var relayout = function(){ render(mq.matches); };
+  if(mq.addEventListener){ mq.addEventListener('change', relayout); }
+  else if(mq.addListener){ mq.addListener(relayout); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
+</content>
+</invoke>

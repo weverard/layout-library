@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i08 · Treemap — Info design scaffold</title>
+<!--
+  CHART       Treemap
+  DATA SHAPE  8 leaves across 3 groups, rects precomputed offline —
+              {group, label, value, x, y, w, h}[] (x/y/w/h in a 600x360
+              unit space; value in TB)
+  INSIGHT     show composition (two levels)
+  BEST FOR    Budgets, portfolio weights, storage.
+  RE-SKIN     The two muted companion hues (Backups, Logs) are hardcoded
+              alongside --accent; edit those literals to reskin all three
+              families. Under ~520px the treemap re-renders as a one-level
+              horizontal bar list (same data).
+-->
+<style>
+  :root{
+    --accent:#166534;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  /* One hue family per group: --accent for the hero group (Media), and two
+     fixed muted companions for Backups / Logs. Each fallback hex is a plain
+     declaration first, then a color-mix() override — file:// still renders
+     sane colors where color-mix() is unsupported. */
+  .leaf{stroke:#fff;stroke-width:2;transition:opacity .15s, filter .15s}
+  .leaf.dim{opacity:.55}
+  .leaf.hi{filter:brightness(1.06);stroke:var(--ink);stroke-width:2.5}
+
+  .leaf-0{fill:#397C52;fill:color-mix(in oklab, var(--accent) 85%, white)}
+  .leaf-1{fill:#73A385;fill:color-mix(in oklab, var(--accent) 60%, white)}
+  .leaf-2{fill:#ADC9B8;fill:color-mix(in oklab, var(--accent) 35%, white)}
+  .leaf-3{fill:#6C7787;fill:color-mix(in oklab, #475569 80%, white)}
+  .leaf-4{fill:#A3AAB4;fill:color-mix(in oklab, #475569 50%, white)}
+  .leaf-5{fill:#A28665;fill:color-mix(in oklab, #92714A 85%, white)}
+  .leaf-6{fill:#BEAA92;fill:color-mix(in oklab, #92714A 60%, white)}
+  .leaf-7{fill:#D9CDC0;fill:color-mix(in oklab, #92714A 35%, white)}
+
+  .leaflabel{font-size:12px;fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.25);stroke-width:2px;stroke-linejoin:round}
+  .leaflabel .pct{font-weight:600}
+  .grouplabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;fill:rgba(255,255,255,.85);
+    paint-order:stroke;stroke:rgba(0,0,0,.2);stroke-width:2px}
+
+  .footnote{margin:var(--s2) 0 0;font-size:12.5px;color:var(--muted)}
+  .footnote b{color:var(--ink);font-weight:600}
+  .footnote .fi{white-space:nowrap;margin-right:14px}
+  .footnote .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  /* compact bar-list mode */
+  .barlabel{font-size:12px;fill:var(--ink)}
+  .barlabel .muted{fill:var(--muted)}
+
+  @media (prefers-reduced-motion:reduce){
+    .leaf,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Part-to-whole · i08</p>
+    <h1>More than half our cloud storage is video, not backups.</h1>
+    <p class="dek">Storage footprint by content type across three categories, 400&nbsp;TB total (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 600 360" role="img" aria-label="Treemap of 400 terabytes of cloud storage across Media, Backups, and Logs and metadata"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="footnote" id="footnote" hidden></p>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A treemap — tiled rectangles whose area is proportional to value, grouped into three color families for a second level of structure.</dd>
+    <dt>When to use it</dt><dd>Budgets, portfolio weights, storage footprints — composition with two meaningful levels (group and item) where both the whole and the parts need to read at a glance.</dd>
+    <dt>Data shape</dt><dd><code>{group, label, value, x, y, w, h}[]</code> — 8 leaves across 3 groups; the rects are squarified by hand ahead of time and hardcoded in a 600x360 unit space, not computed live.</dd>
+    <dt>Visual style</dt><dd>One hue family per group — the accent for the lead group, two muted companion hues for the rest — with white gutters standing in for a legend; cells too small for their label fall back to a footnote list under the figure.</dd>
+  </dl>
+  <p class="tags"><span>part-to-whole</span><span>treemap</span><span>budget</span><span>storage</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a treemap: eight rectangles tile a canvas edge to edge with a thin white gutter between them, each rectangle's area proportional to its value, and grouped into three column-like regions by category. Each of the three groups gets its own color family — one hue is the chart's accent and marks the lead group, the other two are muted companion hues — and within a family, darker/bolder tiles mark the larger items and lighter tiles the smaller ones, so hue tells you the group and shade tells you the rank inside it. There is no legend: labels are set directly inside whichever cells are large enough to hold a name and a percentage, in white text with a soft dark outline so it reads over any tile color; the handful of cells too small for that instead appear as a short footnote list under the figure. Hovering any tile lifts it — a darker outline and a touch more brightness — and dims the rest slightly, while a chip reports the exact label, value, and share of the total. Below roughly 520px the tiled layout re-renders as a plain one-level horizontal bar list sorted by size, trading the two-level grouping for legibility at a small size.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i08 · treemap &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // Squarified offline in a 100x60 unit space, then scaled x6 to 600x360.
+  // Verified by hand: group widths 360+180+60=600; within each group the
+  // leaf rects sum back to the group's full 360-tall column with no gaps.
+  var DATA = [
+    {group:'Media',   label:'Video',        value:136, x:0,      y:0,   w:360, h:204},
+    {group:'Media',   label:'Images',       value:72,  x:0,      y:204, w:249.23, h:156},
+    {group:'Media',   label:'Audio',        value:32,  x:249.23, y:204, w:110.77, h:156},
+    {group:'Backups', label:'Snapshots',    value:80,  x:360,    y:0,   w:180, h:240},
+    {group:'Backups', label:'Archives',     value:40,  x:360,    y:240, w:180, h:120},
+    {group:'Logs',    label:'App logs',     value:24,  x:540,    y:0,   w:60,  h:216},
+    {group:'Logs',    label:'Access logs',  value:12,  x:540,    y:216, w:60,  h:108},
+    {group:'Logs',    label:'Metadata',     value:4,   x:540,    y:324, w:60,  h:36}
+  ];
+  var GROUP_NAMES = {Media:'Media', Backups:'Backups', Logs:'Logs'};
+  var TOTAL = DATA.reduce(function(sum, d){ return sum + d.value; }, 0); // 400 TB
+  var W = 600, H = 360;
+  var LABEL_MIN_W = 64, LABEL_MIN_H = 34;
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var footnoteEl = document.getElementById('footnote');
+
+  function shareOf(d){ return Math.round(d.value / TOTAL * 100); }
+
+  function showChip(target, d){
+    var r = target.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = d.label + ' · ' + d.value + ' TB · ' + shareOf(d) + '% of total';
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  function renderFull(){
+    footnoteEl.hidden = true;
+    var small = [];
+
+    // the first (topmost) leaf in each group also carries that group's name
+    // directly above it, so it needs its own label pushed down to clear it
+    var firstOfGroup = {};
+    DATA.forEach(function(d){ if(!(d.group in firstOfGroup)){ firstOfGroup[d.group] = d; } });
+
+    DATA.forEach(function(d, i){
+      var rect = el('rect', {class:'leaf leaf-' + i, x:d.x, y:d.y, width:d.w, height:d.h, rx:2});
+      svg.appendChild(rect);
+
+      var fits = d.w >= LABEL_MIN_W && d.h >= LABEL_MIN_H;
+      if(fits){
+        var labelTop = (firstOfGroup[d.group] === d) ? d.y + 32 : d.y + 18;
+        var t = el('text', {class:'leaflabel', x:d.x + 8, y:labelTop});
+        t.textContent = d.label;
+        svg.appendChild(t);
+        var t2 = el('text', {class:'leaflabel pct', x:d.x + 8, y:labelTop + 15});
+        t2.textContent = shareOf(d) + '%';
+        svg.appendChild(t2);
+      } else {
+        small.push(d);
+      }
+
+      rect.addEventListener('mouseenter', function(){ rect.classList.add('hi'); showChip(rect, d); });
+      rect.addEventListener('mousemove', function(){ showChip(rect, d); });
+      rect.addEventListener('mouseleave', function(){ rect.classList.remove('hi'); hideChip(); });
+    });
+
+    // group name set once per group, top-left of its first (top) leaf
+    var seenGroups = {};
+    DATA.forEach(function(d){
+      if(seenGroups[d.group]) return;
+      seenGroups[d.group] = true;
+      var gt = el('text', {class:'grouplabel', x:d.x + 8, y:14});
+      gt.textContent = GROUP_NAMES[d.group];
+      svg.appendChild(gt);
+    });
+
+    if(small.length){
+      footnoteEl.hidden = false;
+      footnoteEl.innerHTML = '<b>Too small to label:</b> ';
+      small.forEach(function(d, i){
+        var idx = DATA.indexOf(d);
+        var span = document.createElement('span');
+        span.className = 'fi';
+        span.innerHTML = '<i class="sw" style="background:var(--line)" data-i="' + idx + '"></i>' +
+          d.label + ' — ' + d.value + ' TB (' + shareOf(d) + '%)';
+        footnoteEl.appendChild(span);
+      });
+      // color the swatches to match their actual leaf fill
+      Array.prototype.forEach.call(footnoteEl.querySelectorAll('.sw'), function(sw){
+        var idx = sw.getAttribute('data-i');
+        var cs = getComputedStyle(document.querySelector('.leaf-' + idx));
+        sw.style.background = cs.fill;
+      });
+    }
+  }
+
+  function renderCompact(){
+    footnoteEl.hidden = true;
+    var sorted = DATA.map(function(d, i){ return {d:d, i:i}; })
+      .sort(function(a, b){ return b.d.value - a.d.value; });
+    var rowH = 34, gap = 8, top = 10, left = 10, right = 10;
+    var maxVal = sorted[0].d.value;
+    var barMaxW = W - left - right - 120;
+
+    sorted.forEach(function(entry, row){
+      var d = entry.d, i = entry.i;
+      var y = top + row * (rowH + gap);
+      var w = Math.max(4, barMaxW * d.value / maxVal);
+
+      var name = el('text', {class:'barlabel', x:left, y:y + 12});
+      name.textContent = d.label;
+      svg.appendChild(name);
+
+      var bar = el('rect', {class:'leaf leaf-' + i, x:left, y:y + 18, width:w, height:12, rx:2});
+      svg.appendChild(bar);
+
+      var val = el('text', {class:'barlabel muted', x:left + w + 8, y:y + 27});
+      val.textContent = d.value + ' TB · ' + shareOf(d) + '%';
+      svg.appendChild(val);
+
+      bar.addEventListener('mouseenter', function(){ bar.classList.add('hi'); showChip(bar, d); });
+      bar.addEventListener('mousemove', function(){ showChip(bar, d); });
+      bar.addEventListener('mouseleave', function(){ bar.classList.remove('hi'); hideChip(); });
+    });
+  }
+
+  function render(compact){
+    svg.innerHTML = '';
+    hideChip();
+    svg.setAttribute('viewBox', compact ? '0 0 600 ' + (10 + 8 * 42) : '0 0 600 360');
+    if(compact){ renderCompact(); } else { renderFull(); }
+  }
+
+  var mq = window.matchMedia('(max-width:520px)');
+  render(mq.matches);
+  var relayout = function(){ render(mq.matches); };
+  if(mq.addEventListener){ mq.addEventListener('change', relayout); }
+  else if(mq.addListener){ mq.addListener(relayout); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
+</content>
+</invoke>

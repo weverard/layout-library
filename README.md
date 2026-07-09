@@ -234,6 +234,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i05` | Streamgraph | 5 series x 12 points, stacked offsets | Evolving share of voice/volume |
 | `i06` | Bump Chart | 6 entities x 6 periods of ranks | League positions, brand rankings |
 
+**Part-to-whole — composition**
+
+| # | Chart | Data shape | Best for |
+|---|---|---|---|
+| `i07` | Waffle Grid | 3 named segments + remainder, sum to 100 | Shares of a population, survey splits |
+| `i08` | Treemap | 8 leaves x 3 groups, precomputed rects | Budgets, portfolio weights, storage |
+| `i09` | Stacked Bar with Leader Labels | 5 segments of one whole | Single-total breakdowns where each part deserves a sentence |
+
 ---
 
 ## Backlog — ideas not yet built
