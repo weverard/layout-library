@@ -6,8 +6,8 @@
 <title>i04 · Line with Confidence Band + Events — Info design scaffold</title>
 <!--
   CHART       Line with Confidence Band + Events
-  DATA SHAPE  1 series x 36 monthly points + band — {t, v, lo, hi}[] —
-              plus 2 events — {t, label}[]
+  DATA SHAPE  1 series x 36 monthly points + band — {v, lo, hi}[]
+              (array index = month) plus 2 events — {i, label}[]
   INSIGHT     reveal change
   BEST FOR    KPIs with uncertainty, forecasts, experiments.
   RE-SKIN     --accent = line + band; band opacity is the second knob.
@@ -111,7 +111,7 @@
   <dl>
     <dt>What it is</dt><dd>A single-series line chart with a shaded confidence/range band and annotated event markers.</dd>
     <dt>When to use it</dt><dd>KPI tracking with uncertainty — forecasts, experiment readouts, noisy metrics — where the range around the number matters as much as the number itself.</dd>
-    <dt>Data shape</dt><dd><code>{t, v, lo, hi}[]</code> monthly points, plus a short list of <code>{t, label}</code> events — three years of history is a good default length.</dd>
+    <dt>Data shape</dt><dd><code>{v, lo, hi}[]</code> monthly points (array index stands in for time), plus a short list of <code>{i, label}</code> events — three years of history is a good default length.</dd>
     <dt>Visual style</dt><dd>Direct year ticks instead of a dense x-axis; the band is the accent color at low opacity; two vertical event rules carry short angled labels; the endpoint is called out with its own dot and value.</dd>
   </dl>
   <p class="tags"><span>trend</span><span>uncertainty</span><span>forecast</span><span>line chart</span></p>
