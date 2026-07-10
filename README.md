@@ -11,17 +11,18 @@ A gallery (`index.html`) links to all of them with mini wireframe thumbnails.
 > scaffold faithful to the **Conventions** below, and keep the gallery in sync.
 > If you want it to act as agent instructions, copy it to `CLAUDE.md`.
 
-> **Status — done for the day (2026-06-23).** Grew the library 30 → **60 scaffolds**
-> across **7 categories**. Filled the six original categories to 9 each (`31`–`50`,
-> `56`–`59`) and added a new **Agentic commerce** category of 6 (`51`–`55`, `60`),
-> including two ChatGPT-style homages: `55` (desktop, Shopping Research + Instant
-> Checkout) and `60` (mobile, bottom-sheet checkout). Every scaffold was
+> **Status — done (2026-07-10).** The library is complete on both tabs. **Layouts:**
+> 65 → **71** with a new Slides & frames category (`66`–`71`, six 16:9 presentation
+> frames — KPI slide, numbered steps, quadrant matrix, versus/comparison, roadmap,
+> title + section-dividers). **Info design:** built out from zero to **36** hand-coded
+> chart scaffolds (`i01`–`i36`) across 12 categories — Comparison, Trend, Part-to-whole,
+> Distribution, Correlation, Ranking, Flow, Hierarchy, Table/Heatmap, Geospatial,
+> Pictorial, and Dashboard. **Chooser:** `info-design/chooser.html` is a two-step
+> decision-tree picker (9 insight verbs → a refining question → 2–3 recommended
+> charts) plus a master picker-prompt generated from the full catalog; linked from
+> a banner at the top of the gallery's info-design tab. Every scaffold and chart was
 > browser-verified (clean console + working interaction). Catalog/backlog/counts
-> below are current. **Update 2026-07-04:** Agentic commerce grown 6 → **9**
-> (`61` Chat + Live Product Canvas, `62` Human-in-the-Loop Approvals,
-> `63` Comparison-in-Chat). **Update 2026-07-04 (later):** cleared the two
-> non-agentic backlog items — `64` Globe (3D Points, Spatial) and `65`
-> Ticker / Stock-Board (Objects & cards) — library now **65 scaffolds**.
+> below are current.
 
 ---
 
@@ -128,7 +129,7 @@ fresh load in the browser.
 
 ---
 
-## The catalog (65)
+## The catalog (71)
 
 **Foundations — app & document shells**
 `01` Split Panel · `02` Centered Document · `03` Sidebar App Shell ·
@@ -216,7 +217,7 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
    `details` are siblings and will lay out side-by-side. Center each block
    individually (`margin:0 auto` + `width:min(…, 94vw)`).
 
-## Info-design catalog
+## Info-design catalog (36)
 
 **Comparison — set side by side**
 
@@ -317,6 +318,9 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 ---
 
 ## Backlog — ideas not yet built
+
+Info-design ideas not yet built: Marimekko · radial calendar · horizon chart ·
+arc timeline · voronoi treemap · isotype comparison.
 
 Agentic-commerce ideas not yet built: chat-assembled cart drawer ·
 voice + chat commerce.

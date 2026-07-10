@@ -7,8 +7,9 @@
 <!--
   A library of reusable, standalone layout + navigation scaffolds. Each file is
   self-contained (inline CSS/JS, no build, no deps) and neutrally themed with
-  CSS variables at :root — fork one as the basis for a new build. 65 scaffolds
-  across 7 categories of navigation paradigm.
+  CSS variables at :root — fork one as the basis for a new build. 71 layout
+  scaffolds across 7 categories of navigation paradigm, plus 36 info-design
+  scaffolds (hand-coded chart figures) in a second tab.
 -->
 <style>
   :root{
@@ -51,6 +52,17 @@
   .b .nav b{color:var(--ink);font-weight:600}
   .tags{display:flex;flex-wrap:wrap;gap:5px}
   .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+
+  .chooser-banner{display:flex;align-items:center;justify-content:space-between;gap:20px;
+    background:linear-gradient(135deg,#1c1030,#3b1f63);border:1px solid #4a2d7d;border-radius:16px;
+    padding:26px 30px;margin-bottom:8px;text-decoration:none;color:#fff;transition:transform .15s,box-shadow .15s}
+  .chooser-banner:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(48,20,90,.35)}
+  .chooser-banner .cb-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#c9b6f5;margin:0 0 6px}
+  .chooser-banner h2{font-size:22px;letter-spacing:-.01em;margin:0 0 6px;color:#fff}
+  .chooser-banner p{font-size:13.5px;color:#d9cdf2;margin:0;max-width:52ch}
+  .chooser-banner .cb-arrow{flex:none;font-family:var(--mono);font-size:13px;color:#fff;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:10px 20px;white-space:nowrap}
+  @media (max-width:560px){.chooser-banner{flex-direction:column;align-items:flex-start}}
 
   /* ---------- mini wireframe thumbnails (pure CSS) ---------- */
   .tw{position:absolute;inset:14px;display:flex;gap:5px}
@@ -521,8 +533,8 @@
 <body>
   <div class="wrap">
     <header class="intro">
-      <p class="kicker">Reusable scaffolds · 65 layouts · info design coming</p>
-      <h1>Sixty-five ways to navigate.</h1>
+      <p class="kicker">Reusable scaffolds · 71 layouts · 36 info designs</p>
+      <h1>Seventy-one ways to navigate. Thirty-six ways to show data.</h1>
       <p>Standalone HTML templates — self-contained, no build, neutral tokens in
       <code>:root</code>. Fork one as a starting point. Each file opens with a comment
       describing its pattern, nav model, and regions; the <code>.scaffold</code> badge is safe to delete.</p>
@@ -639,6 +651,15 @@
     </div>
 
     <div class="pane" id="info-design" hidden>
+    <a class="chooser-banner" href="info-design/chooser.html">
+      <div>
+        <p class="cb-kicker">Not sure which chart?</p>
+        <h2>Answer two questions, get the right chart.</h2>
+        <p>A two-step picker over all 36 designs, plus a master prompt you can hand an assistant along with your data.</p>
+      </div>
+      <span class="cb-arrow">Open chooser →</span>
+    </a>
+
     <p class="cat">Comparison — set side by side</p>
     <div class="grid">
       <a class="card" href="info-design/i01-grouped-bars.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-bars"><i class="a" style="height:70px"></i><i style="height:46px"></i><i class="a" style="height:52px"></i><i style="height:48px"></i><i class="a" style="height:82px"></i><i style="height:34px"></i></div></div><div class="b"><p class="n">i01</p><h3>Grouped Bars with Annotation</h3><p class="nav"><b>Hover a bar</b> for its value; one callout points at the standout category.</p><div class="tags"><span class="tag">comparison</span><span class="tag">plan-vs-actual</span></div></div></a>

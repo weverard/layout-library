@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chooser · Which info design? — Info design scaffold</title>
+<!--
+  CHART       Chooser (meta)
+  DATA SHAPE  36-entry catalog — {id, title, cat, href, shape, verbs, when}[]
+  INSIGHT     n/a — this page routes to an insight, it doesn't chart one
+  BEST FOR    Picking the right info design fast: two questions in, 2-3 charts out.
+  RE-SKIN     --accent = the selected-state color for verb cards, question
+              pills, and links. Grids collapse to 2 then 1 column under ~760/460px.
+-->
+<style>
+  :root{
+    --accent:#9333EA;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(880px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:64ch;margin:0 0 var(--s4)}
+
+  .step-label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+
+  .verb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:760px){.verb-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:460px){.verb-grid{grid-template-columns:1fr}}
+
+  .verb-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--panel);
+    cursor:pointer;text-align:left;font:inherit;color:inherit;display:block;width:100%;
+    transition:border-color .15s,transform .15s,box-shadow .15s}
+  .verb-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .verb-card.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .verb-card svg{width:26px;height:26px;color:var(--muted);margin-bottom:10px;display:block;
+    stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .verb-card.on svg{color:var(--accent)}
+  .verb-card .ring-bg{stroke:var(--line);stroke-width:5;fill:none}
+  .verb-card .ring-fg{stroke:currentColor;stroke-width:5;fill:none;stroke-linecap:round}
+  .verb-card .vlabel{font-weight:600;font-size:14.5px;color:var(--ink);text-transform:capitalize;margin:0 0 4px}
+  .verb-card .vdef{font-size:12.5px;color:var(--muted);line-height:1.4;margin:0}
+
+  #step2{margin-top:var(--s4);padding-top:var(--s3);border-top:1px solid var(--line)}
+  #step2, #results{animation:fadein .25s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){#step2,#results{animation:none}}
+
+  .reset{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;
+    border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);margin-bottom:var(--s3);
+    transition:border-color .15s,color .15s}
+  .reset:hover{border-color:var(--ink);color:var(--ink)}
+
+  .q-group{margin-bottom:var(--s3)}
+  .q-group .qlabel{font-size:14px;color:var(--ink);margin:0 0 8px;font-weight:600}
+  .q-options{display:flex;gap:8px;flex-wrap:wrap}
+  .q-option{font-family:var(--sans);font-size:13px;border:1px solid var(--line);background:#fff;
+    border-radius:999px;padding:7px 16px;cursor:pointer;color:var(--ink);
+    transition:border-color .15s,background .15s,color .15s}
+  .q-option:hover{border-color:var(--accent)}
+  .q-option.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  #results{margin-top:var(--s3)}
+  .rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:760px){.rec-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:460px){.rec-grid{grid-template-columns:1fr}}
+  .rec-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--panel);
+    display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;
+    transition:border-color .15s,transform .15s,box-shadow .15s}
+  .rec-card:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.07)}
+  .rec-cat{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  .rec-title{font-family:var(--serif);font-size:17px;margin:0;line-height:1.25}
+  .rec-shape{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .rec-why{font-size:13px;color:var(--ink);line-height:1.45;margin-top:2px}
+  .rec-link{font-size:12.5px;color:var(--accent);font-weight:600;margin-top:6px}
+
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s3) 0 0}
+
+  details.spec{width:min(880px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  .prompt-dek{color:var(--muted);font-size:14px;margin:var(--s2) 0 0}
+  .prompt{margin-top:var(--s2);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink);max-height:340px;overflow:auto}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Chooser · meta</p>
+    <h1>Which info design fits your data?</h1>
+    <p class="dek">Pick what you're trying to do with the data, answer one follow-up question, and get 2–3 of the 36 catalog charts recommended — with a reason for each. Or skip straight to the full picker prompt below and hand the whole catalog to an assistant.</p>
+  </header>
+
+  <section id="step1">
+    <p class="step-label">Step 1 — what do you want to do with your data?</p>
+    <div class="verb-grid" id="verbGrid"></div>
+  </section>
+
+  <section id="step2" hidden>
+    <button class="reset" id="resetBtn" type="button">&larr; Start over</button>
+    <p class="step-label" id="step2Label">Step 2 — one more question</p>
+    <div class="q-groups" id="qGroups"></div>
+  </section>
+
+  <section id="results" hidden>
+    <p class="step-label">Recommended for you</p>
+    <div class="rec-grid" id="recGrid"></div>
+  </section>
+
+  <p class="source">Catalog: 36 hand-built info-design scaffolds, i01–i36 · illustrative</p>
+</main>
+
+<details class="spec" open>
+  <summary>Master picker prompt — hand the whole catalog to an assistant</summary>
+  <p class="prompt-dek">Skip the two-step picker and paste this straight into a chat with your data. It lists all 36 designs so the assistant can recommend and then build.</p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Picker prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text"></pre>
+  </div>
+</details>
+
+<div class="scaffold">chooser &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+
+  var CATALOG = [
+    {id:'i01', title:'Grouped Bars with Annotation', cat:'Comparison', href:'i01-grouped-bars.html', shape:'4 categories × 2 series', verbs:['compare'], when:'two-series category comparisons; plan vs actual'},
+    {id:'i02', title:'Slope Chart', cat:'Comparison', href:'i02-slope.html', shape:'6 entities × 2 time points', verbs:['compare'], when:'before/after across many entities; rank shifts'},
+    {id:'i03', title:'Dumbbell / Dot-Range', cat:'Comparison', href:'i03-dumbbell.html', shape:'8 rows × 2 values, sorted by delta', verbs:['compare'], when:'gap analysis; before/after by group'},
+    {id:'i04', title:'Line with Confidence Band + Events', cat:'Trend', href:'i04-band-line.html', shape:'1 series × 36 monthly points + band', verbs:['reveal-change'], when:'KPIs with uncertainty, forecasts, experiments'},
+    {id:'i05', title:'Streamgraph', cat:'Trend', href:'i05-streamgraph.html', shape:'5 series × 12 monthly points, stacked', verbs:['reveal-change','show-composition'], when:'evolving share of voice/volume'},
+    {id:'i06', title:'Bump Chart', cat:'Trend', href:'i06-bump.html', shape:'6 entities × 6 periods of ranks', verbs:['rank'], when:'league positions, brand rankings over time'},
+    {id:'i07', title:'Waffle Grid', cat:'Part-to-whole', href:'i07-waffle.html', shape:'3 named segments + remainder, sum to 100', verbs:['show-composition'], when:'shares of a population, survey splits'},
+    {id:'i08', title:'Treemap', cat:'Part-to-whole', href:'i08-treemap.html', shape:'8 leaves across 3 groups, rects precomputed', verbs:['show-composition'], when:'budgets, portfolio weights, storage'},
+    {id:'i09', title:'Stacked Bar with Leader Labels', cat:'Part-to-whole', href:'i09-stacked-leader.html', shape:'5 segments of one whole', verbs:['show-composition'], when:'single-total breakdowns where each part deserves a sentence'},
+    {id:'i10', title:'Histogram with Summary Stats', cat:'Distribution', href:'i10-histogram.html', shape:'~200 values pre-binned into 20 buckets', verbs:['distribute'], when:'response times, prices, scores'},
+    {id:'i11', title:'Ridgeline (joyplot)', cat:'Distribution', href:'i11-ridgeline.html', shape:'5 groups × precomputed density curves', verbs:['distribute'], when:'distributions across groups / time-of-day'},
+    {id:'i12', title:'Beeswarm / Dot Strip', cat:'Distribution', href:'i12-beeswarm.html', shape:'3 categories × ~40 values, jitter precomputed', verbs:['distribute'], when:'small-n distributions where individual points matter'},
+    {id:'i13', title:'Annotated Scatter with Trendline', cat:'Correlation', href:'i13-scatter-trend.html', shape:'30 points + precomputed regression line', verbs:['relate'], when:'two-metric relationships with exceptions worth naming'},
+    {id:'i14', title:'Bubble Quadrant', cat:'Correlation', href:'i14-bubble-quadrant.html', shape:'12 items — {label, x, y, size}', verbs:['relate'], when:'effort/impact, risk/return, growth/share'},
+    {id:'i15', title:'Connected Scatter', cat:'Correlation', href:'i15-connected-scatter.html', shape:'One entity × 12 yearly points', verbs:['relate'], when:'two metrics evolving together over time'},
+    {id:'i16', title:'Ordered Bars with Highlight', cat:'Ranking', href:'i16-ordered-bars.html', shape:'10 items sorted descending', verbs:['rank'], when:'"where do we stand" rankings'},
+    {id:'i17', title:'Lollipop with Benchmark', cat:'Ranking', href:'i17-lollipop.html', shape:'12 items + a single benchmark value', verbs:['rank'], when:'targets, SLAs, peer medians'},
+    {id:'i18', title:'League Table with Deltas', cat:'Ranking', href:'i18-league-table.html', shape:'8 rows (name, v, prev)', verbs:['rank'], when:'leaderboards, portfolio tables, team metrics'},
+    {id:'i19', title:'Sankey', cat:'Flow', href:'i19-sankey.html', shape:'3 sources → 4 targets', verbs:['show-flow'], when:'traffic sources → outcomes, budget flows, energy'},
+    {id:'i20', title:'Funnel', cat:'Flow', href:'i20-funnel.html', shape:'5 stages, descending', verbs:['show-flow'], when:'signup/checkout funnels, pipeline stages'},
+    {id:'i21', title:'Chord Diagram', cat:'Flow', href:'i21-chord.html', shape:'5 entities, symmetric flow matrix', verbs:['show-flow'], when:'migrations, trade, who-talks-to-whom'},
+    {id:'i22', title:'Radial Tree', cat:'Hierarchy', href:'i22-radial-tree.html', shape:'root + 2 levels (6 branches × 2–4 leaves)', verbs:['show-composition'], when:'org/topic structures with a focal branch'},
+    {id:'i23', title:'Network Graph', cat:'Hierarchy', href:'i23-network.html', shape:'14 nodes, 18 links, positions precomputed', verbs:['relate'], when:'collaboration, dependencies, influence maps'},
+    {id:'i24', title:'Icicle / Partition', cat:'Hierarchy', href:'i24-icicle.html', shape:'3-depth hierarchy, spans precomputed', verbs:['show-composition'], when:'file sizes, budget trees, taxonomy weights'},
+    {id:'i25', title:'Calendar Heatmap', cat:'Table/Heatmap', href:'i25-calendar-heatmap.html', shape:'52 weeks × 7 days of counts', verbs:['reveal-change'], when:'activity rhythms, habit/commit data'},
+    {id:'i26', title:'Matrix Heatmap with Marginals', cat:'Table/Heatmap', href:'i26-matrix-heatmap.html', shape:'8 rows × 6 cols matrix + totals', verbs:['relate'], when:'confusion matrices, region×product, time×channel'},
+    {id:'i27', title:'Sparkline Table', cat:'Table/Heatmap', href:'i27-sparkline-table.html', shape:'6 rows — {name, series[12], current, prev}', verbs:['compare'], when:'metric overviews, watchlists'},
+    {id:'i28', title:'Tile-Grid Cartogram', cat:'Geospatial', href:'i28-tile-cartogram.html', shape:'24 regions — {code, label, col, row, v}', verbs:['locate'], when:'per-region rates where area shouldn’t dominate'},
+    {id:'i29', title:'Proportional Symbol Map', cat:'Geospatial', href:'i29-symbol-map.html', shape:'coastline path + 10 locations', verbs:['locate'], when:'quantities at places (sales by city, outbreaks)'},
+    {id:'i30', title:'Flow Map', cat:'Geospatial', href:'i30-flow-map.html', shape:'coastline path + 1 origin + 6 destinations', verbs:['show-flow','locate'], when:'shipments, migration, network traffic'},
+    {id:'i31', title:'Icon-Array Pictograph', cat:'Pictorial', href:'i31-icon-array.html', shape:'{k, n} rate + a two-group comparison pair', verbs:['tell-a-story'], when:'risk communication, survey shares, "1 in N"'},
+    {id:'i32', title:'Proportional-Area Shapes', cat:'Pictorial', href:'i32-area-shapes.html', shape:'4 items + a shape flag', verbs:['compare'], when:'magnitude gaps too big for bars'},
+    {id:'i33', title:'Annotated Big-Number Story', cat:'Pictorial', href:'i33-big-number.html', shape:'1 hero stat + 3 support facts + sparkline', verbs:['tell-a-story'], when:'report leads, posters, exec one-pagers'},
+    {id:'i34', title:'KPI Dashboard', cat:'Dashboard', href:'i34-kpi-dashboard.html', shape:'4 KPIs + 1 main series + breakdown', verbs:['compare'], when:'weekly ops reviews, product health'},
+    {id:'i35', title:'Small Multiples', cat:'Dashboard', href:'i35-small-multiples.html', shape:'12 series × 12 points, shared y-scale', verbs:['compare'], when:'regions/products over time without spaghetti'},
+    {id:'i36', title:'Narrative Dashboard', cat:'Dashboard', href:'i36-narrative-dashboard.html', shape:'1 main series (24 points) + 4 annotations', verbs:['reveal-change'], when:'post-mortems, monthly narratives, board packs'}
+  ];
+
+  var GLYPHS = {
+    'compare': '<rect x="5" y="14" width="6" height="13" rx="1"></rect><rect x="21" y="7" width="6" height="20" rx="1"></rect>',
+    'reveal-change': '<polyline points="4,26 12,18 18,22 28,6"></polyline>',
+    'show-composition': '<circle class="ring-bg" cx="16" cy="16" r="10"></circle><circle class="ring-fg" cx="16" cy="16" r="10" stroke-dasharray="16 63" transform="rotate(-90 16 16)"></circle>',
+    'relate': '<circle cx="7" cy="24" r="1.8" fill="currentColor" stroke="none"></circle><circle cx="14" cy="18" r="1.8" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="1.8" fill="currentColor" stroke="none"></circle><circle cx="26" cy="10" r="1.8" fill="currentColor" stroke="none"></circle><line x1="6" y1="25" x2="27" y2="9"></line>',
+    'distribute': '<path d="M4,26 C8,26 8,10 16,10 C24,10 24,26 28,26"></path>',
+    'rank': '<line x1="4" y1="27" x2="28" y2="27"></line><rect x="5" y="16" width="5" height="11"></rect><rect x="13" y="10" width="5" height="17" fill="currentColor" stroke="none"></rect><rect x="21" y="20" width="5" height="7"></rect>',
+    'show-flow': '<path d="M5,6 L27,6 L20,16 L20,26 L12,26 L12,16 Z"></path>',
+    'locate': '<path d="M16,4 C10,4 6,8 6,14 C6,21 16,28 16,28 C16,28 26,21 26,14 C26,8 22,4 16,4 Z"></path><circle cx="16" cy="14" r="3" fill="currentColor" stroke="none"></circle>',
+    'tell-a-story': '<circle cx="16" cy="16" r="7" fill="currentColor" stroke="none"></circle><circle cx="27" cy="9" r="2" fill="currentColor" stroke="none" opacity=".4"></circle><circle cx="6" cy="24" r="2" fill="currentColor" stroke="none" opacity=".4"></circle><circle cx="26" cy="24" r="1.5" fill="currentColor" stroke="none" opacity=".4"></circle>'
+  };
+
+  var VERBS = [
+    {id:'compare', label:'compare', def:'Set two or more things side by side.'},
+    {id:'reveal-change', label:'reveal change', def:'Show how something moved over time.'},
+    {id:'show-composition', label:'show composition', def:'Break a whole into its parts.'},
+    {id:'relate', label:'relate', def:'Show how two or more measures move together.'},
+    {id:'distribute', label:'distribute', def:'Show the spread and shape of many values.'},
+    {id:'rank', label:'rank', def:'Put things in order, best to worst.'},
+    {id:'show-flow', label:'show flow', def:'Show where something moves, or drops off.'},
+    {id:'locate', label:'locate', def:'Show where something happens in space.'},
+    {id:'tell-a-story', label:'tell a story with one number', def:'Lead with a single number, then explain it.'}
+  ];
+
+  var CONFIG = {
+    'compare': {
+      questions:[
+        {key:'count', label:'How many things?', options:[{value:'few',label:'A few (2–10)'},{value:'many',label:'Many (10+)'}]},
+        {key:'time', label:'Is time involved?', options:[{value:'no',label:'No'},{value:'yes',label:'Yes'}]}
+      ],
+      resolve:function(a){ return (a.count && a.time) ? (a.count + '-' + a.time) : null; },
+      results:{'few-no':['i01','i03'], 'few-yes':['i02'], 'many-no':['i32','i27'], 'many-yes':['i35','i34']}
+    },
+    'reveal-change': {
+      questions:[
+        {key:'series', label:'One series or several?', options:[{value:'one',label:'One series'},{value:'several',label:'Several series'}]}
+      ],
+      resolve:function(a){ return a.series || null; },
+      results:{'one':['i04','i25'], 'several':['i05','i36']}
+    },
+    'show-composition': {
+      questions:[
+        {key:'scope', label:'One moment, over time, or a nested hierarchy?', options:[{value:'moment',label:'One moment'},{value:'time',label:'Over time'},{value:'nested',label:'Nested hierarchy'}]}
+      ],
+      resolve:function(a){ return a.scope || null; },
+      results:{'moment':['i07','i09'], 'time':['i05'], 'nested':['i08','i24','i22']}
+    },
+    'relate': {
+      questions:[
+        {key:'scope', label:'Pairs, or a whole system?', options:[{value:'pairs',label:'Pairs'},{value:'system',label:'A whole system'}]}
+      ],
+      resolve:function(a){ return a.scope || null; },
+      results:{'pairs':['i13','i14','i15'], 'system':['i23','i26']}
+    },
+    'distribute': {
+      questions:[
+        {key:'groups', label:'One group or several?', options:[{value:'one',label:'One group'},{value:'several',label:'Several groups'}]}
+      ],
+      resolve:function(a){ return a.groups || null; },
+      results:{'one':['i10'], 'several':['i11','i12']}
+    },
+    'rank': {
+      questions:[
+        {key:'mode', label:'Against a benchmark, or over time?', options:[{value:'plain',label:'Neither — just ranked'},{value:'benchmark',label:'Against a benchmark'},{value:'time',label:'Over time'}]}
+      ],
+      resolve:function(a){ return a.mode || null; },
+      results:{'plain':['i16','i18'], 'benchmark':['i17'], 'time':['i06']}
+    },
+    'show-flow': {
+      questions:[
+        {key:'between', label:'Between stages, between peers, or across space?', options:[{value:'stages',label:'Stages'},{value:'peers',label:'Peers'},{value:'space',label:'Space'}]}
+      ],
+      resolve:function(a){ return a.between || null; },
+      results:{'stages':['i20','i19'], 'peers':['i21'], 'space':['i30']}
+    },
+    'locate': {
+      questions:[
+        {key:'mode', label:'Equal-weight regions, sized quantities, or movement?', options:[{value:'equal',label:'Equal-weight regions'},{value:'sized',label:'Sized quantities'},{value:'movement',label:'Movement'}]}
+      ],
+      resolve:function(a){ return a.mode || null; },
+      results:{'equal':['i28'], 'sized':['i29'], 'movement':['i30']}
+    },
+    'tell-a-story': {
+      questions:[],
+      resolve:function(){ return 'none'; },
+      results:{'none':['i33','i31']}
+    }
+  };
+
+  var WHY = {
+    'compare|few-no': {
+      i01:'Two series per category, side by side, with one bar annotated.',
+      i03:'Same two points, drawn as a line instead of paired bars — the gap itself becomes the story.'
+    },
+    'compare|few-yes': {
+      i02:'Only two moments matter: where each entity started, and where it ended up.'
+    },
+    'compare|many-no': {
+      i32:'Ten-plus categories with no time axis — proportional shapes beat a bar farm.',
+      i27:'Ten-plus rows read better as a scannable table than a crowded chart.'
+    },
+    'compare|many-yes': {
+      i35:'Many series over time — one small honest-scale chart per series keeps every line legible.',
+      i34:'Many metrics at a glance — a KPI wall, not a single plot.'
+    },
+    'reveal-change|one': {
+      i04:'One series changing — the band shows how sure you are, and events explain the jumps.',
+      i25:'One series changing daily — a calendar reads the rhythm faster than a line ever could.'
+    },
+    'reveal-change|several': {
+      i05:'Several series changing together — stack them so the swell of each band tells the story.',
+      i36:'Several things changed and you need to say why — pair the chart with the explanation.'
+    },
+    'show-composition|moment': {
+      i07:'One moment’s mix, few segments — a 10×10 grid makes the share countable.',
+      i09:'One total broken into named parts, each worth a sentence of its own.'
+    },
+    'show-composition|time': {
+      i05:'The mix itself is shifting — stack it across time, not just one instant.'
+    },
+    'show-composition|nested': {
+      i08:'A hierarchy where area, not a list, should carry the weight.',
+      i24:'A hierarchy you want a reader to click into and zoom, layer by layer.',
+      i22:'A hierarchy with one branch that deserves the spotlight.'
+    },
+    'relate|pairs': {
+      i13:'Two metrics, one relationship — a trendline plus the points that break it.',
+      i14:'Two metrics plus a size — effort vs. impact vs. how big the bet is.',
+      i15:'Two metrics for one entity, moving together across years.'
+    },
+    'relate|system': {
+      i23:'Not two things — a whole web of who connects to whom.',
+      i26:'Two categorical axes crossed — a matrix shows every combination at once.'
+    },
+    'distribute|one': {
+      i10:'One group’s spread — bars plus the mean and median it would otherwise hide.'
+    },
+    'distribute|several': {
+      i11:'Several groups’ spreads, stacked so you can compare their shapes at a glance.',
+      i12:'Small enough n that every individual point should still be visible.'
+    },
+    'rank|plain': {
+      i16:'A straight ordered list — who’s on top, plain and simple.',
+      i18:'A ranked table where the direction of change matters as much as the rank.'
+    },
+    'rank|benchmark': {
+      i17:'Ranked against a target — the benchmark line is the real story.'
+    },
+    'rank|time': {
+      i06:'Rank itself is what’s changing over time — who overtakes whom.'
+    },
+    'show-flow|stages': {
+      i20:'A funnel losing people at every stage.',
+      i19:'Flows branching from a few sources to several outcomes.'
+    },
+    'show-flow|peers': {
+      i21:'Everyone can send to everyone — a chord shows the whole web of exchange.'
+    },
+    'show-flow|space': {
+      i30:'Flow with a geography attached — arcs from an origin to real destinations.'
+    },
+    'locate|equal': {
+      i28:'Every region should get equal visual weight, not real-estate-sized weight.'
+    },
+    'locate|sized': {
+      i29:'Quantities at real places — size the symbol, not the region.'
+    },
+    'locate|movement': {
+      i30:'Something moving between places — arcs drawn on a map.'
+    },
+    'tell-a-story|none': {
+      i33:'One hero number, with the supporting facts placed as margin notes.',
+      i31:'A rate or share you want a reader to feel, one icon at a time.'
+    }
+  };
+
+  var byId = {};
+  CATALOG.forEach(function(c){ byId[c.id] = c; });
+
+  var state = { verb:null, answers:{} };
+
+  var verbGrid = document.getElementById('verbGrid');
+  var step2 = document.getElementById('step2');
+  var step2Label = document.getElementById('step2Label');
+  var qGroups = document.getElementById('qGroups');
+  var resultsSection = document.getElementById('results');
+  var recGrid = document.getElementById('recGrid');
+  var resetBtn = document.getElementById('resetBtn');
+
+  function renderStep1(){
+    verbGrid.innerHTML = '';
+    VERBS.forEach(function(v){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'verb-card' + (state.verb === v.id ? ' on' : '');
+      btn.innerHTML =
+        '<svg viewBox="0 0 32 32">' + GLYPHS[v.id] + '</svg>' +
+        '<p class="vlabel">' + v.label + '</p>' +
+        '<p class="vdef">' + v.def + '</p>';
+      btn.addEventListener('click', function(){ selectVerb(v.id); });
+      verbGrid.appendChild(btn);
+    });
+  }
+
+  function selectVerb(verbId){
+    state.verb = verbId;
+    state.answers = {};
+    renderStep1();
+    var cfg = CONFIG[verbId];
+    if(cfg.questions.length === 0){
+      step2.hidden = true;
+      renderResults();
+      return;
+    }
+    step2Label.textContent = 'Step 2 — refine "' + VERBS.filter(function(v){return v.id===verbId;})[0].label + '"';
+    qGroups.innerHTML = '';
+    cfg.questions.forEach(function(q){
+      var group = document.createElement('div');
+      group.className = 'q-group';
+      var label = document.createElement('p');
+      label.className = 'qlabel';
+      label.textContent = q.label;
+      group.appendChild(label);
+      var opts = document.createElement('div');
+      opts.className = 'q-options';
+      q.options.forEach(function(opt){
+        var ob = document.createElement('button');
+        ob.type = 'button';
+        ob.className = 'q-option';
+        ob.textContent = opt.label;
+        ob.addEventListener('click', function(){
+          state.answers[q.key] = opt.value;
+          Array.prototype.forEach.call(opts.querySelectorAll('.q-option'), function(el){ el.classList.remove('on'); });
+          ob.classList.add('on');
+          renderResults();
+        });
+        opts.appendChild(ob);
+      });
+      group.appendChild(opts);
+      qGroups.appendChild(group);
+    });
+    step2.hidden = false;
+    resultsSection.hidden = true;
+  }
+
+  function renderResults(){
+    var cfg = CONFIG[state.verb];
+    var key = cfg.resolve(state.answers);
+    if(!key || !cfg.results[key]){
+      resultsSection.hidden = true;
+      return;
+    }
+    var ids = cfg.results[key];
+    var whyMap = WHY[state.verb + '|' + key] || {};
+    recGrid.innerHTML = '';
+    ids.forEach(function(id){
+      var c = byId[id];
+      var a = document.createElement('a');
+      a.className = 'rec-card';
+      a.href = c.href;
+      a.innerHTML =
+        '<p class="rec-cat">' + c.cat + ' · ' + c.id + '</p>' +
+        '<h3 class="rec-title">' + c.title + '</h3>' +
+        '<p class="rec-shape">' + c.shape + '</p>' +
+        '<p class="rec-why">' + (whyMap[id] || '') + '</p>' +
+        '<span class="rec-link">Open chart &rarr;</span>';
+      recGrid.appendChild(a);
+    });
+    resultsSection.hidden = false;
+  }
+
+  function resetAll(){
+    state.verb = null;
+    state.answers = {};
+    step2.hidden = true;
+    resultsSection.hidden = true;
+    renderStep1();
+  }
+
+  resetBtn.addEventListener('click', resetAll);
+  renderStep1();
+
+  // ---- Master picker prompt, generated from CATALOG ----
+  var PREAMBLE = 'You are choosing an information design. Here is a catalog of 36 designs. I will give you my data and the insight I want. Recommend the best 1–3 designs, favouring the most creative fit that stays honest, and say why. Then ask for my data and build the chosen design as self-contained HTML/SVG.';
+
+  function buildPromptText(){
+    var lines = CATALOG.map(function(c){
+      var verbStr = c.verbs.map(function(v){ return v.replace(/-/g, ' '); }).join(' / ');
+      return c.id + ' · ' + c.title + ' · ' + verbStr + ' · ' + c.shape + ' · ' + c.when;
+    });
+    return PREAMBLE + '\n\n' + lines.join('\n');
+  }
+  document.getElementById('prompt-text').textContent = buildPromptText();
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
