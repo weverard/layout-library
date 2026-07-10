@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i20 · Funnel — Info design scaffold</title>
+<!--
+  CHART       Funnel
+  DATA SHAPE  5 stages, descending n — {label, n}[]
+  INSIGHT     show flow / loss
+  BEST FOR    Signup/checkout funnels, pipeline stages.
+  RE-SKIN     --accent = top band, derived tints descend. Under ~520px
+              bands become full-width horizontal bars with a left-edge %.
+-->
+<style>
+  :root{
+    --accent:#C2410C;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .band{transition:opacity .15s}
+  .band:hover{opacity:.9 !important}
+  .stagelabel{font-size:13px;font-weight:600;text-anchor:middle;pointer-events:none}
+  .stagelabel.on-light{fill:#fff}
+  .stagelabel.on-dark{fill:var(--ink)}
+  .stagelabel tspan{font-family:var(--mono);font-weight:400;font-size:11px;opacity:.85}
+  .convo{font-family:var(--mono);font-size:12px;fill:var(--muted);text-anchor:middle}
+  .convo.steep{fill:var(--neg);font-weight:600}
+  .convo-arrow{fill:var(--muted)}
+  .convo-arrow.steep{fill:var(--neg)}
+  .note{font-size:11.5px;fill:var(--ink)}
+  .note tspan{fill:var(--muted)}
+  .callout-line{stroke:var(--neg);stroke-width:1}
+  .callout-dot{fill:var(--neg)}
+
+  .hbar{transition:opacity .15s}
+  .hbar:hover{opacity:.88}
+  .hlabel{font-size:13px;font-weight:600;fill:#fff;pointer-events:none}
+  .hlabel.on-dark{fill:var(--ink)}
+  .hcount{font-family:var(--mono);font-size:11.5px;fill:#fff;opacity:.9;pointer-events:none}
+  .hcount.on-dark{fill:var(--muted);opacity:1}
+  .hpct{font-family:var(--mono);font-size:11.5px;text-anchor:end}
+  .hpct.steep{fill:var(--neg);font-weight:600}
+  .hpct:not(.steep){fill:var(--muted)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    .band,.hbar,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Flow &amp; process · i20</p>
+    <h1>Most of the funnel's loss happens in a single step: getting from the product page to the cart.</h1>
+    <p class="dek">Checkout funnel, one month of sessions by stage (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Funnel chart of five checkout stages, tapering from ten thousand product page visits to under three thousand completed purchases, with the steepest drop between the first two stages called out"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A funnel chart: five stacked trapezoid bands that taper continuously from the widest stage to the narrowest, each boundary's width set by the real count at that stage.</dd>
+    <dt>When to use it</dt><dd>Any process with a fixed stage order and a shrinking count at each step — signup or checkout funnels, sales pipelines, application stages.</dd>
+    <dt>Data shape</dt><dd><code>{label, n}[]</code> — 5 stages in descending order; conversion percentages are computed from the counts, never stored.</dd>
+    <dt>Visual style</dt><dd>The top band is the accent color; each band below is the same hue at a lower opacity, so the ramp reads as one continuous taper rather than five unrelated colors. Stage label and count sit inside each band; conversion percentage sits in the gutter between bands, and the single steepest drop gets a red callout note.</dd>
+  </dl>
+  <p class="tags"><span>flow</span><span>funnel</span><span>conversion</span><span>pipeline</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a funnel chart: five trapezoid bands stacked vertically and centered on a shared axis, each one tapering smoothly from its own stage's width at the top to the next stage's width at the bottom, so the whole shape narrows continuously rather than jumping between disconnected bars. The top band is the accent color; every band below it is the same hue at progressively lower opacity, so the color itself communicates the funnel's direction without a legend. Each band carries its stage name and count directly inside it, in white or dark text depending on how saturated that band is. In the narrow gutter between each pair of bands sits the conversion percentage from one stage to the next, computed from the real counts rather than authored by hand, and the single steepest of the four drops is colored red with a short callout note explaining what happened at that step. Hovering a band lifts its opacity slightly. Under roughly 520px the tapered silhouette gives way to plain left-aligned horizontal bars, one per stage, each bar's length proportional to its count and its conversion percentage set at the bar's left edge — trading the continuous taper for a layout that stays legible at a small width.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i20 · funnel &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {label:'Visited product page', n:10000},
+    {label:'Added to cart',        n:6200},
+    {label:'Started checkout',     n:4100},
+    {label:'Entered payment',      n:3550},
+    {label:'Completed purchase',   n:2870}
+  ];
+
+  var W = 640, H = 400;
+  var CX = 270;               // trapezoid centerline
+  var MAX_W = 460;            // width of the widest (first) boundary
+  var SCALE_T = MAX_W / DATA[0].n;
+  var BAND_H = 44, GUTTER_H = 30, START_Y = 20;
+  var OPACITIES = [1, 0.8, 0.62, 0.46, 0.32];
+
+  // boundary widths: boundary[i] = width at the top of band i (i<4) /
+  // bottom of band i-1; boundary[4] is also band 4's flat bottom, since
+  // there is no stage 6 to taper into.
+  function boundaryW(i){ return DATA[i].n * SCALE_T; }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var mq = window.matchMedia('(max-width:520px)');
+
+  function ratios(){
+    var r = [];
+    for(var i = 1; i < DATA.length; i++){
+      r.push({idx:i, pct: DATA[i].n / DATA[i - 1].n});
+    }
+    return r;
+  }
+
+  function steepestIndex(){
+    var r = ratios();
+    var min = r[0];
+    for(var i = 1; i < r.length; i++){ if(r[i].pct < min.pct) min = r[i]; }
+    return min.idx; // index into DATA of the stage the steepest drop lands on
+  }
+
+  function fmtN(n){ return n.toLocaleString('en-US'); }
+  function fmtPct(p){ return (p * 100).toFixed(1) + '%'; }
+
+  function renderTrapezoids(){
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.innerHTML = '';
+    var steep = steepestIndex();
+
+    DATA.forEach(function(d, i){
+      var y0 = START_Y + i * (BAND_H + GUTTER_H);
+      var y1 = y0 + BAND_H;
+      var topW = boundaryW(i);
+      var botW = (i === DATA.length - 1) ? boundaryW(i) : boundaryW(i + 1);
+
+      var pts = [
+        (CX - topW / 2) + ',' + y0,
+        (CX + topW / 2) + ',' + y0,
+        (CX + botW / 2) + ',' + y1,
+        (CX - botW / 2) + ',' + y1
+      ].join(' ');
+      var band = el('polygon', {class:'band', points:pts, fill:'var(--accent)', 'fill-opacity':OPACITIES[i]});
+      svg.appendChild(band);
+      attachHover(band, d.label, d.n);
+
+      var lightText = OPACITIES[i] >= 0.6;
+      var lbl = el('text', {class:'stagelabel ' + (lightText ? 'on-light' : 'on-dark'), x:CX, y:(y0 + y1) / 2 - 2});
+      lbl.textContent = d.label;
+      var cnt = el('tspan', {x:CX, dy:'14'});
+      cnt.textContent = fmtN(d.n);
+      lbl.appendChild(cnt);
+      svg.appendChild(lbl);
+
+      if(i < DATA.length - 1){
+        var gy0 = y1, gy1 = y1 + GUTTER_H;
+        var gmid = (gy0 + gy1) / 2;
+        var pct = DATA[i + 1].n / d.n;
+        var isSteep = (i + 1) === steep;
+        var t = el('text', {class:'convo' + (isSteep ? ' steep' : ''), x:CX, y:gmid + 4});
+        t.textContent = (isSteep ? '▼ ' : '') + fmtPct(pct);
+        svg.appendChild(t);
+
+        if(isSteep){
+          var nx = CX + topW / 2 + 70, ny = gmid - 10;
+          svg.appendChild(el('circle', {class:'callout-dot', cx:CX + Math.max(topW, botW) / 2 + 4, cy:gmid, r:2.6}));
+          svg.appendChild(el('line', {class:'callout-line', x1:CX + Math.max(topW, botW) / 2 + 4, y1:gmid, x2:nx - 4, y2:ny + 4}));
+          var n1 = el('text', {class:'note', x:nx, y:ny, 'text-anchor':'start'});
+          n1.textContent = 'Steepest drop:';
+          var n2 = el('text', {class:'note', x:nx, y:ny + 15, 'text-anchor':'start'});
+          var tspan = el('tspan', {});
+          tspan.textContent = (100 - pct * 100).toFixed(0) + '% leave here.';
+          n2.appendChild(tspan);
+          svg.appendChild(n1);
+          svg.appendChild(n2);
+        }
+      }
+    });
+  }
+
+  function renderHorizontal(){
+    var rowH = 48, rowGap = 16, startY = 16;
+    var totalH = startY + DATA.length * (rowH + rowGap);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + totalH);
+    svg.innerHTML = '';
+
+    var X0 = 108; // left edge every bar starts at
+    var MAX_BAR_W = 500;
+    var scaleH = MAX_BAR_W / DATA[0].n;
+    var steep = steepestIndex();
+
+    DATA.forEach(function(d, i){
+      var y0 = startY + i * (rowH + rowGap);
+      var barW = d.n * scaleH;
+      var opacity = OPACITIES[i];
+
+      if(i > 0){
+        var pct = d.n / DATA[i - 1].n;
+        var isSteep = i === steep;
+        var pctLbl = el('text', {class:'hpct' + (isSteep ? ' steep' : ''), x:X0 - 10, y:y0 + rowH / 2 + 4});
+        pctLbl.textContent = (isSteep ? '▼ ' : '') + fmtPct(pct);
+        svg.appendChild(pctLbl);
+      }
+
+      var bar = el('rect', {class:'hbar', x:X0, y:y0, width:barW, height:rowH, rx:3, fill:'var(--accent)', 'fill-opacity':opacity});
+      svg.appendChild(bar);
+      attachHover(bar, d.label, d.n);
+
+      var lightText = opacity >= 0.6;
+      var lbl = el('text', {class:'hlabel' + (lightText ? '' : ' on-dark'), x:X0 + 12, y:y0 + rowH / 2 - 3});
+      lbl.textContent = d.label;
+      svg.appendChild(lbl);
+      var cnt = el('text', {class:'hcount' + (lightText ? '' : ' on-dark'), x:X0 + 12, y:y0 + rowH / 2 + 14});
+      cnt.textContent = fmtN(d.n);
+      svg.appendChild(cnt);
+    });
+  }
+
+  function render(){
+    if(mq.matches){ renderHorizontal(); } else { renderTrapezoids(); }
+  }
+
+  function attachHover(elNode, label, n){
+    elNode.addEventListener('mouseenter', function(){ showChip(elNode, label, n); });
+    elNode.addEventListener('mousemove', function(){ showChip(elNode, label, n); });
+    elNode.addEventListener('mouseleave', hideChip);
+  }
+
+  function showChip(target, label, n){
+    var r = target.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = label + ': ' + fmtN(n);
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  render();
+  if(mq.addEventListener){ mq.addEventListener('change', render); }
+  else if(mq.addListener){ mq.addListener(render); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

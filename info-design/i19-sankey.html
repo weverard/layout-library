@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i19 · Sankey — Info design scaffold</title>
+<!--
+  CHART       Sankey
+  DATA SHAPE  3 sources -> 4 targets — nodes[]{label,x,y0,y1},
+              links[]{s,t,v,sy0,sy1,ty0,ty1}
+  INSIGHT     show flow
+  BEST FOR    Traffic sources -> outcomes, budget flows, energy.
+  RE-SKIN     --accent = the dominant ribbon. Under ~560px the diagram
+              re-renders vertical (sources on top, targets on bottom) from
+              the same DATA via a coordinate transpose.
+-->
+<style>
+  :root{
+    --accent:#1E40AF;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .node{fill:var(--ink)}
+  .node.hero{fill:var(--accent)}
+  .nodelabel{font-size:12px;fill:var(--ink)}
+  .nodelabel .v{fill:var(--muted);font-family:var(--mono);font-size:10.5px}
+  .ribbon{fill:#9C978D;opacity:.42;transition:opacity .15s,fill .15s}
+  .ribbon.hero{fill:var(--accent);opacity:.5}
+  .ribbon:hover{opacity:.68}
+  figure.isolating .ribbon{opacity:.08}
+  figure.isolating .ribbon.on{opacity:.72}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    .ribbon,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Flow &amp; process · i19</p>
+    <h1>Organic search alone drives more signups than every paid channel combined.</h1>
+    <p class="dek">Sessions by acquisition channel, split by outcome, one month (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Sankey diagram of three acquisition channels flowing into four outcomes, with the organic-search-to-signed-up ribbon highlighted as the dominant path"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A Sankey diagram: node bars at two columns, joined by ribbons whose width is proportional to the flow between them.</dd>
+    <dt>When to use it</dt><dd>Anywhere volume moves from a set of sources to a set of outcomes and both the total at each node and the individual paths between them matter — traffic sources into conversion states, budget into line items, energy into end uses.</dd>
+    <dt>Data shape</dt><dd><code>nodes[]{label,x,y0,y1}</code>, <code>links[]{s,t,v,sy0,sy1,ty0,ty1}</code> — 3 sources, 4 targets, 10 links; every node's height and every ribbon's attachment band is precomputed from the flow values times a shared scale.</dd>
+    <dt>Visual style</dt><dd>Solid dark node bars anchor the columns; ribbons sit at low opacity so crossings stay legible, with only the single largest link carrying the accent color. Labels sit outside the bars; exact values surface on hover.</dd>
+  </dl>
+  <p class="tags"><span>flow</span><span>sankey</span><span>acquisition</span><span>funnel</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a Sankey diagram: two columns of solid dark bars — three source nodes on the left, four target nodes on the right — connected by soft cubic-bezier ribbons whose thickness is proportional to the flow they carry. Every ribbon is drawn at low opacity in a neutral warm gray so overlapping paths stay readable, except the single largest flow in the whole diagram, which is the only ribbon carrying the accent color, so the eye lands on the dominant path first. Node labels sit outside the bars — left-aligned to the right of source bars, right-aligned to the left of target bars — rather than inside them, keeping the bars themselves clean. There's no value axis: hovering a ribbon isolates it, fading every other ribbon and popping a small tooltip with the exact flow value, and hovering a node shows its total. Under roughly 560px the whole diagram re-renders vertically — sources stacked on top, targets stacked on the bottom, ribbons flowing top to bottom instead of left to right — recomputed from the same underlying numbers rather than swapped for a different chart.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i19 · sankey &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // Geometry precomputed by hand (scale = 0.6 px/unit, node gap = 14px) and
+  // verified numerically:
+  //  - node height = summed incident flow x 0.6 (e.g. Organic Search:
+  //    150 x 0.6 = 90 = 196-106; Signed Up: 125 x 0.6 = 75 = 174-99)
+  //  - each node's stacked ribbon bands sum to its full y1-y0 with no gaps
+  //  - every ribbon's sy1-sy0 == ty1-ty0 == v x 0.6
+  var NODE_W = 16;
+  var HERO_LINK = 0; // index of the dominant (largest) link, drawn in --accent
+
+  var DATA = {
+    nodes: [
+      {label:'Organic Search', x:110, y0:106, y1:196}, // 0 · 150 total
+      {label:'Paid Ads',       x:110, y0:210, y1:264}, // 1 · 90 total
+      {label:'Referral',       x:110, y0:278, y1:314}, // 2 · 60 total
+      {label:'Signed Up',      x:514, y0:99,  y1:174}, // 3 · 125 total
+      {label:'Trial Only',     x:514, y0:188, y1:251}, // 4 · 105 total
+      {label:'Bounced',        x:514, y0:265, y1:295}, // 5 · 50 total
+      {label:'Churned Fast',   x:514, y0:309, y1:321}  // 6 · 20 total
+    ],
+    links: [
+      {s:0, t:3, v:70, sy0:106, sy1:148, ty0:99,  ty1:141},
+      {s:0, t:4, v:50, sy0:148, sy1:178, ty0:188, ty1:218},
+      {s:0, t:5, v:30, sy0:178, sy1:196, ty0:265, ty1:283},
+      {s:1, t:3, v:20, sy0:210, sy1:222, ty0:141, ty1:153},
+      {s:1, t:4, v:40, sy0:222, sy1:246, ty0:218, ty1:242},
+      {s:1, t:5, v:20, sy0:246, sy1:258, ty0:283, ty1:295},
+      {s:1, t:6, v:10, sy0:258, sy1:264, ty0:309, ty1:315},
+      {s:2, t:3, v:35, sy0:278, sy1:299, ty0:153, ty1:174},
+      {s:2, t:4, v:15, sy0:299, sy1:308, ty0:242, ty1:251},
+      {s:2, t:6, v:10, sy0:308, sy1:314, ty0:315, ty1:321}
+    ]
+  };
+
+  var W = 640, H = 400; // horizontal viewBox
+  var VW = 400, VH = 640; // vertical (transposed) viewBox
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var mq = window.matchMedia('(max-width:560px)');
+
+  function nodeRect(n, vertical){
+    if(!vertical){ return {x:n.x, y:n.y0, w:NODE_W, h:n.y1 - n.y0}; }
+    // transpose: old y-extent becomes the horizontal extent, old column x
+    // becomes the fixed vertical position
+    return {x:n.y0, y:n.x, w:n.y1 - n.y0, h:NODE_W};
+  }
+
+  function ribbonPath(l, sNode, tNode, vertical){
+    if(!vertical){
+      var sx = sNode.x + NODE_W, tx = tNode.x;
+      var midX = (sx + tx) / 2;
+      return 'M' + sx + ',' + l.sy0 +
+        ' C' + midX + ',' + l.sy0 + ' ' + midX + ',' + l.ty0 + ' ' + tx + ',' + l.ty0 +
+        ' L' + tx + ',' + l.ty1 +
+        ' C' + midX + ',' + l.ty1 + ' ' + midX + ',' + l.sy1 + ' ' + sx + ',' + l.sy1 + ' Z';
+    }
+    // transposed: the column position becomes a y coordinate, the band
+    // extent stays on the x axis — this is a pure swap of every (x,y) pair
+    // in the horizontal path above, which reflects the S-curve so flow
+    // reads top-to-bottom instead of left-to-right.
+    var sy = sNode.x + NODE_W, ty = tNode.x;
+    var midY = (sy + ty) / 2;
+    return 'M' + l.sy0 + ',' + sy +
+      ' C' + l.sy0 + ',' + midY + ' ' + l.ty0 + ',' + midY + ' ' + l.ty0 + ',' + ty +
+      ' L' + l.ty1 + ',' + ty +
+      ' C' + l.ty1 + ',' + midY + ' ' + l.sy1 + ',' + midY + ' ' + l.sy1 + ',' + sy + ' Z';
+  }
+
+  function render(){
+    var vertical = mq.matches;
+    svg.setAttribute('viewBox', '0 0 ' + (vertical ? VW : W) + ' ' + (vertical ? VH : H));
+    svg.innerHTML = '';
+    figureEl.classList.remove('isolating');
+
+    var ribbonEls = [];
+    DATA.links.forEach(function(l, i){
+      var sNode = DATA.nodes[l.s], tNode = DATA.nodes[l.t];
+      var d = ribbonPath(l, sNode, tNode, vertical);
+      var cls = 'ribbon' + (i === HERO_LINK ? ' hero' : '');
+      var r = el('path', {class:cls, d:d});
+      svg.appendChild(r);
+      ribbonEls.push(r);
+      attachRibbonHover(r, ribbonEls, l, sNode, tNode);
+    });
+
+    DATA.nodes.forEach(function(n, idx){
+      var isSource = idx <= 2;
+      var rect = nodeRect(n, vertical);
+      var isHero = HERO_LINK !== null && (isSource ? DATA.links[HERO_LINK].s === idx : DATA.links[HERO_LINK].t === idx);
+      svg.appendChild(el('rect', {class:'node' + (isHero ? ' hero' : ''), x:rect.x, y:rect.y, width:rect.w, height:rect.h, rx:1.5}));
+
+      var total = isSource
+        ? DATA.links.filter(function(l){ return l.s === idx; }).reduce(function(s,l){ return s + l.v; }, 0)
+        : DATA.links.filter(function(l){ return l.t === idx; }).reduce(function(s,l){ return s + l.v; }, 0);
+
+      var lbl;
+      if(!vertical){
+        var lx = isSource ? n.x - 8 : n.x + NODE_W + 8;
+        var ly = (n.y0 + n.y1) / 2;
+        lbl = el('text', {class:'nodelabel', x:lx, y:ly - 2, 'text-anchor': isSource ? 'end' : 'start'});
+        lbl.textContent = n.label;
+      } else {
+        var vx = (n.y0 + n.y1) / 2;
+        if(isSource){
+          lbl = el('text', {class:'nodelabel', x:vx, y:n.x - 8, 'text-anchor':'middle'});
+        } else {
+          // target labels sit below narrow bars in the vertical layout —
+          // rotate them so adjacent short bands (e.g. Bounced, Churned
+          // Fast) don't collide edge to edge.
+          lbl = el('text', {
+            class:'nodelabel', x:0, y:0, 'text-anchor':'start',
+            transform:'translate(' + vx + ',' + (n.x + NODE_W + 10) + ') rotate(40)'
+          });
+        }
+        lbl.textContent = n.label;
+      }
+      svg.appendChild(lbl);
+      attachNodeHover(lbl, n.label, total);
+    });
+  }
+
+  function attachRibbonHover(r, all, l, sNode, tNode){
+    r.addEventListener('mouseenter', function(){
+      figureEl.classList.add('isolating');
+      all.forEach(function(el2){ el2.classList.remove('on'); });
+      r.classList.add('on');
+      showChip(r, sNode.label + ' → ' + tNode.label, l.v);
+    });
+    r.addEventListener('mousemove', function(){ showChip(r, sNode.label + ' → ' + tNode.label, l.v); });
+    r.addEventListener('mouseleave', function(){
+      figureEl.classList.remove('isolating');
+      r.classList.remove('on');
+      hideChip();
+    });
+  }
+
+  function attachNodeHover(n, label, total){
+    n.addEventListener('mouseenter', function(){ showChip(n, label, total); });
+    n.addEventListener('mousemove', function(){ showChip(n, label, total); });
+    n.addEventListener('mouseleave', hideChip);
+  }
+
+  function showChip(target, label, value){
+    var r = target.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = label + ': ' + value;
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  render();
+  if(mq.addEventListener){ mq.addEventListener('change', render); }
+  else if(mq.addListener){ mq.addListener(render); } // older Safari
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

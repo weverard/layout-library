@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i21 · Chord Diagram — Info design scaffold</title>
+<!--
+  CHART       Chord Diagram
+  DATA SHAPE  5 entities, symmetric flow matrix — arcs[]{label,a0,a1},
+              ribbons[]{s,t,sa0,sa1,ta0,ta1,v}
+  INSIGHT     show flow between peers
+  BEST FOR    Migrations, trade, who-talks-to-whom.
+  RE-SKIN     hue set; under ~560px falls back to a matrix heat-grid of the
+              same values.
+-->
+<style>
+  :root{
+    --accent:#6D28D9;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .arc{fill:#CBC4B6;cursor:pointer;transition:fill .15s,opacity .15s}
+  .arc.hero{fill:var(--accent)}
+  .arc:hover{opacity:.85}
+  .arclabel{font-size:12px;fill:var(--ink)}
+  .ribbon{fill:#9C978D;opacity:.4;transition:opacity .15s}
+  .ribbon.hero-touch{fill:var(--accent)}
+  .ribbon:hover{opacity:.68}
+  figure.isolating .ribbon{opacity:.06}
+  figure.isolating .ribbon.on{opacity:.7}
+
+  .heatgrid{display:none}
+  .heatgrid table{border-collapse:collapse;width:100%;font-size:12px}
+  .heatgrid th,.heatgrid td{padding:8px 6px;text-align:center;border:1px solid var(--line)}
+  .heatgrid th{font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+  .heatgrid td.diag{background:var(--bg);color:var(--muted)}
+  .heatgrid td.cell{font-family:var(--mono);color:var(--ink);font-weight:600}
+  .heatgrid td.cell.hero{outline:2px solid var(--accent);outline-offset:-2px}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    .arc,.ribbon,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Flow &amp; process · i21</p>
+    <h1>Product spends more hours in cross-team meetings than any other group.</h1>
+    <p class="dek">Weekly collaboration hours between five teams, one snapshot (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 430" role="img" aria-label="Chord diagram of weekly collaboration hours among five teams, with Product highlighted as the team with the most total cross-team flow"></svg>
+    <div class="heatgrid" id="heatgrid"></div>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A chord diagram: five entities sit as arcs around a circle, sized by their total flow, joined by ribbons whose width encodes the flow between each pair.</dd>
+    <dt>When to use it</dt><dd>Symmetric peer-to-peer relationships — migrations between regions, trade between countries, cross-team collaboration — where every entity can flow to every other one and both the total and the pairwise split matter.</dd>
+    <dt>Data shape</dt><dd><code>arcs[]{label,a0,a1}</code>, <code>ribbons[]{s,t,sa0,sa1,ta0,ta1,v}</code> — 5 entities, a symmetric 5x5 matrix, 10 unique pairs; every angle is precomputed from the matrix and a shared radians-per-unit scale.</dd>
+    <dt>Visual style</dt><dd>Arc segments form a thin ring, one muted per entity except the entity with the largest total, which carries the accent. Low-opacity ribbons cross the interior; labels sit just outside the ring, rotated to run tangentially so they stay readable at any position on the circle.</dd>
+  </dl>
+  <p class="tags"><span>flow</span><span>chord</span><span>collaboration</span><span>peer-to-peer</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a chord diagram: five arc segments form a thin ring around a circle, each arc's length proportional to that entity's total flow, separated by small fixed gaps. Every arc is a muted neutral except the one entity with the single largest total, which carries the accent color, so the eye finds the most connected entity first. Low-opacity ribbons cross the interior of the circle, curving through the center point, connecting each pair of arcs with a band whose width matches the flow between them at both ends. Labels sit just outside the ring, each one rotated to run tangentially along the circle rather than staying horizontal, and flipped upright on the left half of the circle so nothing reads upside down. Hovering an arc fades every ribbon except the ones touching that entity and shows a chip with its total; hovering a single ribbon isolates just that one and shows the exact pairwise value. Under roughly 560px the circular layout gives way entirely to a plain symmetric matrix — a heat-shaded grid table of the same ten values, row and column headers naming every entity, diagonal cells empty — trading the radial form for a layout that stays legible and scannable at a small width.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i21 · chord &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // Angles precomputed offline (see the working script referenced in the
+  // build notes) from a symmetric 5x5 matrix and verified numerically:
+  //  - matrix is symmetric by construction (each pair authored once)
+  //  - gap = 0.04 rad x 5 gaps = 0.2 rad; arc spans sum to 2*PI - 0.2 =
+  //    6.083185 (checked: 1.073503 + 1.252420 + 1.533577 + 1.277980 +
+  //    0.945705 = 6.083185)
+  //  - angScale = 6.083185 / 238 (total flow) = 0.0255596 rad/unit, used
+  //    for every arc AND every ribbon band, so a ribbon's width matches at
+  //    both ends and each entity's stacked ribbon bands sum to its arc span
+  //    (angles stored to 6 decimals, so widths agree to ~1e-6 rad — sub-pixel)
+  var ENTITIES = ['Design', 'Engineering', 'Product', 'Marketing', 'Sales'];
+  var ROW_SUMS = [42, 49, 60, 50, 37]; // total flow per entity, sums to 238
+  var HERO = 2; // Product — largest row sum
+
+  var DATA = {
+    arcs: [
+      {label:'Design',       a0:-1.570796, a1:-0.497293},
+      {label:'Engineering',  a0:-0.457293, a1:0.795127},
+      {label:'Product',      a0:0.835127,  a1:2.368704},
+      {label:'Marketing',    a0:2.408704,  a1:3.686684},
+      {label:'Sales',        a0:3.726684,  a1:4.672389}
+    ],
+    ribbons: [
+      {s:0, t:1, v:18, sa0:-1.570796, sa1:-1.110723, ta0:-0.457293, ta1:0.002780},
+      {s:0, t:2, v:12, sa0:-1.110723, sa1:-0.804008, ta0:0.835127,  ta1:1.141843},
+      {s:0, t:3, v:9,  sa0:-0.804008, sa1:-0.573972, ta0:2.408704,  ta1:2.638740},
+      {s:0, t:4, v:3,  sa0:-0.573972, sa1:-0.497293, ta0:3.726684,  ta1:3.803363},
+      {s:1, t:2, v:22, sa0:0.002780,  sa1:0.565091,  ta0:1.141843,  ta1:1.704154},
+      {s:1, t:3, v:5,  sa0:0.565091,  sa1:0.692889,  ta0:2.638740,  ta1:2.766538},
+      {s:1, t:4, v:4,  sa0:0.692889,  sa1:0.795127,  ta0:3.803363,  ta1:3.905601},
+      {s:2, t:3, v:16, sa0:1.704154,  sa1:2.113108,  ta0:2.766538,  ta1:3.175492},
+      {s:2, t:4, v:10, sa0:2.113108,  sa1:2.368704,  ta0:3.905601,  ta1:4.161197},
+      {s:3, t:4, v:20, sa0:3.175492,  sa1:3.686684,  ta0:4.161197,  ta1:4.672389}
+    ]
+  };
+
+  var CX = 320, CY = 200;
+  var R_OUT = 172, R_IN = 158;
+  var W = 640, H = 430;
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var heatEl = document.getElementById('heatgrid');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var mq = window.matchMedia('(max-width:560px)');
+
+  function polar(radius, angle){
+    return (CX + radius * Math.cos(angle)) + ',' + (CY + radius * Math.sin(angle));
+  }
+  function polarPt(radius, angle){
+    return [CX + radius * Math.cos(angle), CY + radius * Math.sin(angle)];
+  }
+  function largeArc(a0, a1){ return (a1 - a0) > Math.PI ? 1 : 0; }
+
+  function arcPath(a0, a1){
+    return 'M' + polar(R_OUT, a0) +
+      ' A' + R_OUT + ',' + R_OUT + ' 0 ' + largeArc(a0, a1) + ' 1 ' + polar(R_OUT, a1) +
+      ' L' + polar(R_IN, a1) +
+      ' A' + R_IN + ',' + R_IN + ' 0 ' + largeArc(a0, a1) + ' 0 ' + polar(R_IN, a0) +
+      ' Z';
+  }
+
+  function ribbonPath(l){
+    return 'M' + polar(R_IN, l.sa0) +
+      ' A' + R_IN + ',' + R_IN + ' 0 ' + largeArc(l.sa0, l.sa1) + ' 1 ' + polar(R_IN, l.sa1) +
+      ' Q' + CX + ',' + CY + ' ' + polar(R_IN, l.ta1) +
+      ' A' + R_IN + ',' + R_IN + ' 0 ' + largeArc(l.ta0, l.ta1) + ' 1 ' + polar(R_IN, l.ta0) +
+      ' Q' + CX + ',' + CY + ' ' + polar(R_IN, l.sa0) + ' Z';
+  }
+
+  function renderCircle(){
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    heatEl.style.display = 'none';
+    svg.style.display = 'block';
+    svg.innerHTML = '';
+    figureEl.classList.remove('isolating');
+
+    var ribbonEls = [];
+    DATA.ribbons.forEach(function(l){
+      var r = el('path', {class:'ribbon', d:ribbonPath(l)});
+      svg.appendChild(r);
+      ribbonEls.push(r);
+      r.addEventListener('mouseenter', function(){
+        figureEl.classList.add('isolating');
+        ribbonEls.forEach(function(x){ x.classList.remove('on'); });
+        r.classList.add('on');
+        showChip(r, ENTITIES[l.s] + ' ↔ ' + ENTITIES[l.t], l.v);
+      });
+      r.addEventListener('mousemove', function(){ showChip(r, ENTITIES[l.s] + ' ↔ ' + ENTITIES[l.t], l.v); });
+      r.addEventListener('mouseleave', function(){
+        figureEl.classList.remove('isolating');
+        r.classList.remove('on');
+        hideChip();
+      });
+    });
+
+    DATA.arcs.forEach(function(a, i){
+      var arcEl = el('path', {class:'arc' + (i === HERO ? ' hero' : ''), d:arcPath(a.a0, a.a1)});
+      svg.appendChild(arcEl);
+
+      arcEl.addEventListener('mouseenter', function(){
+        figureEl.classList.add('isolating');
+        ribbonEls.forEach(function(r, ri){
+          var l = DATA.ribbons[ri];
+          r.classList.toggle('on', l.s === i || l.t === i);
+        });
+        showChip(arcEl, a.label, ROW_SUMS[i]);
+      });
+      arcEl.addEventListener('mousemove', function(){ showChip(arcEl, a.label, ROW_SUMS[i]); });
+      arcEl.addEventListener('mouseleave', function(){
+        figureEl.classList.remove('isolating');
+        ribbonEls.forEach(function(r){ r.classList.remove('on'); });
+        hideChip();
+      });
+
+      var mid = (a.a0 + a.a1) / 2;
+      var lp = polarPt(R_OUT + 16, mid);
+      var deg = mid * 180 / Math.PI;
+      var flip = Math.cos(mid) < 0;
+      var rot = flip ? deg + 180 : deg;
+      var label = el('text', {
+        class:'arclabel',
+        x:0, y:0,
+        'text-anchor': flip ? 'end' : 'start',
+        transform:'translate(' + lp[0] + ',' + lp[1] + ') rotate(' + rot.toFixed(2) + ')'
+      });
+      label.textContent = a.label;
+      svg.appendChild(label);
+    });
+  }
+
+  function renderHeatGrid(){
+    svg.style.display = 'none';
+    heatEl.style.display = 'block';
+
+    var matrix = ENTITIES.map(function(){ return ENTITIES.map(function(){ return 0; }); });
+    DATA.ribbons.forEach(function(l){ matrix[l.s][l.t] = l.v; matrix[l.t][l.s] = l.v; });
+    var maxV = Math.max.apply(null, DATA.ribbons.map(function(l){ return l.v; }));
+
+    var html = '<table><thead><tr><th></th>';
+    ENTITIES.forEach(function(name){ html += '<th>' + name.slice(0, 4) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    ENTITIES.forEach(function(rowName, i){
+      html += '<tr><th>' + rowName + '</th>';
+      ENTITIES.forEach(function(colName, j){
+        if(i === j){
+          html += '<td class="diag">—</td>';
+        } else {
+          var v = matrix[i][j];
+          var op = (v / maxV) * 0.85 + 0.05;
+          var heroClass = (i === HERO || j === HERO) ? ' hero' : '';
+          html += '<td class="cell' + heroClass + '" style="background:rgba(109,40,217,' + op.toFixed(2) + ')">' + v + '</td>';
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    heatEl.innerHTML = html;
+  }
+
+  function render(){
+    if(mq.matches){ renderHeatGrid(); } else { renderCircle(); }
+  }
+
+  function showChip(target, label, value){
+    var r = target.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = label + ': ' + value + 'h';
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  render();
+  if(mq.addEventListener){ mq.addEventListener('change', render); }
+  else if(mq.addListener){ mq.addListener(render); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

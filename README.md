@@ -266,6 +266,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i17` | Lollipop with Benchmark | 12 items (label, v) + a benchmark value | Targets, SLAs, peer medians |
 | `i18` | League Table with Deltas | 8 rows (name, v, prev) | Leaderboards, portfolios, team metrics |
 
+**Flow & process — where things go**
+
+| # | Chart | Data shape | Best for |
+|---|---|---|---|
+| `i19` | Sankey | 3 sources → 4 targets, node y-extents + ribbon bands precomputed | Traffic sources → outcomes, budget/energy flows |
+| `i20` | Funnel | 5 stages (label, n) descending | Signup/checkout funnels, pipeline stages |
+| `i21` | Chord Diagram | 5 entities, symmetric flow matrix, arc angles precomputed | Migrations, trade, who-talks-to-whom |
+
 ---
 
 ## Backlog — ideas not yet built
