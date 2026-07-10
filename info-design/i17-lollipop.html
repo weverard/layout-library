@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i17 · Lollipop with Benchmark — Info design scaffold</title>
+<!--
+  CHART       Lollipop with Benchmark
+  DATA SHAPE  12 items — {label, v}[] — plus a single BENCHMARK value
+  INSIGHT     rank vs a reference
+  BEST FOR    Targets, SLAs, peer medians.
+  RE-SKIN     benchmark value lives in DATA; stems get thinner under ~520px.
+-->
+<style>
+  :root{
+    --accent:#4D7C0F;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .row-label{font-size:12.5px;fill:var(--ink)}
+  .stem{stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+  .stem.a{stroke:var(--accent)}
+  .dot{fill:var(--ink)}
+  .dot.a{fill:var(--accent)}
+  .val{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+  .val.a{fill:var(--accent)}
+  .bench-line{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:3 3}
+  .bench-label{font-family:var(--mono);font-size:11px;fill:var(--muted);letter-spacing:.02em}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:520px){
+    .stem{stroke-width:1.2}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Ranking · i17</p>
+    <h1>Most of this year's launches cleared the adoption bar — five didn't.</h1>
+    <p class="dek">30-day adoption rate by feature launch, against the 50% threshold that marks a "sticky" feature — 7 of 12 clear it.</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Lollipop chart of 30-day adoption rate for twelve feature launches, with a benchmark line at 50 percent; dots past the benchmark are accent colored"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A row of thin stems ending in dots, one per item, crossed by a single labeled benchmark line; dots are colored by which side of the benchmark they land on.</dd>
+    <dt>When to use it</dt><dd>Any ranking that's really a pass/fail question against one reference value — a target, an SLA, a peer median — where the count that clears the bar matters as much as the order.</dd>
+    <dt>Data shape</dt><dd><code>{label, v}[]</code> (12 items) plus a single <code>BENCHMARK</code> value; author the sort order — descending reads best.</dd>
+    <dt>Visual style</dt><dd>Neutral ink stems and dots for items short of the benchmark, accent for items past it; a dashed vertical rule marks the benchmark with its value labeled at the top.</dd>
+  </dl>
+  <p class="tags"><span>ranking</span><span>lollipop</span><span>benchmark</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a lollipop chart: twelve thin horizontal stems, each ending in a small dot, stacked in rows and already sorted from highest value to lowest. A single dashed vertical rule cuts across every row at one fixed x-position — the benchmark — with its value set in small mono type just above where the line begins. Stems and dots that fall short of the benchmark stay a plain ink color; the moment a dot's value passes the benchmark, both its stem and dot switch to the accent color, so the split reads instantly without needing to check the axis. There's no value axis running along the bottom — the benchmark line and the two-tone dots carry all the comparison a reader needs. Hovering a dot raises a small dark tooltip with its exact value. On narrow screens the stems simply get thinner rather than the layout changing, since the whole chart scales down as one vector rather than reflowing.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i17 · lollipop &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {label:'Bulk export', v:82},
+    {label:'Saved views', v:76},
+    {label:'Inline comments', v:71},
+    {label:'Keyboard shortcuts', v:66},
+    {label:'Dark mode', v:60},
+    {label:'Slack alerts', v:55},
+    {label:'Custom fields', v:52},
+    {label:'API webhooks', v:48},
+    {label:'Guest access', v:44},
+    {label:'Time tracking', v:39},
+    {label:'Mobile offline mode', v:33},
+    {label:'Approval workflows', v:28}
+  ];
+  var BENCHMARK = 50;
+  var DOMAIN_MAX = 100;
+
+  var W = 640;
+  var M = {top:36, right:26, bottom:12, left:14};
+  var rowH = 28, rowGap = 5;
+  var labelColW = 168;
+  var stemX0 = M.left + labelColW;
+  var plotW = W - M.right - stemX0;
+
+  function xOf(v){ return stemX0 + plotW * (v / DOMAIN_MAX); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  var n = DATA.length;
+  var plotTop = M.top;
+  var plotBottom = M.top + n * rowH + (n - 1) * rowGap;
+  var H = plotBottom + M.bottom;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+  // Benchmark rule, drawn first so stems/dots sit on top of it.
+  var bx = xOf(BENCHMARK);
+  svg.appendChild(el('line', {class:'bench-line', x1:bx, x2:bx, y1:plotTop - 14, y2:plotBottom}));
+  var bl = el('text', {class:'bench-label', x:bx, y:plotTop - 18, 'text-anchor':'middle'});
+  bl.textContent = 'Benchmark: ' + BENCHMARK + '%';
+  svg.appendChild(bl);
+
+  DATA.forEach(function(d, i){
+    var cy = M.top + i * (rowH + rowGap) + rowH / 2;
+    var above = d.v >= BENCHMARK;
+    var cls = above ? ' a' : '';
+
+    var label = el('text', {class:'row-label', x:M.left, y:cy + 4});
+    label.textContent = d.label;
+    svg.appendChild(label);
+
+    var dx = xOf(d.v);
+    var stem = el('line', {class:'stem' + cls, x1:stemX0, y1:cy, x2:dx, y2:cy});
+    svg.appendChild(stem);
+
+    var dot = el('circle', {class:'dot' + cls, cx:dx, cy:cy, r:4});
+    svg.appendChild(dot);
+
+    var val = el('text', {class:'val' + cls, x:dx + 9, y:cy + 3.5});
+    val.textContent = d.v + '%';
+    svg.appendChild(val);
+
+    attachHover(dot, d.label, d.v);
+  });
+
+  function attachHover(node, label, value){
+    node.addEventListener('mouseenter', function(){ showChip(node, label, value); });
+    node.addEventListener('mousemove', function(){ showChip(node, label, value); });
+    node.addEventListener('mouseleave', hideChip);
+  }
+
+  function showChip(node, label, value){
+    var r = node.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = label + ': ' + value + '%';
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

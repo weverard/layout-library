@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i18 · League Table with Deltas — Info design scaffold</title>
+<!--
+  CHART       League Table with Deltas
+  DATA SHAPE  8 rows — {name, v, prev}[]
+  INSIGHT     rank + change
+  BEST FOR    Leaderboards, portfolio tables, team metrics.
+  RE-SKIN     --accent = bars + positive delta; the delta column hides
+              under ~520px.
+-->
+<style>
+  :root{
+    --accent:#0F766E;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2)}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .table-wrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .table-scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead tr{background:var(--bg);border-bottom:1px solid var(--line)}
+  th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:11px;font-weight:600;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  th.sortable{cursor:pointer;user-select:none;-webkit-user-select:none}
+  th.sortable:hover{color:var(--ink)}
+  th.sorted{color:var(--accent)}
+  .sort-ind{margin-left:5px;font-size:10px;opacity:.55}
+  th.sorted .sort-ind{opacity:1}
+  .col-rank{width:44px}
+  tbody tr{border-bottom:1px solid var(--line);transition:background .12s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:rgba(15,118,110,.05)}
+  td{padding:10px 14px;vertical-align:middle}
+  .rank-cell{font-family:var(--mono);color:var(--muted)}
+  .name-cell{font-weight:600}
+
+  .bar-track{position:relative;width:120px;height:9px;background:#EFEBE2;border-radius:5px;overflow:hidden;display:inline-block;vertical-align:middle}
+  .bar-fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:5px;transition:width .2s}
+  .bar-num{font-family:var(--mono);font-size:12.5px;color:var(--ink);margin-left:9px;vertical-align:middle}
+
+  .chip-delta{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:12px;
+    font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid currentColor}
+  .chip-delta.pos{color:var(--pos)}
+  .chip-delta.neg{color:var(--neg)}
+
+  @media (max-width:520px){
+    .col-delta{display:none}
+    .bar-track{width:80px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    tbody tr,.bar-fill{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Ranking · i18</p>
+    <h1>Half the team gained ground this month — half lost it.</h1>
+    <p class="dek">Tickets resolved by support rep, this month vs. last — sort by value or by change, illustrative.</p>
+  </header>
+  <figure id="figure">
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="lg-table">
+          <thead>
+            <tr>
+              <th class="col-rank">Rank</th>
+              <th class="col-name">Name</th>
+              <th data-col="v" class="sortable">Tickets resolved <span class="sort-ind">↕</span></th>
+              <th data-col="delta" class="sortable col-delta">Δ vs last month <span class="sort-ind">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="lg-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A real, sortable HTML table: rank, name, an inline value bar, and a delta pill showing change versus the prior period.</dd>
+    <dt>When to use it</dt><dd>Leaderboards, portfolio holdings, team metrics — anywhere a reader will want to re-order the list themselves, by size or by movement, rather than accept one fixed ranking.</dd>
+    <dt>Data shape</dt><dd><code>{name, v, prev}[]</code> — 8 rows; delta is computed as <code>v - prev</code>, never stored.</dd>
+    <dt>Visual style</dt><dd>An inline accent bar scaled to each row's share of the maximum stands in for a bar-chart column inside the table; delta pills are accent for gains, red for losses; the active sort column shows a direction arrow and the rank column renumbers on every sort.</dd>
+  </dl>
+  <p class="tags"><span>ranking</span><span>table</span><span>sortable</span><span>deltas</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a real, interactive HTML table styled to match the rest of the system rather than a chart drawn to look like one. Four columns: a plain rank number, a name, a value column with a short horizontal bar built from a div scaled to that row's share of the table's largest value with the exact number set beside it, and a delta column showing a small bordered pill with an up or down arrow, colored accent for gains and a muted red for losses. Clicking the value or delta column header re-sorts the whole table by that column, toggling ascending and descending on repeated clicks, with a small arrow appearing next to the active header to show its direction. After every sort the rank column renumbers from one in the new order, and ties keep their prior relative order rather than jumping around. On narrow screens the delta column drops out entirely and the value bar shrinks, leaving rank, name, and value as the core comparison.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i18 · league-table &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {name:'Priya Shah', v:142, prev:118},
+    {name:'Marcus Webb', v:131, prev:140},
+    {name:'Elena Popa', v:127, prev:101},
+    {name:'Diego Ruiz', v:119, prev:124},
+    {name:'Aiko Sato', v:108, prev:95},
+    {name:'Tomas Novak', v:97, prev:110},
+    {name:'Grace Liu', v:88, prev:80},
+    {name:"Ben O'Malley", v:74, prev:99}
+  ];
+
+  var maxV = Math.max.apply(null, DATA.map(function(d){ return d.v; }));
+
+  var rows = DATA.map(function(d){
+    return {name:d.name, v:d.v, prev:d.prev, delta:d.v - d.prev};
+  });
+
+  var sortState = {col:'v', dir:'desc'};
+
+  var tbody = document.getElementById('lg-body');
+  var headers = document.querySelectorAll('th[data-col]');
+
+  function stableSortBy(col, dir){
+    var mult = dir === 'asc' ? 1 : -1;
+    rows = rows
+      .map(function(row, i){ return {row:row, i:i}; })
+      .sort(function(a, b){
+        var cmp = (a.row[col] - b.row[col]) * mult;
+        if(cmp !== 0) return cmp;
+        return a.i - b.i; // stable: equal keys keep their prior order
+      })
+      .map(function(entry){ return entry.row; });
+  }
+
+  function fmtDelta(d){
+    var arrow = d >= 0 ? '▲' : '▼';
+    return arrow + Math.abs(d);
+  }
+
+  function render(){
+    tbody.innerHTML = '';
+    rows.forEach(function(row, i){
+      var tr = document.createElement('tr');
+      var pct = (row.v / maxV) * 100;
+      var deltaClass = row.delta >= 0 ? 'pos' : 'neg';
+      tr.innerHTML =
+        '<td class="rank-cell">' + (i + 1) + '</td>' +
+        '<td class="name-cell">' + row.name + '</td>' +
+        '<td class="col-value"><span class="bar-track"><span class="bar-fill" style="width:' + pct.toFixed(1) + '%"></span></span><span class="bar-num">' + row.v + '</span></td>' +
+        '<td class="col-delta"><span class="chip-delta ' + deltaClass + '">' + fmtDelta(row.delta) + '</span></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateHeaderIndicators(){
+    headers.forEach(function(th){
+      var col = th.getAttribute('data-col');
+      var ind = th.querySelector('.sort-ind');
+      if(col === sortState.col){
+        th.classList.add('sorted');
+        ind.textContent = sortState.dir === 'asc' ? '▲' : '▼';
+      } else {
+        th.classList.remove('sorted');
+        ind.textContent = '↕';
+      }
+    });
+  }
+
+  headers.forEach(function(th){
+    th.addEventListener('click', function(){
+      var col = th.getAttribute('data-col');
+      if(sortState.col === col){
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.col = col;
+        sortState.dir = 'asc';
+      }
+      stableSortBy(sortState.col, sortState.dir);
+      updateHeaderIndicators();
+      render();
+    });
+  });
+
+  // Sort on load so the displayed order always matches sortState (never trusts DATA's authored order).
+  stableSortBy(sortState.col, sortState.dir);
+  updateHeaderIndicators();
+  render();
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -258,6 +258,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i14` | Bubble Quadrant | 12 items (label, x, y, size), x/y in [0,1] | Effort/impact, risk/return, growth/share |
 | `i15` | Connected Scatter | One entity x 12 yearly points (year, x, y) | Two metrics evolving together over time |
 
+**Ranking — order matters**
+
+| # | Chart | Data shape | Best for |
+|---|---|---|---|
+| `i16` | Ordered Bars with Highlight | 10 items (label, v, focal) sorted desc | "Where do we stand" rankings |
+| `i17` | Lollipop with Benchmark | 12 items (label, v) + a benchmark value | Targets, SLAs, peer medians |
+| `i18` | League Table with Deltas | 8 rows (name, v, prev) | Leaderboards, portfolios, team metrics |
+
 ---
 
 ## Backlog — ideas not yet built
