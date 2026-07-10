@@ -492,6 +492,28 @@
   .t-i-bignum polyline{fill:none;stroke:var(--accent);stroke-width:1.6}
   .t-i-bignum circle{fill:var(--accent)}
 
+  .t-i-kpi{display:flex;flex-direction:column;gap:5px}
+  .t-i-kpi .row{display:flex;gap:4px;flex:none}
+  .t-i-kpi .tile{flex:1;height:18px;border-radius:3px;background:#dfe1e6}
+  .t-i-kpi .tile.a{background:var(--accent);opacity:.85}
+  .t-i-kpi svg.hint{flex:1;min-height:0;width:100%;overflow:visible;display:block}
+  .t-i-kpi svg.hint polyline{fill:none;stroke:var(--accent);stroke-width:1.6}
+  .t-i-kpi .bar{flex:1;height:6px;border-radius:2px;background:#c7c2b6}
+  .t-i-kpi .bar.a{background:var(--accent)}
+  .t-i-multiples{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4px}
+  .t-i-multiples svg{width:100%;height:100%;overflow:visible}
+  .t-i-multiples .med{stroke:var(--line);stroke-width:1}
+  .t-i-multiples polyline{fill:none;stroke:#c7c2b6;stroke-width:1.6}
+  .t-i-multiples svg.a polyline{stroke:var(--accent);stroke-width:2.2}
+  .t-i-narrative{display:flex;gap:6px}
+  .t-i-narrative svg.nchart{flex:0 0 60%;width:60%;height:100%;overflow:visible}
+  .t-i-narrative .nl{fill:none;stroke:var(--accent);stroke-width:1.8}
+  .t-i-narrative .nd{fill:#fff;stroke:#9C978D;stroke-width:1.4}
+  .t-i-narrative .nd.a{fill:var(--accent);stroke:var(--accent)}
+  .t-i-narrative .rail{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
+  .t-i-narrative .rail i{display:block;height:5px;border-radius:3px;background:#dfe1e6}
+  .t-i-narrative .rail i.a{background:var(--accent)}
+
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
 </style>
@@ -692,6 +714,13 @@
       <a class="card" href="info-design/i31-icon-array.html" style="--accent:#BE123C"><div class="thumb"><div class="tw t-i-icons"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">i31</p><h3>Icon-Array Pictograph</h3><p class="nav"><b>Hover the array</b> for "k in 100"; two 1-in-10 rows compare groups below.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">icon array</span></div></div></a>
       <a class="card" href="info-design/i32-area-shapes.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-i-circles"><svg viewBox="0 0 60 40"><circle class="a" cx="14" cy="24" r="10"/><circle cx="34" cy="27" r="7"/><circle cx="47" cy="29.5" r="4.5"/><circle cx="56" cy="31.5" r="2.5"/></svg></div></div><div class="b"><p class="n">i32</p><h3>Proportional-Area Shapes</h3><p class="nav"><b>Hover a shape</b> for its value; area — not radius — carries the comparison.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">proportional area</span></div></div></a>
       <a class="card" href="info-design/i33-big-number.html" style="--accent:#1E3A8A"><div class="thumb"><div class="tw t-i-bignum"><span class="num">128K</span><svg viewBox="0 0 34 14"><polyline points="0,11 6,9 12,10 18,6 24,7 29,3 34,2"/><circle cx="34" cy="2" r="1.6"/></svg></div></div><div class="b"><p class="n">i33</p><h3>Annotated Big-Number Story</h3><p class="nav"><b>Follow the leader lines</b> from margin notes to the sparkline, a chip, and a date.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">big number</span></div></div></a>
+    </div>
+
+    <p class="cat">Dashboard &amp; multi-chart — the whole picture</p>
+    <div class="grid">
+      <a class="card" href="info-design/i34-kpi-dashboard.html" style="--accent:#334155"><div class="thumb"><div class="tw t-i-kpi"><div class="row"><i class="tile a"></i><i class="tile"></i></div><svg class="hint" viewBox="0 0 40 14"><polyline points="0,10 8,8 16,9 24,5 32,6 40,2"/></svg><div class="row"><i class="bar a"></i><i class="bar"></i></div></div></div><div class="b"><p class="n">i34</p><h3>KPI Dashboard</h3><p class="nav"><b>Hover a tile, point, or bar</b> — four KPIs, a trend, and the category mix in one view.</p><div class="tags"><span class="tag">dashboard</span><span class="tag">kpi</span></div></div></a>
+      <a class="card" href="info-design/i35-small-multiples.html" style="--accent:#1D4ED8"><div class="thumb"><div class="tw t-i-multiples"><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,11 5,10 10,8 15,9 20,5"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,4 5,6 10,5 15,8 20,10"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,9 5,7 10,8 15,6 20,4"/></svg><svg viewBox="0 0 20 14" class="a"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,3 5,5 10,6 15,9 20,12"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,10 5,9 10,7 15,6 20,5"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,8 5,8 10,6 15,7 20,5"/></svg></div></div><div class="b"><p class="n">i35</p><h3>Small Multiples</h3><p class="nav"><b>Hover a panel</b> to enlarge it — all twelve share one honest y-scale.</p><div class="tags"><span class="tag">dashboard</span><span class="tag">small multiples</span></div></div></a>
+      <a class="card" href="info-design/i36-narrative-dashboard.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-narrative"><svg class="nchart" viewBox="0 0 60 40"><path class="nl" d="M0,30 L15,20 L30,24 L45,10 L60,14"/><circle class="nd" cx="15" cy="20" r="2.4"/><circle class="nd a" cx="45" cy="10" r="2.6"/></svg><div class="rail"><i></i><i class="a"></i><i></i></div></div></div><div class="b"><p class="n">i36</p><h3>Narrative Dashboard</h3><p class="nav"><b>Hover a note or marker</b> — the chart band and the rail highlight each other.</p><div class="tags"><span class="tag">dashboard</span><span class="tag">narrative</span></div></div></a>
     </div>
     </div>
 

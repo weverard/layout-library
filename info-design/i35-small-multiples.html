@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i35 · Small Multiples — Info design scaffold</title>
+<!--
+  CHART       Small Multiples
+  DATA SHAPE  12 series x 12 points — {label, pts[12], focal?}[], one
+              flagged focal
+  INSIGHT     compare many trends honestly
+  BEST FOR    Regions/products over time without spaghetti.
+  RE-SKIN     grid dims; 2x6 under ~700px, 1-col under ~460px.
+-->
+<style>
+  :root{
+    --accent:#1D4ED8;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(880px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:64ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .scale-note{font-family:var(--mono);font-size:12px;color:var(--muted);margin:0 0 var(--s2)}
+  .scale-note b{color:var(--ink);font-weight:600}
+
+  .grid-panels{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2)}
+  @media (max-width:700px){ .grid-panels{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:460px){ .grid-panels{grid-template-columns:1fr} }
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:2px;
+    transition:transform .15s,box-shadow .15s,border-color .15s;position:relative}
+  .panel:hover{transform:scale(1.05);box-shadow:0 10px 22px rgba(0,0,0,.09);border-color:var(--ink);z-index:2}
+  .panel.focal{border-color:var(--accent)}
+  .panel.focal:hover{border-color:var(--accent)}
+  .panel svg{width:100%;height:auto;display:block;overflow:visible}
+
+  .med-line{stroke:#C9C5BA;stroke-width:1;stroke-dasharray:2 2}
+  .mline{fill:none;stroke:var(--ink);stroke-width:1.5}
+  .mline.focal{stroke:var(--accent);stroke-width:2.2}
+  .mdot{fill:var(--ink)}
+  .mdot.focal{fill:var(--accent)}
+  .mdot-halo{fill:var(--ink);opacity:0;transition:opacity .15s}
+  .mdot-halo.focal{fill:var(--accent)}
+  .panel:hover .mdot-halo{opacity:.16}
+  .panel-label{font-size:9px;font-weight:600;fill:var(--ink)}
+  .panel-end{font-family:var(--mono);font-size:9px;fill:var(--muted)}
+  .panel-end.focal{fill:var(--accent);font-weight:700}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    .panel,.mdot-halo,.chip{transition:none}
+  }
+
+  details.spec{width:min(880px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Dashboard &amp; multi-chart · i35</p>
+    <h1>Every region is growing — except the coast, and the shared scale proves it.</h1>
+    <p class="dek">Twelve regions' signup trend, drawn on one honest y-axis, twelve months (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <p class="scale-note">Same scale in every panel — <b id="scaleRange"></b>. Gray dashed line marks the all-series median, <b id="scaleMedian"></b>.</p>
+    <div class="grid-panels" id="panelsGrid"></div>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A grid of small multiple line charts — one panel per series — deliberately drawn on a single shared y-scale instead of letting each panel auto-fit its own range.</dd>
+    <dt>When to use it</dt><dd>Comparing many trends at once without a spaghetti chart or, worse, dishonest per-panel scaling that exaggerates flat lines into cliffs.</dd>
+    <dt>Data shape</dt><dd><code>{label, pts[12], focal?}[]</code> — 12 series x 12 points. The global min/max across all 144 points is computed once and reused for every panel.</dd>
+    <dt>Visual style</dt><dd>One flagged focal panel switches its line and border to the accent color; every other panel stays ink on a neutral border; a faint gray dashed line marks the all-series median at the identical y in every panel, so scale-cheating is visually impossible.</dd>
+  </dl>
+  <p class="tags"><span>dashboard</span><span>small multiples</span><span>honest scale</span><span>line chart</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a grid of twelve small line-chart panels, one per series, deliberately built so every panel shares a single y-scale rather than auto-fitting to its own range — the global minimum and maximum across all twelve series are computed once, and that same mapping draws every line, so a viewer can trust that a taller line really means a bigger number. Each panel carries its label at the top-left and its final value at the top-right in monospace, both inside the chart itself rather than in a caption. A faint gray dashed line marks the median of every point in the whole dataset, drawn at the identical height in every single panel, which makes it trivial to see which lines run above or below the pack. One panel is flagged as the one to watch: its line and border switch to the accent color while the other eleven stay a quiet ink tone, so it reads as different without needing a legend. Hovering any panel enlarges it slightly, opens a small halo around its endpoint, and drops a chip reporting its final value and where it started.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i35 · small-multiples &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var SERIES = [
+    {label:'North',     pts:[40,42,44,45,47,49,50,52,54,55,57,59]},
+    {label:'South',     pts:[35,36,38,40,41,43,45,46,48,50,52,54]},
+    {label:'East',      pts:[50,49,51,52,53,55,56,58,59,61,62,64]},
+    {label:'West',      pts:[30,32,31,34,36,35,38,40,39,42,44,46]},
+    {label:'Central',   pts:[45,46,45,47,48,50,49,51,53,52,54,56]},
+    {label:'Atlantic',  pts:[55,57,56,59,60,62,63,65,67,68,70,72]},
+    {label:'Pacific',   pts:[38,39,41,40,43,44,46,48,47,50,52,53]},
+    {label:'Mountain',  pts:[42,43,44,46,45,48,49,51,50,53,55,56]},
+    {label:'Lakes',     pts:[33,35,34,37,38,40,41,43,45,44,47,49]},
+    {label:'Delta',     pts:[60,61,63,62,65,66,68,70,69,72,74,76]},
+    {label:'Highlands', pts:[28,30,29,32,34,33,36,38,37,40,42,44]},
+    {label:'Coastal',   pts:[88,84,80,75,70,64,58,52,46,40,34,28], focal:true}
+  ];
+
+  // INVARIANT: the global min/max is computed ONCE from every point across
+  // every series, and that single scale (yOf below) is the only function
+  // used to place a point in ANY panel — no panel ever computes its own
+  // local min/max. Two concrete values that prove it: Highlands' first
+  // point and Coastal's last point are both 28, so they land at the exact
+  // same y in two different panels.
+  var ALL = [].concat.apply([], SERIES.map(function(s){ return s.pts; }));
+  var GLOBAL_MIN = Math.min.apply(null, ALL);
+  var GLOBAL_MAX = Math.max.apply(null, ALL);
+  var SORTED_ALL = ALL.slice().sort(function(a, b){ return a - b; });
+  var mid = SORTED_ALL.length / 2;
+  var MEDIAN = SORTED_ALL.length % 2 === 0
+    ? (SORTED_ALL[mid - 1] + SORTED_ALL[mid]) / 2
+    : SORTED_ALL[Math.floor(mid)];
+
+  document.getElementById('scaleRange').textContent = GLOBAL_MIN + '–' + GLOBAL_MAX;
+  document.getElementById('scaleMedian').textContent = MEDIAN;
+
+  var W = 130, H = 74;
+  var M = {top:14, right:8, bottom:6, left:8};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+  var n = 12;
+
+  function xOf(i){ return M.left + plotW * i / (n - 1); }
+  // The ONE shared scale — every panel's line, dot, and median tick call
+  // this same function with the same GLOBAL_MIN/GLOBAL_MAX.
+  function yOf(v){ return M.top + plotH * (1 - (v - GLOBAL_MIN) / (GLOBAL_MAX - GLOBAL_MIN)); }
+
+  var medY = yOf(MEDIAN);
+
+  var panelsHtml = SERIES.map(function(s, si){
+    var idxLast = s.pts.length - 1;
+    var linePts = s.pts.map(function(v, i){ return xOf(i) + ',' + yOf(v); }).join(' L');
+    var ex = xOf(idxLast), ey = yOf(s.pts[idxLast]);
+    var focalCls = s.focal ? ' focal' : '';
+    return '<div class="panel' + focalCls + '" data-idx="' + si + '">' +
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + s.label + ' trend, 12 points, shared scale">' +
+        '<line class="med-line" x1="' + M.left + '" x2="' + (W - M.right) + '" y1="' + medY + '" y2="' + medY + '"></line>' +
+        '<path class="mline' + focalCls + '" d="M' + linePts + '"></path>' +
+        '<circle class="mdot-halo' + focalCls + '" cx="' + ex + '" cy="' + ey + '" r="6"></circle>' +
+        '<circle class="mdot' + focalCls + '" cx="' + ex + '" cy="' + ey + '" r="2.4"></circle>' +
+        '<text class="panel-label" x="' + M.left + '" y="10">' + s.label + '</text>' +
+        '<text class="panel-end' + focalCls + '" x="' + (W - M.right) + '" y="10" text-anchor="end">' + s.pts[idxLast] + '</text>' +
+      '</svg></div>';
+  }).join('');
+  document.getElementById('panelsGrid').innerHTML = panelsHtml;
+
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  document.querySelectorAll('.panel').forEach(function(p){
+    var s = SERIES[+p.getAttribute('data-idx')];
+    p.addEventListener('mouseenter', function(){
+      var last = s.pts[s.pts.length - 1], first = s.pts[0];
+      var r = p.getBoundingClientRect();
+      var f = figureEl.getBoundingClientRect();
+      chip.textContent = s.label + ': ' + last + ' (from ' + first + ')';
+      chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+      chip.style.top = (r.top - f.top) + 'px';
+      chip.classList.add('on');
+    });
+    p.addEventListener('mouseleave', function(){ chip.classList.remove('on'); });
+  });
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

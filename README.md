@@ -306,6 +306,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i32` | Proportional-Area Shapes | 4 items (label, v) + shape flag | Magnitude gaps too big for bars |
 | `i33` | Annotated Big-Number Story | 1 hero stat + 3 facts + 12-point sparkline | Report leads, posters, exec one-pagers |
 
+**Dashboard & multi-chart — the whole picture**
+
+| # | Chart | Data shape | Best for |
+| --- | --- | --- | --- |
+| `i34` | KPI Dashboard | 4 KPIs (label, v, prev, series[12]) + main series + breakdown | Weekly ops reviews, product health |
+| `i35` | Small Multiples | 12 series × 12 points, shared y-scale | Regions/products over time without spaghetti |
+| `i36` | Narrative Dashboard | Main series + 4 numbered annotations (x-range targets) | Post-mortems, monthly narratives, board packs |
+
 ---
 
 ## Backlog — ideas not yet built

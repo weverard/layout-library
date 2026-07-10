@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i36 · Narrative Dashboard — Info design scaffold</title>
+<!--
+  CHART       Narrative Dashboard
+  DATA SHAPE  1 main series (24 monthly points) + exactly 4 annotations —
+              {n, title, text, target:{x0,x1}}[] — target names an x-range
+              in data coordinates
+  INSIGHT     monitor + explain
+  BEST FOR    Post-mortems, monthly narratives, board packs.
+  RE-SKIN     --accent = markers + bands; the rail moves below the chart
+              under ~760px.
+-->
+<style>
+  :root{
+    --accent:#B45309;
+    --accent-rgb:180,83,9;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(920px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:64ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2)}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .narrative-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s3);align-items:start}
+  @media (max-width:760px){ .narrative-grid{grid-template-columns:1fr} }
+
+  .chart-col{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .panel-title{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  #chart{width:100%;height:auto;display:block;overflow:visible}
+
+  .gridline{stroke:var(--line);stroke-width:1}
+  .gridlabel{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+  .monthtick{stroke:var(--line);stroke-width:1}
+  .monthlabel{font-family:var(--mono);font-size:10.5px;fill:var(--muted);text-anchor:middle}
+
+  .band{fill:var(--accent);opacity:.055;transition:opacity .15s}
+  .band.active{opacity:.18}
+  .band-hit{fill:transparent;cursor:pointer}
+  .area{fill:var(--accent);opacity:.1;stroke:none}
+  .valline{fill:none;stroke:var(--accent);stroke-width:2.2}
+
+  .marker{cursor:pointer}
+  .marker .ring{fill:var(--panel);stroke:var(--accent);stroke-width:2;transition:fill .15s}
+  .marker .num{fill:var(--accent);font-family:var(--mono);font-weight:700;font-size:11px;text-anchor:middle;transition:fill .15s}
+  .marker.active .ring{fill:var(--accent)}
+  .marker.active .num{fill:#fff}
+
+  .rail-col{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 16px}
+  .rail-note{display:flex;gap:12px;padding:14px 2px;border-bottom:1px solid var(--line);
+    border-left:3px solid transparent;transition:background .15s,border-color .15s;cursor:pointer}
+  .rail-note:last-child{border-bottom:0}
+  .rail-note.active{background:rgba(var(--accent-rgb),.07);border-left-color:var(--accent)}
+  .rn-badge{flex:none;width:22px;height:22px;margin-top:1px;border-radius:50%;border:1.5px solid var(--accent);
+    color:var(--accent);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:12px;font-weight:700;transition:background .15s,color .15s}
+  .rail-note.active .rn-badge{background:var(--accent);color:#fff}
+  .rail-note h4{margin:0 0 4px;font-size:14px;font-weight:600}
+  .rail-note p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+
+  @media (prefers-reduced-motion:reduce){
+    .band,.marker .ring,.marker .num,.rail-note,.rn-badge{transition:none}
+  }
+
+  details.spec{width:min(920px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Dashboard &amp; multi-chart · i36</p>
+    <h1>Two clean growth phases bracket a deliberate four-month pause for the migration.</h1>
+    <p class="dek">Monthly active users, Jan 2024–Dec 2025, with the four moments that explain the shape (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <div class="narrative-grid">
+      <div class="chart-col">
+        <p class="panel-title">Monthly active users, 24 months</p>
+        <svg id="chart" viewBox="0 0 560 280" role="img" aria-label="Area chart of monthly active users over 24 months with four numbered annotated periods"></svg>
+      </div>
+      <div class="rail-col">
+        <p class="panel-title">What happened, in order</p>
+        <div id="rail"></div>
+      </div>
+    </div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A large annotated area chart paired with a reading rail of four numbered notes, cross-highlighted in both directions.</dd>
+    <dt>When to use it</dt><dd>Post-mortems, monthly narratives, board packs — anywhere the reader needs the exact moments a trend changed, explained in prose, not just plotted.</dd>
+    <dt>Data shape</dt><dd>One 24-point main series plus exactly four annotations — <code>{n, title, text, target:{x0,x1}}[]</code> — where <code>target</code> names the x-range each note is about.</dd>
+    <dt>Visual style</dt><dd>A soft accent band marks each note's x-range behind the line; a small numbered marker sits on the line at each band's midpoint; the rail's number badge and background respond the moment its band or marker is hovered, and vice versa.</dd>
+  </dl>
+  <p class="tags"><span>dashboard</span><span>narrative</span><span>annotation</span><span>bidirectional</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a narrative dashboard: a large annotated area chart on the left carries the whole story, and a reading rail of four numbered notes on the right explains it, so the page works as a short memo rather than a control panel. Four soft vertical bands sit behind the line, each spanning the exact months one note is about, and a small numbered marker sits directly on the line at the middle of its band — so every note has a literal, findable home on the chart rather than a footnote reference. The cross-highlight runs both ways: hovering a note tints its band and lights up its marker, and hovering a marker or its band brings the matching note forward in the rail with an accent-filled number and a tinted background, so a reader can work from the story to the chart or from the chart to the story with the same result either way. Only two gridlines and five month ticks keep the chart quiet enough for the bands and markers to carry the eye instead of axis clutter.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i36 · narrative-dashboard &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var MAIN = [
+    40,38,36,35,37,
+    42,48,54,60,64,68,
+    66,65,67,66,68,
+    70,74,78,82,85,88,90,92
+  ]; // 24 monthly points: slow start, referral growth, migration plateau, enterprise climb
+
+  // Exactly 4 annotations — the single source of truth for the bands, the
+  // markers, and the rail notes, so all three are always in sync at 4/4/4.
+  var ANNOTATIONS = [
+    {n:1, title:'Slow start', target:{x0:0, x1:4},
+      text:'The first five months underperformed plan — early positioning wasn’t landing.'},
+    {n:2, title:'Referral program launch', target:{x0:5, x1:10},
+      text:'A referral incentive in June kicked off six months of consistent month-over-month growth.'},
+    {n:3, title:'Platform migration', target:{x0:11, x1:15},
+      text:'A four-month infrastructure migration held growth flat, by design, while the team stabilized the backend.'},
+    {n:4, title:'Enterprise tier ships', target:{x0:16, x1:23},
+      text:'Since May 2025, enterprise adoption has driven the steepest sustained climb in the product’s history.'}
+  ];
+
+  var MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function labelFor(i){
+    var year = 2024 + Math.floor(i / 12);
+    return MONTH_NAMES[i % 12] + ' ' + String(year).slice(2);
+  }
+  var TICK_IDX = [0, 6, 12, 18, 23];
+  var NICE_MIN = 0, NICE_MAX = 100;
+  var GRID_VALUES = [0, 50, 100];
+
+  var W = 560, H = 280;
+  var M = {top:20, right:20, bottom:34, left:34};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+  var n = MAIN.length;
+
+  function xOf(i){ return M.left + plotW * i / (n - 1); }
+  function yOf(v){ return M.top + plotH * (1 - (v - NICE_MIN) / (NICE_MAX - NICE_MIN)); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var bottom = yOf(NICE_MIN);
+
+  // gridlines
+  GRID_VALUES.forEach(function(v){
+    var y = yOf(v);
+    svg.appendChild(el('line', {class:'gridline', x1:M.left, x2:W - M.right, y1:y, y2:y}));
+    var t = el('text', {class:'gridlabel', x:M.left, y:y - 6});
+    t.textContent = v;
+    svg.appendChild(t);
+  });
+
+  // visual bands (behind the area/line)
+  var bandEls = {}, hitEls = {}, markerEls = {}, railEls = {};
+  var padX = (xOf(1) - xOf(0)) * 0.28;
+  ANNOTATIONS.forEach(function(a){
+    var x0 = xOf(a.target.x0) - padX, x1 = xOf(a.target.x1) + padX;
+    var band = el('rect', {class:'band', x:x0, y:M.top, width:(x1 - x0), height:(bottom - M.top)});
+    svg.appendChild(band);
+    bandEls[a.n] = band;
+  });
+
+  // area fill + line (purely visual — pointer-events off so bands beneath stay hoverable)
+  var areaPts = MAIN.map(function(v, i){ return xOf(i) + ',' + yOf(v); });
+  var areaD = 'M' + xOf(0) + ',' + bottom + ' L' + areaPts.join(' L') + ' L' + xOf(n - 1) + ',' + bottom + ' Z';
+  var areaPath = el('path', {class:'area', d:areaD});
+  areaPath.style.pointerEvents = 'none';
+  svg.appendChild(areaPath);
+
+  var linePts = MAIN.map(function(v, i){ return xOf(i) + ',' + yOf(v); });
+  var linePath = el('path', {class:'valline', d:'M' + linePts.join(' L')});
+  linePath.style.pointerEvents = 'none';
+  svg.appendChild(linePath);
+
+  // month ticks
+  TICK_IDX.forEach(function(i){
+    var x = xOf(i);
+    svg.appendChild(el('line', {class:'monthtick', x1:x, x2:x, y1:bottom, y2:bottom + 5}));
+    var t = el('text', {class:'monthlabel', x:x, y:bottom + 19});
+    t.textContent = labelFor(i);
+    svg.appendChild(t);
+  });
+
+  // transparent hit-rects on top of the line/area, so hovering anywhere in
+  // a band's x-range (not just the exact line pixel) triggers the highlight
+  ANNOTATIONS.forEach(function(a){
+    var x0 = xOf(a.target.x0) - padX, x1 = xOf(a.target.x1) + padX;
+    var hit = el('rect', {class:'band-hit', x:x0, y:M.top, width:(x1 - x0), height:(bottom - M.top)});
+    svg.appendChild(hit);
+    hitEls[a.n] = hit;
+  });
+
+  // numbered markers, placed on the line at each band's midpoint index —
+  // this is the INVARIANT: each marker sits inside its own target x-range
+  ANNOTATIONS.forEach(function(a){
+    var midIdx = Math.round((a.target.x0 + a.target.x1) / 2);
+    var mx = xOf(midIdx), my = yOf(MAIN[midIdx]);
+    var g = el('g', {class:'marker'});
+    g.appendChild(el('circle', {class:'ring', cx:mx, cy:my, r:9}));
+    var num = el('text', {class:'num', x:mx, y:my + 3.5});
+    num.textContent = a.n;
+    g.appendChild(num);
+    svg.appendChild(g);
+    markerEls[a.n] = g;
+  });
+
+  // reading rail
+  var railEl = document.getElementById('rail');
+  railEl.innerHTML = ANNOTATIONS.map(function(a){
+    return '<div class="rail-note" data-n="' + a.n + '">' +
+      '<span class="rn-badge">' + a.n + '</span>' +
+      '<div><h4>' + a.title + '</h4><p>' + a.text + '</p></div></div>';
+  }).join('');
+  ANNOTATIONS.forEach(function(a){
+    railEls[a.n] = railEl.querySelector('.rail-note[data-n="' + a.n + '"]');
+  });
+
+  // bidirectional cross-highlight: any of {note, band, band-hit, marker}
+  // activates all three (note + band + marker) for that annotation number
+  function activate(n){
+    if(bandEls[n]) bandEls[n].classList.add('active');
+    if(markerEls[n]) markerEls[n].classList.add('active');
+    if(railEls[n]) railEls[n].classList.add('active');
+  }
+  function deactivate(n){
+    if(bandEls[n]) bandEls[n].classList.remove('active');
+    if(markerEls[n]) markerEls[n].classList.remove('active');
+    if(railEls[n]) railEls[n].classList.remove('active');
+  }
+
+  ANNOTATIONS.forEach(function(a){
+    [hitEls[a.n], markerEls[a.n], railEls[a.n]].forEach(function(target){
+      target.addEventListener('mouseenter', function(){ activate(a.n); });
+      target.addEventListener('mouseleave', function(){ deactivate(a.n); });
+      target.addEventListener('focus', function(){ activate(a.n); });
+      target.addEventListener('blur', function(){ deactivate(a.n); });
+    });
+  });
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

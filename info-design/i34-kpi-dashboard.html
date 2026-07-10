@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i34 · KPI Dashboard — Info design scaffold</title>
+<!--
+  CHART       KPI Dashboard
+  DATA SHAPE  4 KPIs — {label, v, prev, series[12]}[] — plus 1 main series
+              (12 monthly {v, lo, hi} points) and 1 category breakdown —
+              {label, v}[]
+  INSIGHT     monitor
+  BEST FOR    Weekly ops reviews, product health.
+  RE-SKIN     --accent; under ~760px the tiles go 2x2 and the charts stack.
+-->
+<style>
+  :root{
+    --accent:#334155;
+    --accent-rgb:51,65,85;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(920px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:64ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--s2)}
+
+  .tile{grid-column:span 3;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;transition:border-color .15s,box-shadow .15s}
+  .tile:hover{border-color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.06)}
+  .t-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0}
+  .t-value{font-family:var(--mono);font-weight:700;font-size:21px;margin:5px 0 8px;color:var(--ink)}
+  .t-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .chip-delta{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:11.5px;
+    font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+  .chip-delta.pos{color:var(--pos)}
+  .chip-delta.neg{color:var(--neg)}
+  .spark{width:40px;height:14px;overflow:visible;flex:none;display:block}
+  .spark polyline{fill:none;stroke:var(--accent);stroke-width:1.6}
+  .spark circle{fill:var(--accent)}
+
+  .chart-panel{grid-column:span 8;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .list-panel{grid-column:span 4;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .panel-title{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+
+  #mainChart{width:100%;height:auto;display:block;overflow:visible}
+  .gridline{stroke:var(--line);stroke-width:1}
+  .gridlabel{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+  .band{fill:var(--accent);opacity:.14;stroke:none}
+  .valline{fill:none;stroke:var(--accent);stroke-width:2}
+  .monthtick{stroke:var(--line);stroke-width:1}
+  .monthlabel{font-family:var(--mono);font-size:10px;fill:var(--muted);text-anchor:middle}
+  .hitrect{fill:transparent}
+  .crosshair{stroke:var(--muted);stroke-width:1;opacity:0;transition:opacity .12s}
+  .crosshair.on{opacity:1}
+  .hoverdot{fill:var(--accent);stroke:var(--panel);stroke-width:1.5;opacity:0;transition:opacity .12s}
+  .hoverdot.on{opacity:1}
+
+  .bl-row{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line);
+    border-radius:4px;transition:background .12s}
+  .bl-row:last-child{border-bottom:0}
+  .bl-row:hover{background:rgba(var(--accent-rgb),.07)}
+  .bl-label{flex:0 0 80px;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bl-track{flex:1;height:9px;background:#F1F0EC;border-radius:3px;position:relative;overflow:hidden}
+  .bl-fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:3px}
+  .bl-value{flex:0 0 34px;text-align:right;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:760px){
+    .tile{grid-column:span 6}
+    .chart-panel,.list-panel{grid-column:span 12}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .tile,.bl-row,.crosshair,.hoverdot,.chip{transition:none}
+  }
+
+  details.spec{width:min(920px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Dashboard &amp; multi-chart · i34</p>
+    <h1>Users and conversion are up — revenue and satisfaction are moving the wrong way.</h1>
+    <p class="dek">Four headline KPIs, the underlying health trend, and this quarter's revenue mix, in one operating view (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <div class="dash-grid" id="dashGrid">
+      <div class="chart-panel">
+        <p class="panel-title">Product health index — trailing 12 months</p>
+        <svg id="mainChart" viewBox="0 0 480 220" role="img" aria-label="Line chart with a soft range band showing the product health index over the trailing twelve months"></svg>
+      </div>
+      <div class="list-panel">
+        <p class="panel-title">Revenue mix by segment, this quarter</p>
+        <div id="barList"></div>
+      </div>
+    </div>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A composite KPI dashboard: four metric tiles, a trend chart with a soft range band, and an ordered breakdown list, assembled on one twelve-column grid.</dd>
+    <dt>When to use it</dt><dd>Weekly or monthly operating reviews — the handful of numbers a team checks first, the trend behind them, and the mix that explains where the total comes from.</dd>
+    <dt>Data shape</dt><dd><code>{label, v, prev, series[12]}[]</code> for the four tiles, one 12-point <code>{v, lo, hi}[]</code> series for the trend chart, and an unsorted <code>{label, v}[]</code> list that is sorted descending at render time.</dd>
+    <dt>Visual style</dt><dd>Monospace values and delta pills read at a glance; each tile's sparkline self-scales to its own range; the trend chart keeps only two gridlines and three month ticks; the breakdown list swaps a value axis for a direct number at each bar's end.</dd>
+  </dl>
+  <p class="tags"><span>dashboard</span><span>kpi</span><span>sparkline</span><span>monitor</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a composite KPI dashboard built on one twelve-column grid rather than four separate charts glued together. Four stat tiles span the top row, each showing a bold monospace value, a small pill reporting the change versus the prior period with an arrow and a color that follows its sign, and a forty-by-fourteen sparkline scaled to that one metric's own range. Below the tiles, a simplified line-and-band chart takes the left two-thirds: the accent line rides a soft translucent band showing a plausible range at every point, with only two gridlines and three month ticks to keep it quiet, and hovering it drops a crosshair, a dot, and a value chip at the nearest month. The right third holds an ordered bar list of the current breakdown, sorted largest to smallest, each row's exact share set directly at the bar's end instead of on an axis, with a soft accent tint sweeping the full row on hover. One accent color runs through every tile, the line, the band, and the bars, so the four pieces read as a single instrument.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i34 · kpi-dashboard &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var KPIS = [
+    {label:'Active users', v:18320, prev:17150,
+      series:[15200,15400,15900,16100,16400,16800,17000,17150,17600,17800,18050,18320],
+      fmtValue:function(x){ return Math.round(x).toLocaleString(); },
+      fmtDelta:function(d){ return (d >= 0 ? '▲' : '▼') + Math.abs(Math.round(d)).toLocaleString(); }},
+    {label:'Weekly revenue', v:92400, prev:96800,
+      series:[101200,99800,98700,97900,97200,96800,96100,96800,95400,94600,93700,92400],
+      fmtValue:function(x){ return '$' + Math.round(x).toLocaleString(); },
+      fmtDelta:function(d){ return (d >= 0 ? '▲' : '▼') + '$' + Math.abs(Math.round(d)).toLocaleString(); }},
+    {label:'Conversion rate', v:4.8, prev:4.3,
+      series:[3.9,4.0,4.0,4.1,4.2,4.1,4.3,4.3,4.4,4.5,4.6,4.8],
+      fmtValue:function(x){ return x.toFixed(1) + '%'; },
+      fmtDelta:function(d){ return (d >= 0 ? '▲' : '▼') + Math.abs(d).toFixed(1) + 'pt'; }},
+    {label:'NPS score', v:41, prev:47,
+      series:[52,51,50,49,49,48,48,47,46,45,43,41],
+      fmtValue:function(x){ return String(Math.round(x)); },
+      fmtDelta:function(d){ return (d >= 0 ? '▲' : '▼') + Math.abs(Math.round(d)); }}
+  ];
+
+  // Category breakdown authored deliberately out of order — the INVARIANT is
+  // that render-time sorting always produces the descending list, regardless
+  // of authored order.
+  var BREAKDOWN = [
+    {label:'Mid-market', v:27},
+    {label:'Enterprise', v:38},
+    {label:'Self-serve', v:11},
+    {label:'SMB', v:19},
+    {label:'Partner', v:5}
+  ];
+
+  var MAIN = [
+    {v:58, lo:52, hi:64}, {v:60, lo:54, hi:66}, {v:59, lo:53, hi:65}, {v:62, lo:55, hi:69},
+    {v:64, lo:57, hi:71}, {v:63, lo:56, hi:70}, {v:66, lo:58, hi:74}, {v:68, lo:60, hi:76},
+    {v:67, lo:59, hi:75}, {v:70, lo:61, hi:79}, {v:72, lo:63, hi:81}, {v:74, lo:64, hi:84}
+  ];
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var NICE_MIN = 0, NICE_MAX = 100;
+  var GRID_VALUES = [0, 50, 100];
+  var TICK_IDX = [0, 5, 11];
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  // ---- stat tiles ----
+  function sparkSVG(series){
+    var n = series.length;
+    var min = Math.min.apply(null, series);
+    var max = Math.max.apply(null, series);
+    var range = max - min;
+    var pad = 2, w = 40, h = 14;
+    var pts = series.map(function(v, i){
+      var x = (i / (n - 1)) * w;
+      var y = range === 0 ? h / 2 : (h - pad) - ((v - min) / range) * (h - pad * 2);
+      return [x, y];
+    });
+    var last = pts[pts.length - 1];
+    var ptStr = pts.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+    return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="12-month trend">' +
+      '<polyline points="' + ptStr + '"></polyline>' +
+      '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="1.6"></circle>' +
+      '</svg>';
+  }
+
+  var tilesHtml = KPIS.map(function(k){
+    var delta = k.v - k.prev; // INVARIANT: delta chip is always v - prev, computed here
+    var cls = delta >= 0 ? 'pos' : 'neg';
+    return '<div class="tile"><p class="t-label">' + k.label + '</p>' +
+      '<p class="t-value">' + k.fmtValue(k.v) + '</p>' +
+      '<div class="t-row"><span class="chip-delta ' + cls + '">' + k.fmtDelta(delta) + '</span>' +
+      sparkSVG(k.series) + '</div></div>';
+  }).join('');
+  document.getElementById('dashGrid').insertAdjacentHTML('afterbegin', tilesHtml);
+
+  // ---- main band-line chart (i04 language, simplified) ----
+  var W = 480, H = 220;
+  var M = {top:20, right:14, bottom:26, left:28};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+  var n = MAIN.length;
+
+  function xOf(i){ return M.left + plotW * i / (n - 1); }
+  function yOf(v){ return M.top + plotH * (1 - (v - NICE_MIN) / (NICE_MAX - NICE_MIN)); }
+
+  var svg = document.getElementById('mainChart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var bottom = yOf(NICE_MIN);
+
+  GRID_VALUES.forEach(function(v){
+    var y = yOf(v);
+    svg.appendChild(el('line', {class:'gridline', x1:M.left, x2:W - M.right, y1:y, y2:y}));
+    var t = el('text', {class:'gridlabel', x:M.left, y:y - 6});
+    t.textContent = v;
+    svg.appendChild(t);
+  });
+
+  var topPts = MAIN.map(function(d, i){ return xOf(i) + ',' + yOf(d.hi); });
+  var botPts = [];
+  for(var i = n - 1; i >= 0; i--){ botPts.push(xOf(i) + ',' + yOf(MAIN[i].lo)); }
+  svg.appendChild(el('path', {class:'band', d:'M' + topPts.join(' L') + ' L' + botPts.join(' L') + ' Z'}));
+
+  var linePts = MAIN.map(function(d, i){ return xOf(i) + ',' + yOf(d.v); });
+  svg.appendChild(el('path', {class:'valline', d:'M' + linePts.join(' L')}));
+
+  TICK_IDX.forEach(function(i){
+    var x = xOf(i);
+    svg.appendChild(el('line', {class:'monthtick', x1:x, x2:x, y1:bottom, y2:bottom + 5}));
+    var t = el('text', {class:'monthlabel', x:x, y:bottom + 18});
+    t.textContent = MONTHS[i];
+    svg.appendChild(t);
+  });
+
+  var crosshair = el('line', {class:'crosshair', y1:M.top, y2:bottom, x1:0, x2:0});
+  var hoverDot = el('circle', {class:'hoverdot', r:3.5, cx:0, cy:0});
+  svg.appendChild(crosshair);
+  svg.appendChild(hoverDot);
+  var hitRect = el('rect', {class:'hitrect', x:M.left, y:M.top, width:plotW, height:(bottom - M.top)});
+  svg.appendChild(hitRect);
+
+  function indexFromEvent(e){
+    var r = svg.getBoundingClientRect();
+    var scale = W / r.width;
+    var localX = (e.clientX - r.left) * scale;
+    var idx = Math.round((localX - M.left) / plotW * (n - 1));
+    return Math.max(0, Math.min(n - 1, idx));
+  }
+
+  function onMove(e){
+    var idx = indexFromEvent(e);
+    var d = MAIN[idx];
+    var x = xOf(idx), y = yOf(d.v);
+    crosshair.setAttribute('x1', x);
+    crosshair.setAttribute('x2', x);
+    crosshair.classList.add('on');
+    hoverDot.setAttribute('cx', x);
+    hoverDot.setAttribute('cy', y);
+    hoverDot.classList.add('on');
+    var r = svg.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    var sx = r.width / W, sy = r.height / H;
+    chip.textContent = MONTHS[idx] + ' · ' + d.v + ' (band ' + d.lo + '–' + d.hi + ')';
+    chip.style.left = (r.left - f.left + x * sx) + 'px';
+    chip.style.top = (r.top - f.top + y * sy) + 'px';
+    chip.classList.add('on');
+  }
+  function onLeave(){
+    crosshair.classList.remove('on');
+    hoverDot.classList.remove('on');
+    chip.classList.remove('on');
+  }
+
+  var canHover = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+  if(canHover){
+    hitRect.addEventListener('mousemove', onMove);
+    hitRect.addEventListener('mouseleave', onLeave);
+  }
+
+  // ---- ordered bar list (i16 language) ----
+  var sorted = BREAKDOWN.slice().sort(function(a, b){ return b.v - a.v; }); // INVARIANT: always desc at render
+  var max = sorted[0].v;
+  var barListEl = document.getElementById('barList');
+  barListEl.innerHTML = sorted.map(function(d){
+    var w = (d.v / max * 100).toFixed(1);
+    return '<div class="bl-row"><span class="bl-label">' + d.label + '</span>' +
+      '<div class="bl-track"><div class="bl-fill" style="width:' + w + '%"></div></div>' +
+      '<span class="bl-value">' + d.v + '%</span></div>';
+  }).join('');
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
