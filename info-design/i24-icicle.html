@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i24 · Icicle / Partition — Info design scaffold</title>
+<!--
+  CHART       Icicle / Partition
+  DATA SHAPE  3-depth hierarchy, spans precomputed —
+              {label, depth, x0, x1, parent}[], root spans x0:0, x1:1
+  INSIGHT     show hierarchy + size
+  BEST FOR    File sizes, budget trees, taxonomy weights.
+  RE-SKIN     tint ramp; under ~520px rows get taller and labels become
+              hover-only.
+-->
+<style>
+  :root{
+    --accent:#166534;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2)}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .breadcrumb{display:none;align-items:center;flex-wrap:wrap;gap:5px;margin:0 0 10px;font-family:var(--mono);font-size:12px}
+  .crumb{background:none;border:none;padding:3px 2px;font-family:var(--mono);font-size:12px;color:var(--muted);cursor:pointer}
+  .crumb:hover{color:var(--accent)}
+  .crumb.current{color:var(--ink);font-weight:600;cursor:default}
+  .crumb-sep{color:var(--line)}
+
+  .icicle{display:flex;flex-direction:column;gap:2px}
+  .i-row{position:relative;height:46px;transition:height .15s}
+  .i-cell{position:absolute;top:0;bottom:0;box-sizing:border-box;background:var(--accent);
+    border-right:2px solid var(--bg);display:flex;align-items:center;padding:0 9px;overflow:hidden;
+    transition:opacity .15s,filter .15s}
+  .i-cell:last-child{border-right:none}
+  .i-cell.tint-0{opacity:1}
+  .i-cell.tint-1{opacity:.62}
+  .i-cell.tint-2{opacity:.38}
+  .i-cell.zoomable{cursor:pointer}
+  .i-cell.zoomable:hover{filter:brightness(1.08)}
+  .i-cell.zoomable:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+  .i-cell .lbl{font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .i-cell.fit-hide .lbl{display:none}
+
+  @media (max-width:520px){
+    .i-row{height:60px}
+    .i-cell .lbl{opacity:0;transition:opacity .12s}
+    .i-cell:hover .lbl,.i-cell:focus-visible .lbl{opacity:1}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .i-cell,.i-row,.i-cell .lbl{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Hierarchy &amp; network · i24</p>
+    <h1>Engineering claims almost half the total budget.</h1>
+    <p class="dek">Budget allocation, department down to line item, this fiscal year — click a bar to zoom in (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <div class="icicle" id="icicle"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>An icicle (partition) chart: a full-width bar on top, its children stacked in a row beneath it with widths proportional to their share, and their children in a third row beneath that.</dd>
+    <dt>When to use it</dt><dd>File sizes, budget trees, taxonomy weights — anywhere a hierarchy also carries a size, and both the structure and the proportions need to read at once.</dd>
+    <dt>Data shape</dt><dd><code>{label, depth, x0, x1, parent}[]</code> — a root spanning 0-1 and two levels beneath it; every child row exactly partitions its parent's span, no gaps or overlaps.</dd>
+    <dt>Visual style</dt><dd>Depth is encoded as a tint step of the accent — darkest at the top, lighter with each row down. Labels hide in cells too narrow to hold them.</dd>
+  </dl>
+  <p class="tags"><span>hierarchy</span><span>icicle</span><span>partition</span><span>budget</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is an icicle chart: a full-width bar sits on top, a row of narrower bars beneath it whose widths are each proportional to their share of the row above, and a third row beneath that partitioning each of those bars the same way. Every child row exactly tiles its parent's width with no gaps or overlaps, so the eye can read both the tree structure and the size of every branch in one shape. Depth is shown as a tint step of a single accent color — solid at the top row, progressively lighter with each row down — rather than a different hue per level, so the palette stays restrained. Labels sit inside each cell and disappear entirely when a cell is too narrow to hold them rather than overflow or wrap. Clicking any bar below the top row zooms into it: that bar rescales to fill the full width, its own children rescale beneath it by the same proportion, and a breadcrumb trail appears above naming every ancestor back to the root — clicking an earlier crumb, including the root, jumps back out to that level. Under roughly 520px the rows grow taller for easier tapping and labels stop showing by default, appearing only on hover or focus.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i24 · icicle &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // Spans precomputed offline from department/line-item share tables and
+  // verified numerically: every non-root node's children start exactly at
+  // the parent's x0, end exactly at the parent's x1, and share edges with
+  // no gaps or overlaps (checked to 6 decimal places). Root spans 0-1.
+  var DATA = [
+    {id:0,  label:'Total Budget', depth:0, x0:0,     x1:1,     parent:null},
+    {id:1,  label:'Engineering',  depth:1, x0:0,     x1:0.42,  parent:0},
+    {id:2,  label:'Marketing',    depth:1, x0:0.42,  x1:0.65,  parent:0},
+    {id:3,  label:'Sales',        depth:1, x0:0.65,  x1:0.85,  parent:0},
+    {id:4,  label:'Operations',   depth:1, x0:0.85,  x1:1,     parent:0},
+    {id:5,  label:'Platform',     depth:2, x0:0,      x1:0.231, parent:1},
+    {id:6,  label:'Infra',        depth:2, x0:0.231,  x1:0.357, parent:1},
+    {id:7,  label:'Tools',        depth:2, x0:0.357,  x1:0.42,  parent:1},
+    {id:8,  label:'Brand',        depth:2, x0:0.42,   x1:0.5235,parent:2},
+    {id:9,  label:'Growth',       depth:2, x0:0.5235, x1:0.604, parent:2},
+    {id:10, label:'Events',       depth:2, x0:0.604,  x1:0.65,  parent:2},
+    {id:11, label:'Field',        depth:2, x0:0.65,   x1:0.77,  parent:3},
+    {id:12, label:'Partnerships', depth:2, x0:0.77,   x1:0.85,  parent:3},
+    {id:13, label:'People',       depth:2, x0:0.85,   x1:0.925, parent:4},
+    {id:14, label:'Facilities',   depth:2, x0:0.925,  x1:0.97,  parent:4},
+    {id:15, label:'Legal',        depth:2, x0:0.97,   x1:1,     parent:4}
+  ];
+
+  var byId = {};
+  DATA.forEach(function(d){ byId[d.id] = d; });
+  function childrenOf(id){ return DATA.filter(function(d){ return d.parent === id; }); }
+  function ancestorsOf(id){
+    var chain = [];
+    var cur = byId[id];
+    while(cur){ chain.unshift(cur); cur = (cur.parent === null) ? null : byId[cur.parent]; }
+    return chain;
+  }
+
+  var icicleEl = document.getElementById('icicle');
+  var breadcrumbEl = document.getElementById('breadcrumb');
+  var focusId = 0;
+
+  function render(){
+    var focus = byId[focusId];
+    var rows = [[focus]];
+    var lvl1 = childrenOf(focus.id);
+    if(lvl1.length){
+      rows.push(lvl1);
+      var lvl2 = [];
+      lvl1.forEach(function(c){ lvl2 = lvl2.concat(childrenOf(c.id)); });
+      if(lvl2.length){ rows.push(lvl2); }
+    }
+
+    var fx0 = focus.x0, fx1 = focus.x1, fw = fx1 - fx0;
+    function rescale(x){ return (x - fx0) / fw; }
+
+    icicleEl.innerHTML = '';
+    rows.forEach(function(rowNodes, rowIdx){
+      var rowEl = document.createElement('div');
+      rowEl.className = 'i-row';
+      rowNodes.forEach(function(n){
+        var nx0 = rescale(n.x0), nx1 = rescale(n.x1);
+        var cell = document.createElement('div');
+        cell.className = 'i-cell tint-' + rowIdx + (rowIdx > 0 ? ' zoomable' : '');
+        cell.style.left = (nx0 * 100).toFixed(4) + '%';
+        cell.style.width = ((nx1 - nx0) * 100).toFixed(4) + '%';
+
+        var lbl = document.createElement('span');
+        lbl.className = 'lbl';
+        lbl.textContent = n.label;
+        cell.appendChild(lbl);
+
+        if(rowIdx > 0){
+          cell.tabIndex = 0;
+          cell.setAttribute('role', 'button');
+          cell.setAttribute('aria-label', 'Zoom into ' + n.label);
+          var zoom = function(nodeId){ return function(){ focusId = nodeId; render(); }; };
+          cell.addEventListener('click', zoom(n.id));
+          cell.addEventListener('keydown', function(e){
+            if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); zoom(n.id)(); }
+          });
+        }
+
+        rowEl.appendChild(cell);
+      });
+      icicleEl.appendChild(rowEl);
+    });
+
+    renderBreadcrumb();
+    requestAnimationFrame(fitLabels);
+  }
+
+  function renderBreadcrumb(){
+    var chain = ancestorsOf(focusId);
+    if(chain.length <= 1){
+      breadcrumbEl.style.display = 'none';
+      breadcrumbEl.innerHTML = '';
+      return;
+    }
+    breadcrumbEl.style.display = 'flex';
+    breadcrumbEl.innerHTML = '';
+    chain.forEach(function(n, i){
+      if(i > 0){
+        var sep = document.createElement('span');
+        sep.className = 'crumb-sep';
+        sep.textContent = '›';
+        breadcrumbEl.appendChild(sep);
+      }
+      var b = document.createElement('button');
+      b.type = 'button';
+      var isCurrent = i === chain.length - 1;
+      b.className = 'crumb' + (isCurrent ? ' current' : '');
+      b.textContent = n.label;
+      if(isCurrent){
+        b.disabled = true;
+      } else {
+        b.addEventListener('click', (function(nodeId){ return function(){ focusId = nodeId; render(); }; })(n.id));
+      }
+      breadcrumbEl.appendChild(b);
+    });
+  }
+
+  function fitLabels(){
+    icicleEl.querySelectorAll('.i-cell').forEach(function(cell){
+      var lbl = cell.querySelector('.lbl');
+      if(!lbl) return;
+      cell.classList.remove('fit-hide');
+      var fits = lbl.scrollWidth <= (cell.clientWidth - 18);
+      cell.classList.toggle('fit-hide', !fits);
+    });
+  }
+
+  render();
+
+  var resizeQueued = false;
+  window.addEventListener('resize', function(){
+    if(resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(function(){ resizeQueued = false; fitLabels(); });
+  });
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

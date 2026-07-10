@@ -429,6 +429,23 @@
   .t-i-chord .ring{fill:none;stroke:#dfe1e6;stroke-width:6}
   .t-i-chord .ring.a{stroke:var(--accent)}
   .t-i-chord .rb{fill:none;stroke:#c7c2b6;stroke-width:1.6;opacity:.75}
+  .t-i-radialtree svg{width:80%;height:66%;overflow:visible}
+  .t-i-radialtree .hub{fill:var(--ink)}
+  .t-i-radialtree .lk{fill:none;stroke:#c7c2b6;stroke-width:1.6}
+  .t-i-radialtree .lk.a{stroke:var(--accent)}
+  .t-i-radialtree .nd{fill:#dfe1e6}
+  .t-i-radialtree .nd.a{fill:var(--accent)}
+  .t-i-net svg{width:82%;height:70%;overflow:visible}
+  .t-i-net .lk{stroke:#c7c2b6;stroke-width:1.4;opacity:.7}
+  .t-i-net .lk.a{stroke:var(--accent);opacity:.9}
+  .t-i-net .nd{fill:#dfe1e6}
+  .t-i-net .nd.a{fill:var(--accent)}
+  .t-i-icicle{flex-direction:column;justify-content:center;gap:2px;padding:0 12px}
+  .t-i-icicle i{display:block;background:var(--accent)}
+  .t-i-icicle .row0{height:10px;width:100%;opacity:1}
+  .t-i-icicle .row1{height:8px;display:flex;gap:2px}
+  .t-i-icicle .row1 i{opacity:.6}
+  .t-i-icicle .row1 i.a{opacity:1}
 
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
@@ -602,6 +619,13 @@
       <a class="card" href="info-design/i19-sankey.html" style="--accent:#1E40AF"><div class="thumb"><div class="tw t-i-sankey"><svg viewBox="0 0 60 40"><rect class="nd" x="6" y="6" width="4" height="12"/><rect class="nd" x="6" y="22" width="4" height="10"/><rect class="nd" x="50" y="4" width="4" height="10"/><rect class="nd" x="50" y="18" width="4" height="9"/><rect class="nd" x="50" y="31" width="4" height="5"/><path class="rb a" d="M10,8 C30,8 30,6 50,7 L50,12 C30,11 30,13 10,15 Z"/><path class="rb" d="M10,20 C30,20 30,21 50,20 L50,25 C30,25 30,26 10,27 Z"/></svg></div></div><div class="b"><p class="n">i19</p><h3>Sankey</h3><p class="nav"><b>Hover a ribbon</b> to isolate it; ≤560px it flips to a vertical flow.</p><div class="tags"><span class="tag">flow</span><span class="tag">sankey</span></div></div></a>
       <a class="card" href="info-design/i20-funnel.html" style="--accent:#C2410C"><div class="thumb"><div class="tw t-i-funnel"><i style="width:70%;height:9px"></i><i class="b2" style="width:54%;height:9px"></i><i class="b3" style="width:40%;height:9px"></i><i class="b4" style="width:28%;height:9px"></i></div></div><div class="b"><p class="n">i20</p><h3>Funnel</h3><p class="nav"><b>Hover a band</b> for its count; the steepest drop is called out.</p><div class="tags"><span class="tag">flow</span><span class="tag">funnel</span></div></div></a>
       <a class="card" href="info-design/i21-chord.html" style="--accent:#6D28D9"><div class="thumb"><div class="tw t-i-chord"><svg viewBox="0 0 60 40"><circle class="ring" cx="30" cy="20" r="15"/><path class="ring a" d="M30,5 A15,15 0 0 1 44,15" fill="none"/><path class="rb" d="M20,8 Q30,20 40,32"/><path class="rb" d="M40,8 Q30,20 20,32"/><path class="rb" d="M15,22 Q30,20 45,22"/></svg></div></div><div class="b"><p class="n">i21</p><h3>Chord Diagram</h3><p class="nav"><b>Hover an arc</b> to isolate its ribbons; ≤560px it falls back to a heat-grid.</p><div class="tags"><span class="tag">flow</span><span class="tag">chord</span></div></div></a>
+    </div>
+
+    <p class="cat">Hierarchy &amp; network — structure</p>
+    <div class="grid">
+      <a class="card" href="info-design/i22-radial-tree.html" style="--accent:#0E7490"><div class="thumb"><div class="tw t-i-radialtree"><svg viewBox="0 0 60 40"><circle class="hub" cx="30" cy="20" r="3"/><path class="lk" d="M30,20 C20,20 15,10 8,8"/><path class="lk" d="M30,20 C20,20 15,30 8,30"/><path class="lk a" d="M30,20 C38,20 44,10 52,8"/><path class="lk a" d="M30,20 C38,20 44,14 52,16"/><circle class="nd" cx="8" cy="8" r="2"/><circle class="nd" cx="8" cy="30" r="2"/><circle class="nd a" cx="52" cy="8" r="2"/><circle class="nd a" cx="52" cy="16" r="2"/></svg></div></div><div class="b"><p class="n">i22</p><h3>Radial Tree</h3><p class="nav"><b>Click a branch</b> to collapse or expand it; ≤560px it becomes an indented outline.</p><div class="tags"><span class="tag">hierarchy</span><span class="tag">radial-tree</span></div></div></a>
+      <a class="card" href="info-design/i23-network.html" style="--accent:#BE123C"><div class="thumb"><div class="tw t-i-net"><svg viewBox="0 0 60 40"><line class="lk" x1="10" y1="12" x2="18" y2="22"/><line class="lk" x1="10" y1="12" x2="14" y2="28"/><line class="lk" x1="18" y1="22" x2="14" y2="28"/><line class="lk a" x1="18" y1="22" x2="34" y2="20"/><line class="lk" x1="34" y1="20" x2="46" y2="10"/><line class="lk" x1="34" y1="20" x2="48" y2="24"/><line class="lk" x1="46" y1="10" x2="48" y2="24"/><circle class="nd" cx="10" cy="12" r="3.4"/><circle class="nd" cx="18" cy="22" r="3"/><circle class="nd" cx="14" cy="28" r="2.4"/><circle class="nd a" cx="34" cy="20" r="3.6"/><circle class="nd" cx="46" cy="10" r="3.2"/><circle class="nd" cx="48" cy="24" r="2.8"/></svg></div></div><div class="b"><p class="n">i23</p><h3>Network Graph</h3><p class="nav"><b>Hover a name</b> to trace their connections; the broker bridges both clusters.</p><div class="tags"><span class="tag">network</span><span class="tag">collaboration</span></div></div></a>
+      <a class="card" href="info-design/i24-icicle.html" style="--accent:#166534"><div class="thumb"><div class="tw t-i-icicle"><i class="row0"></i><div class="row1"><i class="a" style="flex:0.42"></i><i style="flex:0.23"></i><i style="flex:0.20"></i><i style="flex:0.15"></i></div></div></div><div class="b"><p class="n">i24</p><h3>Icicle / Partition</h3><p class="nav"><b>Click a bar</b> to zoom in; a breadcrumb tracks the path back to the root.</p><div class="tags"><span class="tag">hierarchy</span><span class="tag">icicle</span></div></div></a>
     </div>
     </div>
 

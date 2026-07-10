@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i22 · Radial Tree — Info design scaffold</title>
+<!--
+  CHART       Radial Tree
+  DATA SHAPE  root + 2 levels (6 branches x 2-4 leaves) — polar coords
+              precomputed: {label, depth, angle, r, parent}[]
+  INSIGHT     show hierarchy
+  BEST FOR    Org/topic structures with a focal branch.
+  RE-SKIN     --accent = focal branch; under ~560px becomes an indented
+              outline built from the same parent-linked data.
+-->
+<style>
+  :root{
+    --accent:#0E7490;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .link{fill:none;stroke:#CBC4B6;stroke-width:1.5;transition:opacity .2s}
+  .branchgrp.hero .link{stroke:var(--accent)}
+  .node{fill:#8F897C}
+  .node.root{fill:var(--ink)}
+  .node.branch{fill:var(--ink);cursor:pointer}
+  .branchgrp.hero .node.branch{fill:var(--accent)}
+  .node.leaf{fill:#CBC4B6}
+  .branchgrp.hero .node.leaf{fill:var(--accent)}
+  .nodelabel{font-size:11.5px;fill:var(--ink)}
+  .nodelabel.root{font-size:12.5px;font-weight:600}
+  .nodelabel.branch{font-weight:600;cursor:pointer}
+  .branchgrp.hero .nodelabel.branch{fill:var(--accent)}
+  .nodelabel.leaf{fill:var(--muted);font-size:11px}
+  .branchgrp.collapsed .node.branch{fill:var(--bg);stroke:var(--ink);stroke-width:1.6}
+  .branchgrp.hero.collapsed .node.branch{stroke:var(--accent)}
+  .branchgrp.leaf{transition:opacity .2s}
+  .branchgrp.leaf.hidden{opacity:0;pointer-events:none}
+
+  .outline{display:none;font-size:14px}
+  .o-root{font-family:var(--serif);font-weight:600;font-size:17px;margin-bottom:10px}
+  .o-branches{list-style:none;margin:0;padding:0}
+  .o-branch{margin:0}
+  .o-row{display:flex;align-items:center;gap:7px;padding:9px 4px;cursor:pointer;font-weight:600;
+    border-bottom:1px solid var(--line);transition:color .15s}
+  .o-row:hover{color:var(--accent)}
+  .o-branch.hero .o-row{color:var(--accent)}
+  .o-caret{width:12px;display:inline-block;color:var(--muted);font-size:10px}
+  .o-branch.hero .o-caret{color:var(--accent)}
+  .o-leaves{list-style:none;margin:0;padding:0 0 4px 25px;overflow:hidden;transition:opacity .15s}
+  .o-leaves.hidden{display:none}
+  .o-leaf{padding:6px 0;color:var(--muted);font-size:13px;border-bottom:1px dashed var(--line)}
+  .o-leaf:last-child{border-bottom:1px solid var(--line)}
+
+  @media (prefers-reduced-motion:reduce){
+    .link,.branchgrp.leaf,.o-leaves{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+
+  @media (max-width:560px){
+    .fig{padding-top:var(--s3)}
+  }
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Hierarchy &amp; network · i22</p>
+    <h1>Identity has grown into the most sprawling branch of the help center.</h1>
+    <p class="dek">Article count by product area, three levels of the taxonomy — click a branch to collapse or expand it (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 460" role="img" aria-label="Radial tree of help-center topics rooted at Help Center, with the Identity branch highlighted as the largest"></svg>
+    <div class="outline" id="outline"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A radial tree: a root at the center, branches at a fixed inner radius, and leaves at a fixed outer radius, joined by curved links that bow outward along the radius rather than running as straight spokes.</dd>
+    <dt>When to use it</dt><dd>Org charts, topic taxonomies, or any two-level hierarchy where one branch is the story and the rest are context — the circular form gives every branch room without a branch competing for the same vertical space.</dd>
+    <dt>Data shape</dt><dd><code>{label, depth, angle, r, parent}[]</code> — a root, 6 branches, 2-4 leaves per branch; every angle and radius precomputed so render code only draws, never lays out.</dd>
+    <dt>Visual style</dt><dd>One branch and its leaves carry the accent; the rest stay a neutral ink-gray. Labels rotate to match their own node's angle and flip upright on the left half of the circle so nothing reads upside down.</dd>
+  </dl>
+  <p class="tags"><span>hierarchy</span><span>radial-tree</span><span>taxonomy</span><span>collapse</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a radial tree: a small root dot sits at the center of a circle, six branch dots ring it at a fixed inner radius, and their leaf dots sit further out at a fixed outer radius. Curved links join parent to child, each one bowing out along the radius instead of running as a straight spoke, so the shape reads as organic rather than mechanical. One branch and every leaf beneath it carry the accent color; the rest of the tree stays a neutral ink-gray, so the eye finds the story branch immediately. Every label is rotated to match its own node's angle around the circle and flips upright on the left half so nothing reads upside down, the same trick used for the ring labels in the chord diagram. Clicking any branch dot collapses its leaves — the links and leaf dots fade out in place — and clicking again brings them back, so a dense tree can be explored one branch at a time. Under roughly 560px the circular layout gives way entirely to an indented outline list built from the exact same parent-linked data, with the same click-to-collapse behavior on each branch row.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i22 · radial-tree &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // Polar coordinates precomputed offline from 6 branch sectors (equal spans,
+  // 0.06rad gaps) and verified numerically:
+  //  - every leaf's angle falls within its parent branch's [a0,a1] sector
+  //  - r strictly increases with depth: root 0 < branch 92 < leaf 172
+  //  - no two sibling leaves inside a branch share an angle
+  var DATA = [
+    {id:0,  label:'Help Center',    depth:0, angle:0,        r:0,   parent:null},
+    {id:1,  label:'Payments',       depth:1, angle:-1.077198, r:92,  parent:0, a0:-1.570796, a1:-0.583599},
+    {id:2,  label:'Checkout',       depth:2, angle:-1.452333, r:172, parent:1},
+    {id:3,  label:'Refunds',        depth:2, angle:-0.702062, r:172, parent:1},
+    {id:4,  label:'Identity',       depth:1, angle:-0.03,     r:92,  parent:0, a0:-0.523599, a1:0.463599, focal:true},
+    {id:5,  label:'SSO',            depth:2, angle:-0.405135, r:172, parent:4},
+    {id:6,  label:'MFA',            depth:2, angle:-0.155045, r:172, parent:4},
+    {id:7,  label:'Sessions',       depth:2, angle:0.095045,  r:172, parent:4},
+    {id:8,  label:'Roles',          depth:2, angle:0.345135,  r:172, parent:4},
+    {id:9,  label:'Data',           depth:1, angle:1.017198,  r:92,  parent:0, a0:0.523599,  a1:1.510796},
+    {id:10, label:'Warehouse',      depth:2, angle:0.642062,  r:172, parent:9},
+    {id:11, label:'Exports',        depth:2, angle:1.017198,  r:172, parent:9},
+    {id:12, label:'Pipelines',      depth:2, angle:1.392333,  r:172, parent:9},
+    {id:13, label:'Notifications',  depth:1, angle:2.064395,  r:92,  parent:0, a0:1.570796,  a1:2.557994},
+    {id:14, label:'Email',          depth:2, angle:1.68926,   r:172, parent:13},
+    {id:15, label:'Push',           depth:2, angle:2.43953,   r:172, parent:13},
+    {id:16, label:'Billing',        depth:1, angle:3.111593,  r:92,  parent:0, a0:2.617994,  a1:3.605191},
+    {id:17, label:'Invoices',       depth:2, angle:2.736458,  r:172, parent:16},
+    {id:18, label:'Plans',          depth:2, angle:3.111593,  r:172, parent:16},
+    {id:19, label:'Tax',            depth:2, angle:3.486728,  r:172, parent:16},
+    {id:20, label:'Admin',          depth:1, angle:4.15879,   r:92,  parent:0, a0:3.665191,  a1:4.652389},
+    {id:21, label:'Audit Log',      depth:2, angle:3.783655,  r:172, parent:20},
+    {id:22, label:'Permissions',    depth:2, angle:4.533925,  r:172, parent:20}
+  ];
+
+  var CX = 320, CY = 230;
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var outlineEl = document.getElementById('outline');
+  var mq = window.matchMedia('(max-width:560px)');
+
+  var byId = {};
+  DATA.forEach(function(d){ byId[d.id] = d; });
+  function childrenOf(id){ return DATA.filter(function(d){ return d.parent === id; }); }
+  function isFocalBranch(d){
+    if(d.depth === 1) return !!d.focal;
+    if(d.depth === 2) return !!byId[d.parent].focal;
+    return false;
+  }
+
+  var collapsed = {}; // branchId -> bool
+
+  function polar(r, a){ return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; }
+
+  function bez(r0, a0, r1, a1){
+    var rm = (r0 + r1) / 2;
+    var p0 = polar(r0, a0), p1 = polar(rm, a0), p2 = polar(rm, a1), p3 = polar(r1, a1);
+    return 'M' + p0[0].toFixed(2) + ',' + p0[1].toFixed(2) +
+      ' C' + p1[0].toFixed(2) + ',' + p1[1].toFixed(2) +
+      ' ' + p2[0].toFixed(2) + ',' + p2[1].toFixed(2) +
+      ' ' + p3[0].toFixed(2) + ',' + p3[1].toFixed(2);
+  }
+
+  function labelXform(r, a, offset){
+    var p = polar(r + offset, a);
+    var deg = a * 180 / Math.PI;
+    var flip = Math.cos(a) < 0;
+    var rot = flip ? deg + 180 : deg;
+    return {x: p[0], y: p[1], anchor: flip ? 'end' : 'start', rot: rot};
+  }
+
+  function buildSvg(){
+    svg.innerHTML = '';
+    var root = byId[0];
+
+    svg.appendChild(el('circle', {class:'node root', cx:CX, cy:CY, r:6}));
+    var rootLabel = el('text', {class:'nodelabel root', x:CX, y:CY - 16, 'text-anchor':'middle'});
+    rootLabel.textContent = root.label;
+    svg.appendChild(rootLabel);
+
+    DATA.forEach(function(d){
+      if(d.depth === 0) return;
+      var parent = byId[d.parent];
+      var focal = isFocalBranch(d);
+      var isBranch = d.depth === 1;
+      var g = el('g', {class:'branchgrp ' + (isBranch ? 'branch' : 'leaf') + (focal ? ' hero' : '')});
+      if(isBranch){ g.setAttribute('data-id', d.id); }
+      else { g.setAttribute('data-parent', d.parent); if(collapsed[d.parent]){ g.classList.add('hidden'); } }
+
+      var link = el('path', {class:'link', d: bez(parent.r, parent.angle, d.r, d.angle)});
+      g.appendChild(link);
+
+      var pt = polar(d.r, d.angle);
+      var dot = el('circle', {
+        class: 'node ' + (isBranch ? 'branch' : 'leaf'),
+        cx: pt[0].toFixed(2), cy: pt[1].toFixed(2), r: isBranch ? 4.5 : 3
+      });
+      g.appendChild(dot);
+
+      var lt = labelXform(d.r, d.angle, isBranch ? 10 : 8);
+      var lbl = el('text', {
+        class: 'nodelabel ' + (isBranch ? 'branch' : 'leaf'),
+        x:0, y:0, 'text-anchor': lt.anchor,
+        transform: 'translate(' + lt.x.toFixed(2) + ',' + lt.y.toFixed(2) + ') rotate(' + lt.rot.toFixed(2) + ')'
+      });
+      lbl.textContent = d.label;
+      g.appendChild(lbl);
+
+      if(isBranch){
+        if(collapsed[d.id]){ g.classList.add('collapsed'); }
+        var title = el('title', {});
+        title.textContent = d.label + (collapsed[d.id] ? ' — collapsed, click to expand' : ' — click to collapse');
+        g.appendChild(title);
+        var toggle = (function(branchId){
+          return function(){
+            collapsed[branchId] = !collapsed[branchId];
+            syncCollapse(branchId);
+          };
+        })(d.id);
+        dot.style.cursor = 'pointer';
+        lbl.style.cursor = 'pointer';
+        dot.addEventListener('click', toggle);
+        lbl.addEventListener('click', toggle);
+      }
+
+      svg.appendChild(g);
+    });
+  }
+
+  function syncCollapse(branchId){
+    var isCollapsed = !!collapsed[branchId];
+    var branchG = svg.querySelector('.branch[data-id="' + branchId + '"]');
+    if(branchG){
+      branchG.classList.toggle('collapsed', isCollapsed);
+      var title = branchG.querySelector('title');
+      if(title){ title.textContent = byId[branchId].label + (isCollapsed ? ' — collapsed, click to expand' : ' — click to collapse'); }
+    }
+    var leaves = svg.querySelectorAll('.leaf[data-parent="' + branchId + '"]');
+    leaves.forEach(function(leafG){ leafG.classList.toggle('hidden', isCollapsed); });
+    if(mq.matches){ buildOutline(); }
+  }
+
+  function buildOutline(){
+    outlineEl.innerHTML = '';
+    var root = byId[0];
+    var rootRow = document.createElement('div');
+    rootRow.className = 'o-root';
+    rootRow.textContent = root.label;
+    outlineEl.appendChild(rootRow);
+
+    var ul = document.createElement('ul');
+    ul.className = 'o-branches';
+    childrenOf(0).forEach(function(b){
+      var isCollapsed = !!collapsed[b.id];
+      var li = document.createElement('li');
+      li.className = 'o-branch' + (b.focal ? ' hero' : '');
+
+      var row = document.createElement('div');
+      row.className = 'o-row';
+      row.tabIndex = 0;
+      row.setAttribute('role', 'button');
+      row.setAttribute('aria-expanded', String(!isCollapsed));
+      row.innerHTML = '<span class="o-caret">' + (isCollapsed ? '▸' : '▾') + '</span><span class="o-label">' + b.label + '</span>';
+      var toggle = (function(branchId){
+        return function(){
+          collapsed[branchId] = !collapsed[branchId];
+          syncCollapse(branchId);
+        };
+      })(b.id);
+      row.addEventListener('click', toggle);
+      row.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+      });
+      li.appendChild(row);
+
+      var leafUl = document.createElement('ul');
+      leafUl.className = 'o-leaves' + (isCollapsed ? ' hidden' : '');
+      childrenOf(b.id).forEach(function(leaf){
+        var lli = document.createElement('li');
+        lli.className = 'o-leaf';
+        lli.textContent = leaf.label;
+        leafUl.appendChild(lli);
+      });
+      li.appendChild(leafUl);
+      ul.appendChild(li);
+    });
+    outlineEl.appendChild(ul);
+  }
+
+  function render(){
+    if(mq.matches){
+      svg.style.display = 'none';
+      outlineEl.style.display = 'block';
+      buildOutline();
+    } else {
+      outlineEl.style.display = 'none';
+      svg.style.display = 'block';
+      buildSvg();
+    }
+  }
+
+  render();
+  if(mq.addEventListener){ mq.addEventListener('change', render); }
+  else if(mq.addListener){ mq.addListener(render); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

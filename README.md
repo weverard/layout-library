@@ -274,6 +274,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i20` | Funnel | 5 stages (label, n) descending | Signup/checkout funnels, pipeline stages |
 | `i21` | Chord Diagram | 5 entities, symmetric flow matrix, arc angles precomputed | Migrations, trade, who-talks-to-whom |
 
+**Hierarchy & network — structure**
+
+| # | Chart | Data shape | Best for |
+| --- | --- | --- | --- |
+| `i22` | Radial Tree | Root + 2 levels, polar coords precomputed | Org/topic structures with a focal branch |
+| `i23` | Network Graph | 14 nodes + 18 links, positions precomputed | Collaboration, dependencies, influence maps |
+| `i24` | Icicle / Partition | 3-depth hierarchy, spans precomputed (x0,x1) | File sizes, budget trees, taxonomy weights |
+
 ---
 
 ## Backlog — ideas not yet built

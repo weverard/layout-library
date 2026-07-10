@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i23 · Network Graph — Info design scaffold</title>
+<!--
+  CHART       Network Graph
+  DATA SHAPE  14 nodes, 18 links, positions precomputed —
+              nodes[]{id,label,x,y,w}, links[]{a,b}
+  INSIGHT     relate (structure)
+  BEST FOR    Collaboration, dependencies, influence maps.
+  RE-SKIN     --accent = bridge/focal node; labels reduce to top-3 under
+              ~560px.
+-->
+<style>
+  :root{
+    --accent:#BE123C;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .lnk{stroke:var(--ink);stroke-width:1.3;opacity:.3;transition:opacity .15s,stroke .15s}
+  .lnk.bridge{stroke:var(--accent);opacity:.55}
+  figure.isolating .lnk{opacity:.06}
+  figure.isolating .lnk.on{opacity:.75;stroke:var(--accent)}
+
+  .node{fill:#8F897C;stroke:var(--bg);stroke-width:1.5;transition:opacity .15s}
+  .node.hero{fill:var(--accent)}
+  figure.isolating .node{opacity:.2}
+  figure.isolating .node.on{opacity:1}
+
+  .lbl-text{font-size:11.5px;fill:var(--ink);font-weight:600;pointer-events:none}
+  .lbl-text.hero{fill:var(--accent)}
+  figure.isolating .lbl-text{opacity:.2}
+  figure.isolating .lbl-text.on{opacity:1}
+  .broker-note{font-size:10.5px;fill:var(--muted);font-style:italic;pointer-events:none}
+  figure.isolating .broker-note{opacity:.2}
+  figure.isolating .broker-note.on{opacity:1}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:560px){
+    .lbl-text:not(.top3){display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .lnk,.node,.chip,.lbl-text,.broker-note{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Hierarchy &amp; network · i23</p>
+    <h1>Design and engineering only talk to each other through one person.</h1>
+    <p class="dek">Working relationships across two teams, sized by activity — hover a name to trace their connections (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 340" role="img" aria-label="Network graph of two team clusters, Design and Engineering, connected only through a single broker node, Reese"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A node-link network graph: discs sized by weight, joined by low-opacity links, laid out so the underlying structure reads as two separable clusters.</dd>
+    <dt>When to use it</dt><dd>Collaboration graphs, service dependencies, influence maps — anywhere the question is "who connects to whom" and whether any single node is a structural risk.</dd>
+    <dt>Data shape</dt><dd><code>nodes[]{id,label,x,y,w}</code>, <code>links[]{a,b}</code> — 14 nodes, 18 links; positions and radii are precomputed, not laid out by a physics simulation at render time.</dd>
+    <dt>Visual style</dt><dd>Disc radius is proportional to the square root of weight so area (not radius) encodes it; only the six heaviest nodes carry a permanent label; the sole node bridging both clusters carries the accent and a small "the broker" note.</dd>
+  </dl>
+  <p class="tags"><span>network</span><span>graph</span><span>collaboration</span><span>structure</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a node-link network graph: fourteen discs sized by the square root of a weight value, so their area rather than their radius encodes it, joined by thin ink-colored links held at low opacity so the overall density reads as texture rather than clutter. The positions are precomputed rather than force-simulated, arranged so the graph visibly splits into two separate clusters with open space between them. Only the six heaviest nodes carry a permanent label; the rest are identifiable only on hover, keeping the resting state calm. One node sits in the gap between the clusters and is the only path between them — it carries the accent color and a small italic note naming it the broker, so the structural risk of a single point of failure is visible without reading the data. Hovering any node holds it and its direct neighbors at full opacity and fades every other node and link, so a reader can trace one person's whole set of connections at a glance. Under roughly 560px the labels thin further, down to just the top three heaviest nodes, so names don't collide at small sizes.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i23 · network &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // Positions and weights precomputed offline and verified numerically:
+  //  - removing node 6 (Reese) from the link list splits the graph into
+  //    exactly two components: {0..5} and {7..13} — confirmed by traversal
+  //  - node 6 is the only node with links into both components
+  //  - node 6's x (315) sits strictly between cluster A's max x (215) and
+  //    cluster B's min x (420); avg intra-cluster distance (~101, ~110) is
+  //    well under avg inter-cluster distance (~336)
+  //  - radius = 2.286 * sqrt(w), same constant for every node
+  //  - the 6 highest-w nodes (Maya 62, Reese 58, Sam 50, Lily 47, Priya 45,
+  //    Zoe 44) are exactly the 6 labeled nodes
+  var NODES = [
+    {id:0,  label:'Maya',  x:150, y:120, w:62},
+    {id:1,  label:'Theo',  x:95,  y:180, w:38},
+    {id:2,  label:'Priya', x:140, y:230, w:45},
+    {id:3,  label:'Noah',  x:210, y:110, w:22},
+    {id:4,  label:'Ana',   x:215, y:190, w:41},
+    {id:5,  label:'Kai',   x:185, y:260, w:19},
+    {id:6,  label:'Reese', x:315, y:180, w:58, bridge:true},
+    {id:7,  label:'Sam',   x:430, y:110, w:50},
+    {id:8,  label:'Lily',  x:480, y:150, w:47},
+    {id:9,  label:'Omar',  x:530, y:110, w:33},
+    {id:10, label:'Zoe',   x:480, y:210, w:44},
+    {id:11, label:'Finn',  x:540, y:250, w:36},
+    {id:12, label:'Ivy',   x:420, y:260, w:15},
+    {id:13, label:'Marco', x:560, y:190, w:14}
+  ];
+  var LINKS = [
+    {a:0,b:1},{a:0,b:2},{a:0,b:3},{a:1,b:2},{a:1,b:4},{a:2,b:5},{a:3,b:4},{a:4,b:5},
+    {a:6,b:0},{a:6,b:7},
+    {a:7,b:8},{a:7,b:9},{a:8,b:9},{a:8,b:10},{a:9,b:11},{a:10,b:11},{a:10,b:12},{a:11,b:13}
+  ];
+  var K = 2.286; // radius = K * sqrt(w)
+  var BRIDGE_ID = 6;
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  var byId = {};
+  NODES.forEach(function(n){ byId[n.id] = n; n.r = +(K * Math.sqrt(n.w)).toFixed(1); });
+
+  var ranked = NODES.slice().sort(function(a, b){ return b.w - a.w; });
+  var top6 = ranked.slice(0, 6).map(function(n){ return n.id; });
+  var top3 = ranked.slice(0, 3).map(function(n){ return n.id; });
+
+  var neighbors = {};
+  NODES.forEach(function(n){ neighbors[n.id] = []; });
+  LINKS.forEach(function(l){ neighbors[l.a].push(l.b); neighbors[l.b].push(l.a); });
+
+  var linkEls = {}, nodeEls = {}, labelEls = {};
+
+  LINKS.forEach(function(l, i){
+    var na = byId[l.a], nb = byId[l.b];
+    var isBridgeLink = l.a === BRIDGE_ID || l.b === BRIDGE_ID;
+    var line = el('line', {
+      class: 'lnk' + (isBridgeLink ? ' bridge' : ''),
+      x1:na.x, y1:na.y, x2:nb.x, y2:nb.y
+    });
+    svg.appendChild(line);
+    linkEls[i] = line;
+    l._el = line;
+  });
+
+  NODES.forEach(function(n){
+    var isHero = n.id === BRIDGE_ID;
+    var isLabeled = top6.indexOf(n.id) !== -1;
+
+    var dot = el('circle', {class:'node' + (isHero ? ' hero' : ''), cx:n.x, cy:n.y, r:n.r});
+    var title = el('title', {}); title.textContent = n.label + ' — activity ' + n.w;
+    dot.appendChild(title);
+    svg.appendChild(dot);
+    nodeEls[n.id] = dot;
+
+    if(isLabeled){
+      var isTop3 = top3.indexOf(n.id) !== -1;
+      var lbl = el('text', {
+        class: 'lbl-text' + (isHero ? ' hero' : '') + (isTop3 ? ' top3' : ''),
+        x: n.x + n.r + 6, y: n.y + 4
+      });
+      lbl.textContent = n.label;
+      svg.appendChild(lbl);
+      labelEls[n.id] = lbl;
+    }
+
+    if(isHero){
+      var note = el('text', {class:'broker-note', x:n.x + n.r + 6, y:n.y + 17});
+      note.textContent = 'the broker';
+      svg.appendChild(note);
+      n._note = note;
+    }
+
+    dot.style.cursor = 'pointer';
+    dot.addEventListener('mouseenter', function(){ isolate(n.id); showChip(dot, n.label, n.w); });
+    dot.addEventListener('mousemove', function(){ showChip(dot, n.label, n.w); });
+    dot.addEventListener('mouseleave', function(){ deisolate(); hideChip(); });
+  });
+
+  function isolate(nodeId){
+    figureEl.classList.add('isolating');
+    var onSet = neighbors[nodeId].concat([nodeId]);
+    NODES.forEach(function(n){
+      var on = onSet.indexOf(n.id) !== -1;
+      nodeEls[n.id].classList.toggle('on', on);
+      if(labelEls[n.id]){ labelEls[n.id].classList.toggle('on', on); }
+      if(n._note){ n._note.classList.toggle('on', on); }
+    });
+    LINKS.forEach(function(l){
+      var touches = l.a === nodeId || l.b === nodeId;
+      l._el.classList.toggle('on', touches);
+    });
+  }
+  function deisolate(){
+    figureEl.classList.remove('isolating');
+    NODES.forEach(function(n){
+      nodeEls[n.id].classList.remove('on');
+      if(labelEls[n.id]){ labelEls[n.id].classList.remove('on'); }
+      if(n._note){ n._note.classList.remove('on'); }
+    });
+    LINKS.forEach(function(l){ l._el.classList.remove('on'); });
+  }
+
+  function showChip(target, label, w){
+    var r = target.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = label + ': ' + w;
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
