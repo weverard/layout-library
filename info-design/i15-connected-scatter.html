@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i15 · Connected Scatter — Info design scaffold</title>
+<!--
+  CHART       Connected Scatter
+  DATA SHAPE  One entity x 12 yearly points — {year, x, y}[]
+  INSIGHT     relate over time
+  BEST FOR    Two metrics evolving together (price vs volume, inflation vs
+              unemployment).
+  RE-SKIN     --accent = path. Arrowheads drop and only every 3rd year
+              labels under ~560px.
+-->
+<style>
+  :root{
+    --accent:#1D4ED8;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .gridline{stroke:var(--line);stroke-width:1}
+  .gridlabel{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+  .xtick{font-family:var(--mono);font-size:11px;fill:var(--muted);text-anchor:middle}
+  .axistitle{font-family:var(--mono);font-size:10.5px;fill:var(--muted);letter-spacing:.04em}
+
+  .ghost{fill:none;stroke:var(--line);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .path{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .arrow{fill:var(--accent)}
+
+  .pt{fill:var(--panel);stroke:var(--accent);stroke-width:1.6}
+  .pt.end{fill:var(--accent);stroke:#fff;stroke-width:1.6}
+  .pt.inflect{fill:var(--accent)}
+
+  .yearlabel{font-family:var(--mono);font-size:10.5px;fill:var(--muted);text-anchor:middle}
+  .yearlabel.end{fill:var(--ink);font-weight:600;font-family:var(--sans);font-size:12px}
+  .note{font-size:11.5px;fill:var(--ink)}
+  .note tspan{fill:var(--muted)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:560px){
+    .arrow{display:none}
+    .yearlabel.minor{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .pt,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Correlation · i15</p>
+    <h1>Lifetime value overtook acquisition cost in 2020 — and the gap has widened every year since.</h1>
+    <p class="dek">Customer acquisition cost against lifetime value, one cohort tracked yearly from 2014 to 2025 (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Connected scatter plot tracking customer acquisition cost against lifetime value from 2014 to 2025, with an arrowed path showing the yearly trajectory"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A connected scatter plot: one entity's yearly points joined point-to-point in year order, with small arrowheads carrying the direction of travel.</dd>
+    <dt>When to use it</dt><dd>Two metrics that move together over time in a way a simple line chart can't show — because the path can double back on one axis while still advancing on the other.</dd>
+    <dt>Data shape</dt><dd><code>{year, x, y}[]</code> — one entity, 12 yearly points, in chronological order.</dd>
+    <dt>Visual style</dt><dd>A faint gray ghost of the path sits just behind the accent path for depth; the first and last points are emphasized and year-labeled, the inflection year gets its own callout, and mid-segment arrowheads make the direction of travel legible without a separate legend.</dd>
+  </dl>
+  <p class="tags"><span>correlation</span><span>connected scatter</span><span>time series</span><span>trajectory</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a connected scatter plot: twelve yearly points for a single entity, joined point-to-point by a smooth accent-colored path that loops rather than running straight, since the two metrics don't move in lockstep. A faint gray duplicate of the same path sits just behind it, offset by a few pixels, giving the line quiet depth without a drop shadow. Small triangular arrowheads sit at the midpoint of each segment, rotated to point along the direction of travel, so the reader can tell which way time runs even where the path bends back on itself. Most points are small open rings in the accent color; the first and last points are solid and larger, each with its year set directly beside it in bold, and the one year where the relationship visibly changes gets its own short callout note rather than being left for the reader to spot in the bend of the line. Hovering any point reveals a small dark tooltip with the year and both exact values. On narrow screens the arrowheads disappear and only every third year keeps its label, so the chart doesn't fill with overlapping text.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i15 · connected-scatter &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {year:2014, x:120, y:95},
+    {year:2015, x:145, y:110},
+    {year:2016, x:175, y:130},
+    {year:2017, x:210, y:160},
+    {year:2018, x:230, y:195},
+    {year:2019, x:245, y:230},
+    {year:2020, x:250, y:255, inflection:true, note:'LTV overtakes CAC.'},
+    {year:2021, x:235, y:290},
+    {year:2022, x:215, y:330},
+    {year:2023, x:200, y:375},
+    {year:2024, x:190, y:420},
+    {year:2025, x:180, y:470}
+  ];
+  var X_LABEL = 'CAC $';
+  var Y_LABEL = 'LTV $';
+  var X_DOMAIN = [100, 270];
+  var Y_DOMAIN = [80, 490];
+  var GRID_VALUES = [100, 200, 300, 400];
+  var X_TICKS = [100, 150, 200, 250];
+
+  var W = 640, H = 400;
+  var M = {top:60, right:60, bottom:50, left:54};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+
+  function xOf(v){ return M.left + plotW * (v - X_DOMAIN[0]) / (X_DOMAIN[1] - X_DOMAIN[0]); }
+  function yOf(v){ return M.top + plotH * (1 - (v - Y_DOMAIN[0]) / (Y_DOMAIN[1] - Y_DOMAIN[0])); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  // gridlines (horizontal only, per house style) + value labels for LTV
+  GRID_VALUES.forEach(function(v){
+    var y = yOf(v);
+    svg.appendChild(el('line', {class:'gridline', x1:M.left, x2:W - M.right, y1:y, y2:y}));
+    var t = el('text', {class:'gridlabel', x:M.left, y:y - 7});
+    t.textContent = '$' + v;
+    svg.appendChild(t);
+  });
+
+  // x-axis reference ticks for CAC (no vertical gridlines)
+  X_TICKS.forEach(function(v){
+    var t = el('text', {class:'xtick', x:xOf(v), y:H - M.bottom + 20});
+    t.textContent = '$' + v;
+    svg.appendChild(t);
+  });
+
+  var atL = el('text', {class:'axistitle', x:M.left, y:M.top - 18});
+  atL.textContent = '↑ ' + Y_LABEL;
+  svg.appendChild(atL);
+  var atR = el('text', {class:'axistitle', x:W - M.right, y:H - 14, 'text-anchor':'end'});
+  atR.textContent = X_LABEL + ' →';
+  svg.appendChild(atR);
+
+  var pts = DATA.map(function(d){ return {x:xOf(d.x), y:yOf(d.y), d:d}; });
+  var pathD = pts.map(function(p, i){ return (i === 0 ? 'M' : 'L') + p.x + ',' + p.y; }).join(' ');
+
+  // ghost duplicate, offset slightly, drawn beneath the accent path
+  var ghostD = pts.map(function(p, i){ return (i === 0 ? 'M' : 'L') + (p.x + 4) + ',' + (p.y + 6); }).join(' ');
+  svg.appendChild(el('path', {class:'ghost', d:ghostD}));
+  svg.appendChild(el('path', {class:'path', d:pathD}));
+
+  // mid-segment arrowheads showing direction of travel
+  for(var i = 0; i < pts.length - 1; i++){
+    var a = pts[i], b = pts[i + 1];
+    var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    var angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    var g = el('g', {class:'arrow', transform:'translate(' + mx + ',' + my + ') rotate(' + angle + ')'});
+    g.appendChild(el('polygon', {points:'-5,-4 5,0 -5,4'}));
+    svg.appendChild(g);
+  }
+
+  var last = DATA.length - 1;
+  DATA.forEach(function(d, i){
+    var x = xOf(d.x), y = yOf(d.y);
+    var isEnd = (i === 0 || i === last);
+    var isKeptAt560 = (i % 3 === 0 || i === last);
+    var cls = 'pt' + (isEnd ? ' end' : '') + (d.inflection ? ' inflect' : '');
+    var r = isEnd ? 5 : (d.inflection ? 4.2 : 3.2);
+    var pt = el('circle', {class:cls, cx:x, cy:y, r:r});
+    svg.appendChild(pt);
+    attachHover(pt, d);
+
+    var labelCls = 'yearlabel' + (isEnd ? ' end' : '') + (isKeptAt560 ? '' : ' minor');
+    var ly = i === 0 ? y + 20 : y - 12;
+    if(isEnd) ly = i === 0 ? y + 22 : y - 16;
+    var t = el('text', {class:labelCls, x:x, y:ly});
+    t.textContent = d.year;
+    svg.appendChild(t);
+
+    if(d.inflection){
+      var nx = x + 10, ny = y - 26;
+      var n1 = el('text', {class:'note', x:nx, y:ny, 'text-anchor':'start'});
+      n1.textContent = d.note;
+      svg.appendChild(n1);
+    }
+  });
+
+  function attachHover(node, d){
+    node.addEventListener('mouseenter', function(){ showChip(node, d); });
+    node.addEventListener('mousemove', function(){ showChip(node, d); });
+    node.addEventListener('mouseleave', hideChip);
+  }
+
+  function showChip(node, d){
+    var r = node.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = d.year + ' · CAC $' + d.x + ' · LTV $' + d.y;
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i14 · Bubble Quadrant — Info design scaffold</title>
+<!--
+  CHART       Bubble Quadrant
+  DATA SHAPE  12 items — {label, x, y, size}[] — x/y in [0,1]
+  INSIGHT     relate / position
+  BEST FOR    Effort/impact, risk/return, growth/share.
+  RE-SKIN     --accent = focal-quadrant bubbles + its corner label + wash.
+              Bubble labels drop to hover-only under ~560px.
+-->
+<style>
+  :root{
+    --accent:#B91C1C;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .midline{stroke:var(--line);stroke-width:1}
+  .quad-tint{fill:var(--accent);opacity:.07}
+  .corner{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;fill:var(--muted)}
+  .corner.focal{fill:var(--accent)}
+
+  .bub{fill:#CBC4B6;stroke:#fff;stroke-width:1.5;transition:opacity .15s}
+  .bub.focal{fill:var(--accent)}
+  .bub:hover{opacity:.8}
+  .blabel{font-size:11px;fill:var(--ink);text-anchor:middle;pointer-events:none}
+  .blabel.focal{fill:var(--accent);font-weight:600}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:560px){
+    .blabel{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .bub,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Correlation · i14</p>
+    <h1>Search and onboarding promise the most impact for the least effort.</h1>
+    <p class="dek">Twelve product initiatives scored on effort and impact; bubble size is estimated users affected, in thousands (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Bubble quadrant chart plotting twelve product initiatives by effort and impact, bubble size sized by estimated users affected"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A scatter of area-scaled bubbles split into four labeled quadrants by two midline rules, with the quadrant that matters most for the headline tinted a faint accent wash.</dd>
+    <dt>When to use it</dt><dd>Any time you're positioning a set of options on two axes and want a size dimension to carry a third variable without a second chart — effort/impact, risk/return, growth/share.</dd>
+    <dt>Data shape</dt><dd><code>{label, x, y, size}[]</code>, 12 items, x and y normalized to [0,1] against whatever axes you name.</dd>
+    <dt>Visual style</dt><dd>Bubble radius is proportional to the square root of size, never to size directly, so area — not diameter — represents magnitude; quadrant corner labels replace an axis legend, and only the focal quadrant's bubbles carry the accent color.</dd>
+  </dl>
+  <p class="tags"><span>correlation</span><span>bubble chart</span><span>quadrant</span><span>effort-impact</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a bubble quadrant: two thin hairline rules cross at the midpoint of the plot, splitting it into four quadrants, each named in small uppercase monospace type tucked into its own corner rather than in an axis title or legend. Twelve circles of varying size sit across the four quadrants, their radius scaled to the square root of a third value so that area, not diameter, reads as magnitude. Every bubble not in the quadrant that matters gets a neutral warm-gray fill with a thin white stroke to separate overlaps; the bubbles that land in the one quadrant worth calling out switch to the accent color, and that quadrant's rectangle gets a faint accent wash behind it and its corner label turns accent too, so the eye lands there first. Most bubbles carry their name directly beneath them in small type; hovering any bubble reveals its exact effort, impact, and size values in a small dark tooltip. On narrow screens the direct labels disappear and only the tooltip remains, since twelve labels crowd a narrow chart badly.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i14 · bubble-quadrant &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {label:'Search redesign', x:0.28, y:0.78, size:42},
+    {label:'Onboarding revamp', x:0.35, y:0.82, size:58},
+    {label:'Dark mode', x:0.18, y:0.62, size:20},
+    {label:'Notifications cleanup', x:0.22, y:0.55, size:15},
+    {label:'Mobile app', x:0.82, y:0.88, size:75},
+    {label:'SSO / SAML', x:0.75, y:0.68, size:48},
+    {label:'API v2', x:0.68, y:0.72, size:55},
+    {label:'Bulk export', x:0.30, y:0.25, size:12},
+    {label:'In-app chat', x:0.40, y:0.30, size:18},
+    {label:'Custom themes', x:0.20, y:0.15, size:8},
+    {label:'Advanced permissions', x:0.85, y:0.22, size:30},
+    {label:'Legacy report builder', x:0.72, y:0.18, size:22}
+  ];
+  var QUADRANTS = {
+    tl: {name:'Quick wins', focal:true},
+    tr: {name:'Big bets', focal:false},
+    bl: {name:'Fill-ins', focal:false},
+    br: {name:'Money pits', focal:false}
+  };
+  var X_LABEL = 'Effort';
+  var Y_LABEL = 'Impact';
+  var SIZE_UNIT = 'k users affected';
+  var RADIUS_K = 3.2;
+
+  var W = 640, H = 400;
+  var M = {top:56, right:34, bottom:50, left:34};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+
+  function xOf(v){ return M.left + plotW * v; }
+  function yOf(v){ return M.top + plotH * (1 - v); }
+  function rOf(size){ return RADIUS_K * Math.sqrt(size); }
+  function isFocal(d){ return d.x < 0.5 && d.y > 0.5; }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  var midX = xOf(0.5), midY = yOf(0.5);
+
+  // focal quadrant wash, drawn first so it sits beneath everything
+  svg.appendChild(el('rect', {class:'quad-tint', x:M.left, y:M.top, width:midX - M.left, height:midY - M.top}));
+
+  svg.appendChild(el('line', {class:'midline', x1:midX, x2:midX, y1:M.top, y2:H - M.bottom}));
+  svg.appendChild(el('line', {class:'midline', x1:M.left, x2:W - M.right, y1:midY, y2:midY}));
+
+  var pad = 12;
+  function cornerLabel(text, x, y, anchor, focal){
+    var t = el('text', {class:'corner' + (focal ? ' focal' : ''), x:x, y:y, 'text-anchor':anchor});
+    t.textContent = text;
+    svg.appendChild(t);
+  }
+  cornerLabel(QUADRANTS.tl.name, M.left + pad, M.top + 16, 'start', QUADRANTS.tl.focal);
+  cornerLabel(QUADRANTS.tr.name, W - M.right - pad, M.top + 16, 'end', QUADRANTS.tr.focal);
+  cornerLabel(QUADRANTS.bl.name, M.left + pad, H - M.bottom - 10, 'start', QUADRANTS.bl.focal);
+  cornerLabel(QUADRANTS.br.name, W - M.right - pad, H - M.bottom - 10, 'end', QUADRANTS.br.focal);
+
+  DATA.forEach(function(d){
+    var cx = xOf(d.x), cy = yOf(d.y), r = rOf(d.size);
+    var focal = isFocal(d);
+    var bub = el('circle', {class:'bub' + (focal ? ' focal' : ''), cx:cx, cy:cy, r:r});
+    svg.appendChild(bub);
+
+    var label = el('text', {class:'blabel' + (focal ? ' focal' : ''), x:cx, y:cy + r + 12});
+    label.textContent = d.label;
+    svg.appendChild(label);
+
+    attachHover(bub, d);
+  });
+
+  function attachHover(node, d){
+    node.addEventListener('mouseenter', function(){ showChip(node, d); });
+    node.addEventListener('mousemove', function(){ showChip(node, d); });
+    node.addEventListener('mouseleave', hideChip);
+  }
+
+  function showChip(node, d){
+    var r = node.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = d.label + ' · ' + X_LABEL + ' ' + Math.round(d.x * 100) + '% · ' +
+      Y_LABEL + ' ' + Math.round(d.y * 100) + '% · ' + d.size + SIZE_UNIT;
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

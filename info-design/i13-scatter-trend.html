@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i13 · Annotated Scatter with Trendline — Info design scaffold</title>
+<!--
+  CHART       Annotated Scatter with Trendline
+  DATA SHAPE  30 points — {x, y, label}[] — plus a precomputed regression
+              {m, b, r2} (fit computed once offline, not at runtime)
+  INSIGHT     relate
+  BEST FOR    Two-metric relationships with exceptions worth naming.
+  RE-SKIN     --accent = trendline + outlier marks. Curved leader
+              annotations collapse to a numbered footnote list under ~560px.
+-->
+<style>
+  :root{
+    --accent:#A21CAF;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .gridline{stroke:var(--line);stroke-width:1}
+  .gridlabel{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+  .xtick{font-family:var(--mono);font-size:11px;fill:var(--muted);text-anchor:middle}
+  .axistitle{font-family:var(--mono);font-size:10.5px;fill:var(--muted);letter-spacing:.04em}
+
+  .dot{fill:var(--ink);opacity:.45;transition:opacity .15s}
+  .dot:hover{opacity:.85}
+  .fitline{fill:none;stroke:var(--accent);stroke-width:2}
+  .fitlabel{font-family:var(--mono);font-size:11px;fill:var(--accent);opacity:.85}
+
+  .badge circle{fill:var(--accent)}
+  .badge text{fill:#fff;font-size:9.5px;font-weight:700;text-anchor:middle}
+  .badge{cursor:pointer}
+
+  .outlier-anno .leader{fill:none;stroke:var(--muted);stroke-width:1;stroke-dasharray:2 2}
+  .outlier-anno .name{font-size:11.5px;font-weight:600;fill:var(--ink)}
+  .outlier-anno .note{font-size:11px;fill:var(--muted)}
+
+  .footnotes{display:none;margin:var(--s2) 0 0;padding-left:20px;font-size:13px;color:var(--muted)}
+  .footnotes li{margin:4px 0}
+  .footnotes b{color:var(--ink)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:560px){
+    .outlier-anno{display:none}
+    .footnotes{display:block}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .dot,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Correlation · i13</p>
+    <h1>Onboarding completion tracks with retention — with three exceptions worth a closer look.</h1>
+    <p class="dek">Onboarding completion rate against 90-day retention across 30 customer accounts, illustrative.</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Scatter plot of onboarding completion rate versus 90-day retention across 30 accounts, with an accent regression line and three labeled outliers"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <ol class="footnotes" id="footnotes"></ol>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A scatter plot of 30 accounts with a precomputed linear regression line; the three points that depart most from the fit switch to accent fill and are called out by name.</dd>
+    <dt>When to use it</dt><dd>Any time you want to relate two continuous measures and are prepared to name the handful of points that don't fit the pattern, rather than letting them sit unexplained in the cloud.</dd>
+    <dt>Data shape</dt><dd><code>{x, y, label}[]</code> plus a precomputed regression <code>{m, b, r2}</code> — the fit is computed once offline and hardcoded, never recomputed in the browser.</dd>
+    <dt>Visual style</dt><dd>Ink dots on a hairline horizontal grid; a single accent regression line carries its equation and R² quietly at its own trailing end; three outliers get accent badges with curved leader lines to a name and a one-line reason.</dd>
+  </dl>
+  <p class="tags"><span>correlation</span><span>scatter</span><span>regression</span><span>outliers</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a scatter plot: thirty small ink-colored dots at reduced opacity, plotted against a single hairline horizontal grid with no vertical gridlines at all. A single accent-colored regression line runs through the cloud, and instead of a caption or legend box, its equation and R² value are set quietly in small monospace type right at the line's own trailing end, so the statistic reads as part of the line rather than a separate callout. Three points that sit furthest from the fit switch from ink to the accent color and gain a small numbered badge; a thin dashed line curves outward from each badge to a short two-line label giving the account's name and, below it in muted gray, the one-sentence reason it's worth naming. Hovering any dot reveals a small dark tooltip with its exact values. On narrow screens the curved leader lines and their labels disappear entirely and the same three explanations reappear as a plain numbered list beneath the chart, so the reasoning survives even when there isn't room to point at it directly.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i13 · scatter-trend &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {x:20.8, y:34.4, label:'Acme Co'},
+    {x:68.4, y:68.1, label:'Brightline'},
+    {x:34.0, y:51.1, label:'Cedar Labs'},
+    {x:40.2, y:40.7, label:'Delta Works'},
+    {x:35.6, y:38.5, label:'Echo Systems'},
+    {x:73.6, y:62.7, label:'Fernwood'},
+    {x:59.7, y:56.4, label:'Glide Health'},
+    {x:75.5, y:62.4, label:'Harbor Retail'},
+    {x:84.8, y:56.1, label:'Ionic Media'},
+    {x:51.8, y:67.7, label:'Juniper Group'},
+    {x:59.1, y:50.5, label:'Kestrel Fin'},
+    {x:31.8, y:32.3, label:'Lumen Data'},
+    {x:87.4, y:68.4, label:'Marlow Inc'},
+    {x:84.8, y:59.3, label:'Nova Robotics'},
+    {x:44.2, y:48.3, label:'Orbit Tech'},
+    {x:94.5, y:73.3, label:'Pinecrest'},
+    {x:75.9, y:73.5, label:'Quartz Analytics'},
+    {x:37.9, y:44.8, label:'Ridgeline'},
+    {x:48.5, y:49.5, label:'Sable & Co'},
+    {x:66.2, y:66.2, label:'Tundra Labs'},
+    {x:40.5, y:59.5, label:'Umbra Studio'},
+    {x:95.6, y:73.9, label:'Vantage Point'},
+    {x:23.8, y:30.4, label:'Willow Health'},
+    {x:48.2, y:59.9, label:'Xenon Co'},
+    {x:26.1, y:23.0, label:'Yarrow Ventures'},
+    {x:64.5, y:70.1, label:'Zephyr Ops'},
+    {x:57.1, y:49.7, label:'Ashgrove'},
+    {x:77.4, y:69.5, label:'Birchwood'},
+    {x:19.7, y:32.4, label:'Copperline'},
+    {x:83.7, y:81.5, label:'Driftwood'}
+  ];
+  var FIT = {m:0.568, b:22.74, r2:0.73};
+  var OUTLIERS = [
+    {label:'Juniper Group', note:'Retention held despite lower completion.', dx:-48, dy:-42},
+    {label:'Ionic Media', note:'Completion led, but retention lagged.', dx:-46, dy:48},
+    {label:'Yarrow Ventures', note:'Weakest account on both fronts.', dx:-14, dy:-46}
+  ];
+  var X_LABEL = 'onboarding completion';
+  var Y_LABEL = 'retention';
+  var GRID_VALUES = [0, 25, 50, 75, 100];
+
+  var W = 640, H = 400;
+  var M = {top:70, right:34, bottom:50, left:34};
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+
+  function xOf(v){ return M.left + plotW * (v / 100); }
+  function yOf(v){ return M.top + plotH * (1 - v / 100); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var footnotesEl = document.getElementById('footnotes');
+
+  // gridlines + top-aligned value labels (horizontal only, per house style)
+  GRID_VALUES.forEach(function(v){
+    var y = yOf(v);
+    svg.appendChild(el('line', {class:'gridline', x1:M.left, x2:W - M.right, y1:y, y2:y}));
+    var t = el('text', {class:'gridlabel', x:M.left, y:y - 7});
+    t.textContent = v;
+    svg.appendChild(t);
+  });
+
+  var atL = el('text', {class:'axistitle', x:M.left, y:H - 14});
+  atL.textContent = X_LABEL + ' →';
+  svg.appendChild(atL);
+  var atR = el('text', {class:'axistitle', x:M.left, y:M.top - 46, 'text-anchor':'start'});
+  atR.textContent = '↑ ' + Y_LABEL;
+  svg.appendChild(atR);
+
+  // regression line, drawn full-width across the plotted domain
+  var lx0 = xOf(0), ly0 = yOf(FIT.b);
+  var lx1 = xOf(100), ly1 = yOf(FIT.m * 100 + FIT.b);
+  svg.appendChild(el('line', {class:'fitline', x1:lx0, y1:ly0, x2:lx1, y2:ly1}));
+  var fl1 = el('text', {class:'fitlabel', x:lx1 - 6, y:ly1 - 18, 'text-anchor':'end'});
+  fl1.textContent = 'y = ' + FIT.m.toFixed(2) + 'x + ' + FIT.b.toFixed(1);
+  svg.appendChild(fl1);
+  var fl2 = el('text', {class:'fitlabel', x:lx1 - 6, y:ly1 - 4, 'text-anchor':'end'});
+  fl2.textContent = 'R² = ' + FIT.r2.toFixed(2);
+  svg.appendChild(fl2);
+
+  function leaderPath(x0, y0, x1, y1){
+    var mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    var dx = x1 - x0, dy = y1 - y0;
+    var nx = -dy, ny = dx;
+    var len = Math.sqrt(nx * nx + ny * ny) || 1;
+    var amt = 14;
+    var cx = mx + (nx / len) * amt, cy = my + (ny / len) * amt;
+    return 'M' + x0 + ',' + y0 + ' Q' + cx + ',' + cy + ' ' + x1 + ',' + y1;
+  }
+
+  DATA.forEach(function(d){
+    var out = OUTLIERS.filter(function(o){ return o.label === d.label; })[0];
+    var cx = xOf(d.x), cy = yOf(d.y);
+
+    if(out){
+      var idx = OUTLIERS.indexOf(out) + 1;
+      var g = el('g', {class:'badge'});
+      g.appendChild(el('circle', {cx:cx, cy:cy, r:7}));
+      var num = el('text', {x:cx, y:cy + 3.3});
+      num.textContent = idx;
+      g.appendChild(num);
+      svg.appendChild(g);
+      attachHover(g, d.label, d.x, d.y);
+
+      var lx = cx + out.dx, ly = cy + out.dy;
+      var anno = el('g', {class:'outlier-anno'});
+      anno.appendChild(el('path', {class:'leader', d:leaderPath(cx, cy, lx, ly)}));
+      var anchor = out.dx < 0 ? 'end' : 'start';
+      var name = el('text', {class:'name', x:lx, y:ly, 'text-anchor':anchor});
+      name.textContent = d.label;
+      anno.appendChild(name);
+      var note = el('text', {class:'note', x:lx, y:ly + 14, 'text-anchor':anchor});
+      note.textContent = out.note;
+      anno.appendChild(note);
+      svg.appendChild(anno);
+    } else {
+      var dot = el('circle', {class:'dot', cx:cx, cy:cy, r:3.4});
+      svg.appendChild(dot);
+      attachHover(dot, d.label, d.x, d.y);
+    }
+  });
+
+  // Footnotes follow OUTLIERS order so each list number matches its on-chart badge.
+  OUTLIERS.forEach(function(out){
+    var li = document.createElement('li');
+    li.innerHTML = '<b>' + out.label + '</b> — ' + out.note;
+    footnotesEl.appendChild(li);
+  });
+
+  function attachHover(node, label, x, y){
+    node.addEventListener('mouseenter', function(){ showChip(node, label, x, y); });
+    node.addEventListener('mousemove', function(){ showChip(node, label, x, y); });
+    node.addEventListener('mouseleave', hideChip);
+  }
+
+  function showChip(node, label, x, y){
+    var r = node.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = label + ' · ' + x.toFixed(0) + '% → ' + y.toFixed(0) + '%';
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

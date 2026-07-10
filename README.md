@@ -250,6 +250,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i11` | Ridgeline | 5 groups x 24 precomputed density points | Distributions across groups / time-of-day |
 | `i12` | Beeswarm / Dot Strip | 3 categories x ~40 values, jitter precomputed | Small-n distributions where individual points matter |
 
+**Correlation — how two things move**
+
+| # | Chart | Data shape | Best for |
+|---|---|---|---|
+| `i13` | Annotated Scatter with Trendline | 30 points (x,y) + precomputed regression (m,b,r²) | Two-metric relationships with named exceptions |
+| `i14` | Bubble Quadrant | 12 items (label, x, y, size), x/y in [0,1] | Effort/impact, risk/return, growth/share |
+| `i15` | Connected Scatter | One entity x 12 yearly points (year, x, y) | Two metrics evolving together over time |
+
 ---
 
 ## Backlog — ideas not yet built

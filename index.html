@@ -394,6 +394,19 @@
   .t-i-swarm .srow i{position:absolute;width:7px;height:7px;border-radius:50%;background:#c7c2b6;
     transform:translate(-50%,-50%);display:block}
   .t-i-swarm .srow i.a{background:var(--accent)}
+  .t-i-scatter svg{width:80%;height:66%;overflow:visible}
+  .t-i-scatter .d{fill:#c7c2b6}
+  .t-i-scatter .d.a{fill:var(--accent)}
+  .t-i-scatter .fl{stroke:var(--accent);stroke-width:2}
+  .t-i-quadbub svg{width:80%;height:66%;overflow:visible}
+  .t-i-quadbub .mid{stroke:var(--line);stroke-width:1}
+  .t-i-quadbub .bub{fill:#c7c2b6}
+  .t-i-quadbub .bub.a{fill:var(--accent)}
+  .t-i-connscatter svg{width:80%;height:66%;overflow:visible}
+  .t-i-connscatter .cs-ghost{fill:none;stroke:var(--line);stroke-width:2.4}
+  .t-i-connscatter .cs-path{fill:none;stroke:var(--accent);stroke-width:2}
+  .t-i-connscatter .cs-arrow{fill:var(--accent)}
+  .t-i-connscatter .cs-pt{fill:var(--accent)}
 
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
@@ -546,6 +559,13 @@
       <a class="card" href="info-design/i10-histogram.html" style="--accent:#1E40AF"><div class="thumb"><div class="tw t-i-hist"><i style="height:22px"></i><i style="height:40px"></i><i class="a" style="height:64px"></i><i class="a" style="height:82px"></i><i class="a" style="height:58px"></i><i style="height:36px"></i><i style="height:20px"></i><i style="height:10px"></i></div></div><div class="b"><p class="n">i10</p><h3>Histogram with Summary Stats</h3><p class="nav"><b>Hover a bar</b> for its count; dashed lines flag the mean and median.</p><div class="tags"><span class="tag">distribution</span><span class="tag">skew</span></div></div></a>
       <a class="card" href="info-design/i11-ridgeline.html" style="--accent:#7C2D12"><div class="thumb"><div class="tw t-i-ridge"><svg viewBox="0 0 60 40"><path class="r1" d="M0,30 C10,26 16,10 24,10 C32,10 38,26 48,30 L48,34 C38,30 32,14 24,14 C16,14 10,30 0,34 Z"/><path class="r2" d="M4,34 C14,30 20,18 30,18 C40,18 46,30 56,34 L56,38 C46,34 40,22 30,22 C20,22 14,38 4,38 Z"/></svg></div></div><div class="b"><p class="n">i11</p><h3>Ridgeline</h3><p class="nav"><b>Hover a row</b> to lift it forward; a tick marks its median.</p><div class="tags"><span class="tag">distribution</span><span class="tag">compare-groups</span></div></div></a>
       <a class="card" href="info-design/i12-beeswarm.html" style="--accent:#115E59"><div class="thumb"><div class="tw t-i-swarm"><div class="srow"><i class="a" style="left:20%;top:30%"></i><i class="a" style="left:34%;top:60%"></i><i class="a" style="left:44%;top:20%"></i><i style="left:58%;top:70%"></i><i style="left:80%;top:40%"></i></div><div class="srow"><i style="left:15%;top:50%"></i><i style="left:28%;top:20%"></i><i style="left:40%;top:65%"></i><i style="left:52%;top:35%"></i><i style="left:66%;top:60%"></i></div></div></div><div class="b"><p class="n">i12</p><h3>Beeswarm / Dot Strip</h3><p class="nav"><b>Hover a dot</b> for its value; one named outlier gets a leader line.</p><div class="tags"><span class="tag">distribution</span><span class="tag">outlier</span></div></div></a>
+    </div>
+
+    <p class="cat">Correlation — how two things move</p>
+    <div class="grid">
+      <a class="card" href="info-design/i13-scatter-trend.html" style="--accent:#A21CAF"><div class="thumb"><div class="tw t-i-scatter"><svg viewBox="0 0 60 40"><line class="fl" x1="4" y1="34" x2="56" y2="8"/><circle class="d" cx="10" cy="30" r="2.2"/><circle class="d" cx="18" cy="24" r="2.2"/><circle class="d" cx="26" cy="21" r="2.2"/><circle class="d a" cx="30" cy="10" r="2.6"/><circle class="d" cx="36" cy="16" r="2.2"/><circle class="d" cx="44" cy="12" r="2.2"/><circle class="d" cx="50" cy="9" r="2.2"/></svg></div></div><div class="b"><p class="n">i13</p><h3>Annotated Scatter with Trendline</h3><p class="nav"><b>Hover a dot</b> for its values; three outliers get named leader lines.</p><div class="tags"><span class="tag">correlation</span><span class="tag">regression</span></div></div></a>
+      <a class="card" href="info-design/i14-bubble-quadrant.html" style="--accent:#B91C1C"><div class="thumb"><div class="tw t-i-quadbub"><svg viewBox="0 0 60 40"><line class="mid" x1="30" y1="2" x2="30" y2="38"/><line class="mid" x1="2" y1="20" x2="58" y2="20"/><circle class="bub a" cx="16" cy="10" r="7"/><circle class="bub" cx="46" cy="12" r="9"/><circle class="bub" cx="18" cy="30" r="4"/><circle class="bub" cx="44" cy="28" r="5.5"/></svg></div></div><div class="b"><p class="n">i14</p><h3>Bubble Quadrant</h3><p class="nav"><b>Hover a bubble</b> for its name and all three values.</p><div class="tags"><span class="tag">correlation</span><span class="tag">effort-impact</span></div></div></a>
+      <a class="card" href="info-design/i15-connected-scatter.html" style="--accent:#1D4ED8"><div class="thumb"><div class="tw t-i-connscatter"><svg viewBox="0 0 60 40"><path class="cs-ghost" d="M7,35 L21,27 L35,15 L53,7"/><path class="cs-path" d="M6,34 L20,26 L34,14 L52,6"/><polygon class="cs-arrow" points="-3,-2.5 3,0 -3,2.5" transform="translate(27,20) rotate(-34)"/><circle class="cs-pt" cx="6" cy="34" r="2.2"/><circle class="cs-pt" cx="52" cy="6" r="2.2"/></svg></div></div><div class="b"><p class="n">i15</p><h3>Connected Scatter</h3><p class="nav"><b>Hover a point</b> for its year and values.</p><div class="tags"><span class="tag">correlation</span><span class="tag">time series</span></div></div></a>
     </div>
     </div>
 
