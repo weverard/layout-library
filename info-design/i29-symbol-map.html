@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i29 · Proportional Symbol Map — Info design scaffold</title>
+<!--
+  CHART       Proportional Symbol Map
+  DATA SHAPE  COASTLINE path (landmass + island) + 10 locations —
+              {label, x, y, v}[]
+  INSIGHT     locate + size
+  BEST FOR    Quantities at places (sales by city, outbreaks).
+  RE-SKIN     --accent = symbols. Under ~560px the map letterboxes inside a
+              framed panel and the size-key drops below it.
+-->
+<style>
+  :root{
+    --accent:#B45309;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  .map-frame{position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .land{fill:var(--line)}
+  .sym{fill:var(--accent);fill-opacity:.7;stroke:#fff;stroke-width:1.6;cursor:default;transition:fill-opacity .12s}
+  .sym:hover{fill-opacity:.92}
+  .symlabel{font-size:12px;font-weight:600;fill:var(--ink)}
+
+  .sizekey{position:absolute;left:10px;bottom:10px;display:flex;align-items:flex-end;gap:14px;
+    background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+  .sizekey svg{width:auto;overflow:visible}
+  .sizekey .key-circle{fill:var(--accent);fill-opacity:.55;stroke:var(--muted);stroke-width:1}
+  .sizekey .key-label{font-family:var(--mono);font-size:10.5px;fill:var(--muted);text-anchor:middle}
+  .sizekey-title{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:flex-start;margin-right:-4px}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:560px){
+    .map-frame{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:var(--s2)}
+    figure{display:flex;flex-direction:column;gap:var(--s2)}
+    .sizekey{position:static;background:none;border:0;padding:0;justify-content:center}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .sym,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Geospatial · i29</p>
+    <h1>Portcairn alone holds more than a quarter of all inventory across the isles.</h1>
+    <p class="dek">Warehouse inventory across ten depots in the Tolvern Isles archipelago, symbol area scaled to units on hand, in thousands (illustrative, fictional geography).</p>
+  </header>
+  <figure id="figure">
+    <div class="map-frame">
+      <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Proportional symbol map of the fictional Tolvern Isles showing warehouse inventory at ten depots, with circle area scaled to units on hand and Portcairn and Harrowend labeled as the two largest"></svg>
+    </div>
+    <div class="sizekey" id="sizekey"></div>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative · fictional geography</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A proportional symbol map: a simplified coastline anchors circles at each location, with circle area — not radius — scaled to value.</dd>
+    <dt>When to use it</dt><dd>Quantities tied to specific places, where the reader needs both "where" and "how much" at once — sales by city, cases by outbreak site, inventory by depot.</dd>
+    <dt>Data shape</dt><dd><code>COASTLINE</code> path (a landmass subpath + a smaller island subpath) plus <code>{label, x, y, v}[]</code> — 10 locations positioned on or near the coastline.</dd>
+    <dt>Visual style</dt><dd>Semi-opaque accent circles with a thin white stroke so overlapping symbols still read as distinct; only the two largest carry a direct label, the rest reveal on hover; a three-circle size key uses the identical radius scale as the map itself.</dd>
+  </dl>
+  <p class="tags"><span>geospatial</span><span>symbol map</span><span>proportional</span><span>quantity</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a proportional symbol map: a muted, hand-simplified coastline of a landmass and a smaller offshore island sits filled in a neutral tone, and accent-colored circles mark ten locations on or near it. Every circle's radius is the square root of its value times one fixed scale factor, so area — the thing the eye actually reads — encodes the quantity accurately, rather than radius doing it and silently exaggerating the largest points. A thin white stroke rings every circle so that any that overlap still read as separate shapes. Only the two largest locations carry a label directly on the map; the rest reveal their name and value in a small dark chip on hover. A three-circle size key sits in the map's bottom-left corner, each ring labeled with a round value, built from the exact same radius scale as the map symbols so it doubles as a ruler. Below roughly 560px wide, the map sits inside a letterboxed panel that keeps its true proportions, and the size key drops out of the corner to sit as its own row beneath the map.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i29 · symbol-map &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // Hand-drawn, simplified coastline for a fictional archipelago: one main
+  // landmass subpath + one smaller island subpath. This exact string is
+  // duplicated verbatim in i30-flow-map.html so both charts share one place.
+  var COASTLINE = "M120,80 C200,50 300,40 380,70 C440,95 470,140 452,190 C478,225 468,285 412,312 C352,340 262,336 198,312 C136,289 88,262 78,202 C68,148 78,108 120,80 Z M515,238 C545,220 585,228 594,256 C602,282 578,302 548,298 C520,294 500,262 515,238 Z";
+
+  var DATA = [
+    {label:'Portcairn',   x:230, y:170, v:480},
+    {label:'Reedmark',    x:330, y:110, v:95},
+    {label:'Cliffgate',   x:400, y:160, v:210},
+    {label:'Harrowend',   x:350, y:230, v:340},
+    {label:'Millbrook',   x:230, y:260, v:150},
+    {label:'Sandrift',    x:150, y:230, v:70},
+    {label:'Oxfen',       x:180, y:140, v:120},
+    {label:'Bellcross',   x:300, y:290, v:180},
+    {label:'Thistlewick', x:420, y:250, v:60},
+    {label:'Kellisle',    x:555, y:260, v:40}
+  ];
+  var KEY_VALUES = [50, 200, 450]; // round values spanning the data range
+
+  // radius encodes area: r = SCALE * sqrt(v). The map symbols and the
+  // size-key circles below both call this same function.
+  var maxR = 34;
+  var SCALE = maxR / Math.sqrt(Math.max.apply(null, DATA.map(function(d){ return d.v; })));
+  function radiusOf(v){ return SCALE * Math.sqrt(v); }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var keyEl = document.getElementById('sizekey');
+
+  svg.appendChild(el('path', {class:'land', d:COASTLINE}));
+
+  // the two largest values get a direct on-map label
+  var sortedByV = DATA.slice().sort(function(a, b){ return b.v - a.v; });
+  var topTwo = [sortedByV[0].label, sortedByV[1].label];
+
+  DATA.forEach(function(d){
+    var r = radiusOf(d.v);
+    var circle = el('circle', {class:'sym', cx:d.x, cy:d.y, r:r});
+    svg.appendChild(circle);
+    attachHover(circle, d);
+
+    if(topTwo.indexOf(d.label) !== -1){
+      var t = el('text', {class:'symlabel', x:d.x, y:d.y - r - 8, 'text-anchor':'middle'});
+      t.textContent = d.label;
+      svg.appendChild(t);
+    }
+  });
+
+  function attachHover(node, d){
+    node.addEventListener('mouseenter', function(){ showChip(node, d); });
+    node.addEventListener('mousemove', function(){ showChip(node, d); });
+    node.addEventListener('mouseleave', hideChip);
+  }
+  function showChip(node, d){
+    var r = node.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = d.label + ': ' + d.v + 'k units';
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  // size key: 3 nested circles, same baseline, same SCALE as the map
+  (function renderKey(){
+    var pad = 6;
+    var rMax = radiusOf(KEY_VALUES[KEY_VALUES.length - 1]);
+    var kh = rMax * 2 + 20;
+    var cxs = [];
+    var cursorX = pad + rMax;
+    KEY_VALUES.forEach(function(v){
+      var r = radiusOf(v);
+      cxs.push(cursorX);
+      cursorX += rMax + r + 10;
+    });
+    var kw = cursorX - rMax - 10 + rMax + pad;
+    var keySvg = el('svg', {viewBox:'0 0 ' + kw + ' ' + kh, width:kw, height:kh});
+    var baseline = kh - 14;
+    KEY_VALUES.forEach(function(v, i){
+      var r = radiusOf(v);
+      var cx = cxs[i];
+      keySvg.appendChild(el('circle', {class:'key-circle', cx:cx, cy:baseline - r, r:r}));
+      var lbl = el('text', {class:'key-label', x:cx, y:kh - 2});
+      lbl.textContent = v;
+      keySvg.appendChild(lbl);
+    });
+    var title = document.createElement('span');
+    title.className = 'sizekey-title';
+    title.textContent = 'Units (k)';
+    keyEl.appendChild(title);
+    keyEl.appendChild(keySvg);
+  })();
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

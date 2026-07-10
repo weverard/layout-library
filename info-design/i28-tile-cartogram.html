@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i28 · Tile-Grid Cartogram — Info design scaffold</title>
+<!--
+  CHART       Tile-Grid Cartogram
+  DATA SHAPE  24 regions — {code, label, col, row, v}[]
+  INSIGHT     locate / compare regions with equal weight
+  BEST FOR    Per-region rates where area shouldn't dominate (elections,
+              penetration).
+  RE-SKIN     --accent = the ramp. Tiles shrink but the grid SHAPE persists
+              on narrow (the single SVG scales fluidly; it never reflows to
+              a list).
+-->
+<style>
+  :root{
+    --accent:#0369A1;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .tile{stroke:var(--bg);stroke-width:3;cursor:default;transition:opacity .12s}
+  .tile:hover{opacity:.78}
+  .lvl0{fill:var(--line)}
+  .lvl1{fill:var(--accent);fill-opacity:.26}
+  .lvl2{fill:var(--accent);fill-opacity:.46}
+  .lvl3{fill:var(--accent);fill-opacity:.7}
+  .lvl4{fill:var(--accent);fill-opacity:1}
+  .tilecode{font-family:var(--mono);font-size:13px;text-anchor:middle;pointer-events:none}
+  .tilecode.dark{fill:var(--ink)}
+  .tilecode.light{fill:#fff}
+
+  .leader{stroke:var(--muted);stroke-width:1}
+  .leader-dot{fill:var(--accent)}
+  .leader-label{font-size:12px;fill:var(--ink);text-anchor:middle}
+  .leader-label tspan{fill:var(--muted)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    .tile,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Geospatial · i28</p>
+    <h1>Corvane turned out at nearly double Varlow's rate — geography had nothing to do with it.</h1>
+    <p class="dek">Turnout across all 24 constituencies of the Tolvern Isles Assembly election, one equally sized tile per constituency regardless of land area (illustrative, fictional geography).</p>
+  </header>
+  <figure id="figure">
+    <svg id="chart" viewBox="0 0 640 600" role="img" aria-label="Tile-grid cartogram of the 24 constituencies of the fictional Tolvern Isles, each shown as an equal-size tile shaded by turnout rate, with Corvane annotated as the highest and Varlow as the lowest"></svg>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative · fictional geography</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A tile-grid cartogram: every region gets one equally sized tile, positioned at a fixed grid cell chosen to loosely trace the region's place on the map, rather than being scaled or shaped by true land area.</dd>
+    <dt>When to use it</dt><dd>Per-region rates or shares where physical area would otherwise dominate the reader's eye — a large rural constituency sitting next to a tiny dense one, election results, penetration or adoption rates, per-capita metrics.</dd>
+    <dt>Data shape</dt><dd><code>{code, label, col, row, v}[]</code> — 24 regions, each assigned a distinct grid cell; cells left empty keep the outline reading as a coastline instead of a plain rectangle.</dd>
+    <dt>Visual style</dt><dd>A five-step sequential ramp of the accent color fills each tile by value, tiling the full range with no gaps between steps; a short code sits centered in every tile in place of a legend; the two genuine extremes each carry a leader line to a one-line label.</dd>
+  </dl>
+  <p class="tags"><span>geospatial</span><span>cartogram</span><span>equal-weight</span><span>election</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a tile-grid cartogram: twenty-four equally sized rounded tiles sit at fixed grid positions chosen to loosely trace a landmass, with a handful of grid cells deliberately left empty so the overall outline still reads as a coastline rather than a plain rectangle. Every tile is filled with one of five opacity steps of a single accent color, the steps tiling the full value range with no gaps between them, so the reader compares regions on value alone with no bias from land area. A short code sits centered in every tile in place of a legend or a full name. The two tiles that are the genuine extremes of the data — not just the two that look most striking — each carry a short leader line, up from the top row or down from the bottom row, to a one-line label naming the place and its value. Hovering any tile reveals its full name and exact value in a small dark chip. On narrow screens the whole grid simply scales down as one fluid unit; it never reflows into a list, so the geographic shape stays intact at any width.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i28 · tile-cartogram &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // col/row are 0-indexed grid coordinates (col A..F -> 0..5, row 1..5 -> 0..4).
+  // Empty cells (no region occupies them) are left out so the filled shape
+  // loosely tapers like a landmass: narrow at the top and bottom, wide through
+  // the middle.
+  var DATA = [
+    {code:'B1', label:'Ashwick',       col:1, row:0, v:62},
+    {code:'C1', label:'Bellmere',      col:2, row:0, v:58},
+    {code:'D1', label:'Corvane',       col:3, row:0, v:89, extreme:'max'},
+    {code:'E1', label:'Drummel',       col:4, row:0, v:65},
+    {code:'A2', label:'Esker',         col:0, row:1, v:54},
+    {code:'B2', label:'Fenmoor',       col:1, row:1, v:67},
+    {code:'C2', label:'Gullrock',      col:2, row:1, v:73},
+    {code:'D2', label:'Harrowbay',     col:3, row:1, v:69},
+    {code:'E2', label:'Islewick',      col:4, row:1, v:60},
+    {code:'F2', label:'Junip',         col:5, row:1, v:48},
+    {code:'A3', label:'Kestrelsound',  col:0, row:2, v:51},
+    {code:'B3', label:'Lindow',        col:1, row:2, v:63},
+    {code:'C3', label:'Marrowpoint',   col:2, row:2, v:66},
+    {code:'D3', label:'Norbeck',       col:3, row:2, v:77},
+    {code:'E3', label:'Oxlade',        col:4, row:2, v:70},
+    {code:'F3', label:'Pennard',       col:5, row:2, v:55},
+    {code:'B4', label:'Quillon',       col:1, row:3, v:45},
+    {code:'C4', label:'Ravensmere',    col:2, row:3, v:59},
+    {code:'D4', label:'Sablecove',     col:3, row:3, v:64},
+    {code:'E4', label:'Tarnwick',      col:4, row:3, v:68},
+    {code:'F4', label:'Ulmsted',       col:5, row:3, v:52},
+    {code:'C5', label:'Varlow',        col:2, row:4, v:41, extreme:'min'},
+    {code:'D5', label:'Wrenfield',     col:3, row:4, v:57},
+    {code:'E5', label:'Yewgate',       col:4, row:4, v:63}
+  ];
+
+  var CELL = 80, GAP = 10, STEP = CELL + GAP, COLS = 6, ROWS = 5;
+  var W = 640, H = 600;
+  var M = {left:(W - (COLS * STEP - GAP)) / 2, top:80};
+
+  function xOf(col){ return M.left + col * STEP; }
+  function yOf(row){ return M.top + row * STEP; }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+
+  // 5-level sequential ramp: equal-width buckets tiling [min,max] with no gaps
+  var minD = DATA.reduce(function(a, b){ return a.v < b.v ? a : b; });
+  var maxD = DATA.reduce(function(a, b){ return a.v > b.v ? a : b; });
+  var bucketW = (maxD.v - minD.v) / 5;
+  function levelOf(v){
+    var lvl = Math.floor((v - minD.v) / bucketW);
+    if(lvl > 4) lvl = 4;
+    if(lvl < 0) lvl = 0;
+    return lvl;
+  }
+
+  DATA.forEach(function(d){
+    var level = levelOf(d.v);
+    var x = xOf(d.col), y = yOf(d.row);
+    var rect = el('rect', {class:'tile lvl' + level, x:x, y:y, width:CELL, height:CELL, rx:8});
+    svg.appendChild(rect);
+    attachHover(rect, d);
+
+    var codeCls = 'tilecode ' + (level >= 3 ? 'light' : 'dark');
+    var t = el('text', {class:codeCls, x:x + CELL / 2, y:y + CELL / 2 + 5});
+    t.textContent = d.code;
+    svg.appendChild(t);
+  });
+
+  // leader-line annotations for the genuine max (top row) and min (bottom row)
+  DATA.forEach(function(d){
+    if(!d.extreme) return;
+    var x = xOf(d.col) + CELL / 2;
+    var up = d.extreme === 'max';
+    var edgeY = up ? yOf(d.row) : yOf(d.row) + CELL;
+    var dotY = edgeY;
+    var lineEndY = up ? edgeY - 28 : edgeY + 28;
+    var labelY = up ? lineEndY - 12 : lineEndY + 16;
+
+    svg.appendChild(el('circle', {class:'leader-dot', cx:x, cy:dotY, r:2.6}));
+    svg.appendChild(el('line', {class:'leader', x1:x, y1:dotY, x2:x, y2:lineEndY}));
+
+    var l1 = el('text', {class:'leader-label', x:x, y:labelY});
+    l1.textContent = d.label + ' — ' + (up ? 'highest' : 'lowest');
+    svg.appendChild(l1);
+    var l2 = el('text', {class:'leader-label', x:x, y:labelY + (up ? -15 : 15)});
+    var tspan = el('tspan', {});
+    tspan.textContent = d.v + '% turnout';
+    l2.appendChild(tspan);
+    svg.appendChild(l2);
+  });
+
+  function attachHover(rectEl, d){
+    rectEl.addEventListener('mouseenter', function(){ showChip(rectEl, d); });
+    rectEl.addEventListener('mousemove', function(){ showChip(rectEl, d); });
+    rectEl.addEventListener('mouseleave', hideChip);
+  }
+
+  function showChip(rectEl, d){
+    var r = rectEl.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = d.label + ': ' + d.v + '%';
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

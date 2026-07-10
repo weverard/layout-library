@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i30 · Flow Map — Info design scaffold</title>
+<!--
+  CHART       Flow Map
+  DATA SHAPE  COASTLINE path (landmass + island) + 1 origin + 6 destinations —
+              {from:{x,y}, to:{x,y,label}, v}[]
+  INSIGHT     show flow across space
+  BEST FOR    Shipments, migration, network traffic.
+  RE-SKIN     --accent = hero arc. Under ~560px arcs thin further and
+              destination labels move to a side list. The dash-offset drift
+              animation is gated by prefers-reduced-motion.
+-->
+<style>
+  :root{
+    --accent:#7E22CE;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative;display:flex;gap:var(--s3);align-items:flex-start}
+  .map-frame{flex:1;min-width:0}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .land{fill:var(--line)}
+  .origin-dot{fill:var(--ink)}
+  .origin-label{font-size:12px;font-weight:600;fill:var(--ink)}
+
+  .flow-arc{fill:none;stroke:#C9C2B4;stroke-linecap:round;stroke-dasharray:8 7;
+    animation:flowdash 1.6s linear infinite;transition:opacity .15s}
+  .flow-arc.hero{stroke:var(--accent)}
+  .arrow{fill:#C9C2B4;transition:opacity .15s}
+  .arrow.hero{fill:var(--accent)}
+  figure.isolating .flow-arc,figure.isolating .arrow{opacity:.12}
+  figure.isolating .flow-arc.on,figure.isolating .arrow.on{opacity:1}
+  @keyframes flowdash{ to{ stroke-dashoffset:-30; } }
+
+  .destlabel{font-size:11.5px;fill:var(--muted)}
+  .destlabel.hero{fill:var(--accent);font-weight:600}
+  .sharelabel{font-size:11.5px;fill:var(--accent);font-weight:600}
+
+  .destlist{display:none;flex:0 0 150px;font-size:12.5px;padding-top:4px}
+  .destlist .row{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
+  .destlist .row.hero{color:var(--accent);font-weight:600}
+  .destlist .row span:last-child{font-family:var(--mono);color:var(--muted)}
+  .destlist .row.hero span:last-child{color:var(--accent)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s}
+  .chip.on{opacity:1}
+
+  @media (max-width:560px){
+    figure{flex-direction:column}
+    .flow-arc{stroke-width:calc(var(--w) * .55) !important}
+    .destlabel{display:none}
+    .destlist{display:block;flex:1;width:100%}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .flow-arc{animation:none}
+    .flow-arc,.arrow,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Geospatial · i30</p>
+    <h1>Harrowend receives nearly 40% of everything the Portcairn depot ships out.</h1>
+    <p class="dek">Shipment volume from the Portcairn depot to six other points across the Tolvern Isles archipelago, arc width scaled to volume (illustrative, fictional geography).</p>
+  </header>
+  <figure id="figure">
+    <div class="map-frame">
+      <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Flow map of the fictional Tolvern Isles showing shipment volume from the Portcairn depot to six destinations, with the arc to Harrowend highlighted as the largest at nearly 40 percent of the total"></svg>
+    </div>
+    <div class="destlist" id="destlist"></div>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative · fictional geography</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A flow map: curved arcs run from one origin to several destinations, stroke width scaled to volume, with small arrowheads marking direction.</dd>
+    <dt>When to use it</dt><dd>Movement from a single source to multiple points — shipments, migration, network traffic — where both the destination and the relative size of each flow matter.</dd>
+    <dt>Data shape</dt><dd><code>COASTLINE</code> path (same landmass + island as the symbol map) plus one origin <code>{x,y}</code> and <code>{to:{x,y,label}, v}[]</code> for 6 destinations.</dd>
+    <dt>Visual style</dt><dd>Neutral arcs for ordinary flows, one accent hero arc for the single largest destination labeled with its share of the total; a slow dash-offset drift animation reinforces the direction of travel, fully disabled under reduced motion.</dd>
+  </dl>
+  <p class="tags"><span>geospatial</span><span>flow map</span><span>shipments</span><span>directional</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a flow map: from one origin point, six curved arcs sweep out to destination points scattered across a muted, hand-simplified coastline. Every arc's stroke width is proportional to its volume, so the biggest flow reads as visibly thicker rather than merely differently colored, and a small triangular arrowhead sits at each destination end, rotated to the arc's own tangent so the direction of travel stays unambiguous even where arcs cross. Every arc is a neutral warm gray except the single largest destination, which carries the accent color and its own label stating its exact share of the total volume. A slow, looping dash-offset animation drifts each arc's dashes from origin toward destination as a quiet visual cue for direction, one that fully stops for anyone who has asked their system to reduce motion. Hovering any arc fades every other arc and shows a chip with that destination's name and exact volume. Below roughly 560px wide the arcs thin further and the destination labels leave the map entirely to become a short list beside it.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i30 · flow-map &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  // Hand-drawn, simplified coastline for a fictional archipelago: one main
+  // landmass subpath + one smaller island subpath. This exact string is
+  // duplicated verbatim in i29-symbol-map.html so both charts share one place.
+  var COASTLINE = "M120,80 C200,50 300,40 380,70 C440,95 470,140 452,190 C478,225 468,285 412,312 C352,340 262,336 198,312 C136,289 88,262 78,202 C68,148 78,108 120,80 Z M515,238 C545,220 585,228 594,256 C602,282 578,302 548,298 C520,294 500,262 515,238 Z";
+
+  var ORIGIN = {label:'Portcairn', x:230, y:170};
+  var DATA = [
+    {to:{label:'Cliffgate',   x:400, y:160}, v:180},
+    {to:{label:'Harrowend',   x:350, y:230}, v:340},
+    {to:{label:'Millbrook',   x:230, y:260}, v:90},
+    {to:{label:'Sandrift',    x:150, y:230}, v:60},
+    {to:{label:'Bellcross',   x:300, y:290}, v:140},
+    {to:{label:'Kellisle',    x:555, y:260}, v:50}
+  ];
+
+  var total = DATA.reduce(function(sum, d){ return sum + d.v; }, 0);
+  var hero = DATA.reduce(function(a, b){ return b.v > a.v ? b : a; });
+  var heroShare = hero.v / total;
+
+  var maxW = 14;
+  var WSCALE = maxW / hero.v;
+  function widthOf(v){ return WSCALE * v; }
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+
+  var svg = document.getElementById('chart');
+  var chip = document.getElementById('chip');
+  var figureEl = document.getElementById('figure');
+  var destlistEl = document.getElementById('destlist');
+
+  svg.appendChild(el('path', {class:'land', d:COASTLINE}));
+
+  function controlPoint(o, d){
+    var mx = (o.x + d.x) / 2, my = (o.y + d.y) / 2;
+    var dx = d.x - o.x, dy = d.y - o.y;
+    var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    var nx = -dy / dist, ny = dx / dist; // perpendicular unit vector
+    var bend = dist * 0.2;
+    return {x:mx + nx * bend, y:my + ny * bend};
+  }
+
+  var arcEls = [], arrowEls = [];
+
+  DATA.forEach(function(d){
+    var c = controlPoint(ORIGIN, d.to);
+    var isHero = d === hero;
+    var w = widthOf(d.v);
+    var pathD = 'M' + ORIGIN.x + ',' + ORIGIN.y + ' Q' + c.x + ',' + c.y + ' ' + d.to.x + ',' + d.to.y;
+
+    var arc = el('path', {
+      class:'flow-arc' + (isHero ? ' hero' : ''),
+      d:pathD,
+      style:'--w:' + w + 'px; stroke-width:' + w + 'px'
+    });
+    svg.appendChild(arc);
+    arcEls.push(arc);
+
+    // arrowhead: tangent at t=1 of the quadratic is the direction from the
+    // control point to the end point (origin -> destination)
+    var angle = Math.atan2(d.to.y - c.y, d.to.x - c.x) * 180 / Math.PI;
+    var backX = d.to.x - 9 * Math.cos(angle * Math.PI / 180);
+    var backY = d.to.y - 9 * Math.sin(angle * Math.PI / 180);
+    var arrow = el('g', {
+      class:'arrow' + (isHero ? ' hero' : ''),
+      transform:'translate(' + backX + ',' + backY + ') rotate(' + angle.toFixed(2) + ')'
+    });
+    arrow.appendChild(el('polygon', {points:'-6,-4.5 6,0 -6,4.5'}));
+    svg.appendChild(arrow);
+    arrowEls.push(arrow);
+
+    attachHover(arc, arrow, d);
+
+    var lx = d.to.x + (d.to.x > ORIGIN.x ? 10 : -10);
+    var lbl = el('text', {
+      class:'destlabel' + (isHero ? ' hero' : ''),
+      x:lx, y:d.to.y + 4,
+      'text-anchor': d.to.x > ORIGIN.x ? 'start' : 'end'
+    });
+    lbl.textContent = d.to.label;
+    svg.appendChild(lbl);
+
+    if(isHero){
+      var sx = d.to.x + (d.to.x > ORIGIN.x ? 10 : -10);
+      var share = el('text', {
+        class:'sharelabel', x:sx, y:d.to.y + 20,
+        'text-anchor': d.to.x > ORIGIN.x ? 'start' : 'end'
+      });
+      share.textContent = (heroShare * 100).toFixed(1) + '% of shipments';
+      svg.appendChild(share);
+    }
+  });
+
+  svg.appendChild(el('circle', {class:'origin-dot', cx:ORIGIN.x, cy:ORIGIN.y, r:5}));
+  var ol = el('text', {class:'origin-label', x:ORIGIN.x - 10, y:ORIGIN.y - 10, 'text-anchor':'end'});
+  ol.textContent = ORIGIN.label;
+  svg.appendChild(ol);
+
+  function attachHover(arc, arrow, d){
+    function on(){
+      figureEl.classList.add('isolating');
+      arc.classList.add('on'); arrow.classList.add('on');
+      showChip(arc, d);
+    }
+    function off(){
+      figureEl.classList.remove('isolating');
+      arc.classList.remove('on'); arrow.classList.remove('on');
+      hideChip();
+    }
+    arc.addEventListener('mouseenter', on);
+    arc.addEventListener('mousemove', function(){ showChip(arc, d); });
+    arc.addEventListener('mouseleave', off);
+  }
+  function showChip(node, d){
+    var r = node.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = ORIGIN.label + ' → ' + d.to.label + ': ' + d.v + ' units';
+    chip.style.left = (r.left + r.width / 2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  // narrow-width side list, same data, shown only under the 560px media query
+  DATA.forEach(function(d){
+    var row = document.createElement('div');
+    row.className = 'row' + (d === hero ? ' hero' : '');
+    var name = document.createElement('span');
+    name.textContent = d.to.label;
+    var val = document.createElement('span');
+    val.textContent = d.v + (d === hero ? ' (' + (heroShare * 100).toFixed(1) + '%)' : '');
+    row.appendChild(name);
+    row.appendChild(val);
+    destlistEl.appendChild(row);
+  });
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

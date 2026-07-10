@@ -462,6 +462,23 @@
   .t-i-spark{width:34px;height:14px;display:inline-block;vertical-align:middle;margin-left:6px}
   .t-i-spark polyline{fill:none;stroke:var(--accent);stroke-width:1.6}
   .t-i-spark circle{fill:var(--accent)}
+  .t-i-tiles{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(4,1fr);gap:3px;padding:0 14px}
+  .t-i-tiles i{display:block;border-radius:2px;background:#dfe1e6}
+  .t-i-tiles i.hole{background:transparent}
+  .t-i-tiles i.l2{background:#c7c2b6}
+  .t-i-tiles i.l3{background:var(--accent);opacity:.45}
+  .t-i-tiles i.l4{background:var(--accent);opacity:.7}
+  .t-i-tiles i.a{background:var(--accent);opacity:1}
+  .t-i-symbols svg{width:82%;height:70%;overflow:visible}
+  .t-i-symbols .land{fill:#dfe1e6}
+  .t-i-symbols .sym{fill:var(--accent);opacity:.7;stroke:#fff;stroke-width:1}
+  .t-i-symbols .sym.a{opacity:.92}
+  .t-i-arcs svg{width:84%;height:70%;overflow:visible}
+  .t-i-arcs .origin{fill:var(--ink)}
+  .t-i-arcs .fa{fill:none;stroke:#c7c2b6;stroke-width:1.6}
+  .t-i-arcs .fa.a{stroke:var(--accent);stroke-width:2.4}
+  .t-i-arcs .dest{fill:#dfe1e6}
+  .t-i-arcs .dest.a{fill:var(--accent)}
 
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
@@ -649,6 +666,13 @@
       <a class="card" href="info-design/i25-calendar-heatmap.html" style="--accent:#15803D"><div class="thumb"><div class="tw t-i-cal"><div class="crow"><i></i><i class="l2"></i><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i></div><div class="crow"><i class="l2"></i><i></i><i class="l4"></i><i class="a"></i><i class="a"></i><i class="l4"></i><i class="l2"></i></div><div class="crow"><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i></i><i class="l2"></i></div></div></div><div class="b"><p class="n">i25</p><h3>Calendar Heatmap</h3><p class="nav"><b>Hover a cell</b> for its date and value; the hottest streak is circled.</p><div class="tags"><span class="tag">rhythm</span><span class="tag">calendar</span></div></div></a>
       <a class="card" href="info-design/i26-matrix-heatmap.html" style="--accent:#B91C1C"><div class="thumb"><div class="tw t-i-matrix"><i class="l2"></i><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i></i><i class="l3"></i><i class="l2"></i><i class="a"></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i class="l2"></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i class="l2"></i><i></i><i></i><i class="l2"></i><i></i></div></div><div class="b"><p class="n">i26</p><h3>Matrix Heatmap with Marginals</h3><p class="nav"><b>Hover a cell</b> for row + column highlight; bars show each total.</p><div class="tags"><span class="tag">relate</span><span class="tag">heatmap</span></div></div></a>
       <a class="card" href="info-design/i27-sparkline-table.html" style="--accent:#334155"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><svg class="t-i-spark" viewBox="0 0 34 14"><polyline points="0,11 6,9 12,10 18,6 24,7 29,3 34,2"/><circle cx="34" cy="2" r="1.6"/></svg></div></div><div class="b"><p class="n">i27</p><h3>Sparkline Table</h3><p class="nav"><b>Sort Current or Δ</b>; one focal row stays tinted through every sort.</p><div class="tags"><span class="tag">compare</span><span class="tag">sparkline</span></div></div></a>
+    </div>
+
+    <p class="cat">Geospatial — where</p>
+    <div class="grid">
+      <a class="card" href="info-design/i28-tile-cartogram.html" style="--accent:#0369A1"><div class="thumb"><div class="tw t-i-tiles"><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="hole"></i><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="a"></i><i class="l4"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="l2"></i><i class="hole"></i></div></div><div class="b"><p class="n">i28</p><h3>Tile-Grid Cartogram</h3><p class="nav"><b>Hover a tile</b> for its name and value; the max and min get leader lines.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">cartogram</span></div></div></a>
+      <a class="card" href="info-design/i29-symbol-map.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-symbols"><svg viewBox="0 0 60 40"><path class="land" d="M14,8 C24,4 40,5 48,12 C54,18 50,26 42,30 C32,35 18,33 12,26 C6,19 6,12 14,8 Z"/><circle class="sym a" cx="24" cy="18" r="8"/><circle class="sym" cx="38" cy="14" r="5"/><circle class="sym" cx="34" cy="27" r="4"/></svg></div></div><div class="b"><p class="n">i29</p><h3>Proportional Symbol Map</h3><p class="nav"><b>Hover a symbol</b> for its name and value; the two largest are labeled.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">symbol map</span></div></div></a>
+      <a class="card" href="info-design/i30-flow-map.html" style="--accent:#7E22CE"><div class="thumb"><div class="tw t-i-arcs"><svg viewBox="0 0 60 40"><circle class="origin" cx="12" cy="20" r="3"/><path class="fa a" d="M12,20 Q34,4 50,12"/><path class="fa" d="M12,20 Q30,26 48,24"/><path class="fa" d="M12,20 Q26,34 44,33"/><circle class="dest a" cx="50" cy="12" r="2.6"/><circle class="dest" cx="48" cy="24" r="2.2"/><circle class="dest" cx="44" cy="33" r="2.2"/></svg></div></div><div class="b"><p class="n">i30</p><h3>Flow Map</h3><p class="nav"><b>Hover an arc</b> to isolate it; the hero arc carries its share of the total.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">flow map</span></div></div></a>
     </div>
     </div>
 

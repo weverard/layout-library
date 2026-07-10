@@ -290,6 +290,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i26` | Matrix Heatmap with Marginals | 8×6 matrix + row/col totals | Confusion matrices, region×product, time×channel |
 | `i27` | Sparkline Table | 6 rows (name, series[12], current, prev) | Metric overviews, watchlists |
 
+**Geospatial — where**
+
+| # | Chart | Data shape | Best for |
+| --- | --- | --- | --- |
+| `i28` | Tile-Grid Cartogram | 24 regions (code, label, col, row, v) | Per-region rates where area shouldn't dominate |
+| `i29` | Proportional Symbol Map | Coastline path + 10 locations (label, x, y, v) | Quantities at places (sales by city, outbreaks) |
+| `i30` | Flow Map | Coastline path + 1 origin → 6 destinations | Shipments, migration, network traffic |
+
 ---
 
 ## Backlog — ideas not yet built
