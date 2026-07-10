@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i32 · Proportional-Area Shapes — Info design scaffold</title>
+<!--
+  CHART       Proportional-Area Shapes
+  DATA SHAPE  4 items {label, v}[] + a shape flag ('circle' | 'square')
+  INSIGHT     compare magnitudes viscerally
+  BEST FOR    Magnitude gaps too big for bars ("A is 40x B").
+  RE-SKIN     shape flag in DATA (circle <-> square); shapes wrap to 2x2
+              under ~520px.
+-->
+<style>
+  :root{
+    --accent:#0F766E;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  .footnote{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0;font-style:italic}
+  .source{color:var(--muted);font-size:12.5px;margin:6px 0 0}
+
+  .shapes{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s3);
+    flex-wrap:nowrap;border-bottom:1px solid var(--line);padding-bottom:var(--s3);min-height:220px}
+  .shape-item{display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
+  .shape-svg{display:block;overflow:visible;cursor:default}
+  .shape{fill:#D8D3C6;transition:opacity .15s}
+  .shape.a{fill:var(--accent)}
+  .shape-item:hover .shape{opacity:.82}
+  .shape-value{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink);margin:10px 0 2px}
+  .shape-label{font-size:12.5px;color:var(--muted);margin:0;text-align:center;max-width:12ch}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s;z-index:5}
+  .chip.on{opacity:1}
+
+  @media (max-width:520px){
+    .shapes{flex-wrap:wrap;justify-content:center;row-gap:var(--s4)}
+    .shape-item{flex:0 0 42%}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .shape,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Pictorial · i32</p>
+    <h1>Enterprise accounts are worth roughly 40 times as much as self-serve ones.</h1>
+    <p class="dek">Annual contract value by segment, illustrative. Shapes are scaled so area — not radius — carries the comparison.</p>
+  </header>
+  <figure id="figure">
+    <div class="shapes" id="shapes"></div>
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="footnote">Area (not radius) is proportional to value.</p>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A proportional-area comparison: marks are scaled so radius/side ∝ √v, which makes AREA proportional to value — the honest way to size a shape by magnitude.</dd>
+    <dt>When to use it</dt><dd>Magnitude gaps too wide for bars to hold gracefully on one axis ("A is 40x B") — a bar that tall or that short reads worse than a shape that big or that small.</dd>
+    <dt>Data shape</dt><dd><code>{label, v}[]</code>, 4 items, plus a <code>shape</code> flag (<code>circle</code> | <code>square</code>) so a forker can swap the mark without touching the scaling math.</dd>
+    <dt>Visual style</dt><dd>Shapes sit on a common baseline (not center-aligned) so the ground plane reads like a real comparison; the largest is called out in accent; value and label sit directly beneath each shape; an honesty footnote states plainly that area, not radius, carries the value.</dd>
+  </dl>
+  <p class="tags"><span>pictorial</span><span>proportional area</span><span>magnitude</span><span>honesty footnote</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a proportional-area shape comparison: four marks — circles by default, swappable to squares — are sized so their linear dimension is proportional to the square root of the value, which makes their AREA proportional to the value itself, the honest way to encode magnitude in a filled shape. The shapes sit on a shared baseline rather than being center-aligned, the way objects would actually rest on a ground line, with a value and a short label set directly beneath each one instead of a legend. The largest shape carries the accent color; the rest stay a quiet neutral, so the eye lands on the biggest number first. A small italic footnote states the honesty rule outright — "Area (not radius) is proportional to value" — because area comparisons are easy to misjudge and the chart should not rely on the reader's intuition alone. Hovering a shape raises a chip with its exact value. Under about 520px the row of shapes wraps into a 2-by-2 grid instead of squeezing four abreast.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i32 · area-shapes &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    { label: 'Enterprise',  v: 420 },
+    { label: 'Mid-market',  v: 168 },
+    { label: 'SMB',         v: 66 },
+    { label: 'Self-serve',  v: 11 }
+  ];
+  var SHAPE = 'circle'; // 'circle' | 'square' — linear dimension ∝ √v either way
+  var K = 8.78; // scales the largest shape to a comfortable ~180px footprint
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var key in attrs){ e.setAttribute(key, attrs[key]); }
+    return e;
+  }
+
+  var maxV = Math.max.apply(null, DATA.map(function(d){ return d.v; }));
+  var container = document.getElementById('shapes');
+  var figureEl = document.getElementById('figure');
+  var chip = document.getElementById('chip');
+
+  function showChip(target, text){
+    var r = target.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = text;
+    chip.style.left = (r.left + r.width/2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+
+  DATA.forEach(function(d){
+    var L = K * Math.sqrt(d.v); // linear dimension ∝ √v -> area ∝ v
+    var isMax = d.v === maxV;
+
+    var item = document.createElement('div');
+    item.className = 'shape-item';
+
+    var svg = el('svg', {viewBox: '0 0 ' + L + ' ' + L, class: 'shape-svg', role: 'img',
+      'aria-label': d.label + ': ' + d.v});
+    svg.style.width = L + 'px';
+    svg.style.height = L + 'px';
+
+    var mark;
+    if(SHAPE === 'circle'){
+      mark = el('circle', {cx: L/2, cy: L/2, r: L/2});
+    } else {
+      mark = el('rect', {x: 0, y: 0, width: L, height: L, rx: 3});
+    }
+    mark.setAttribute('class', 'shape' + (isMax ? ' a' : ''));
+    svg.appendChild(mark);
+    item.appendChild(svg);
+
+    var val = document.createElement('p');
+    val.className = 'shape-value';
+    val.textContent = '$' + d.v + 'M';
+    item.appendChild(val);
+
+    var lbl = document.createElement('p');
+    lbl.className = 'shape-label';
+    lbl.textContent = d.label;
+    item.appendChild(lbl);
+
+    item.addEventListener('mouseenter', function(){ showChip(svg, d.label + ': $' + d.v + 'M'); });
+    item.addEventListener('mousemove', function(){ showChip(svg, d.label + ': $' + d.v + 'M'); });
+    item.addEventListener('mouseleave', hideChip);
+
+    container.appendChild(item);
+  });
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

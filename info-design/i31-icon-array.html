@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i31 · Icon-Array Pictograph — Info design scaffold</title>
+<!--
+  CHART       Icon-Array Pictograph
+  DATA SHAPE  {k, n} headline rate + a two-group comparison pair, each k out of 10
+  INSIGHT     humanise a rate
+  BEST FOR    Risk communication, survey shares, "1 in N" stats.
+  RE-SKIN     the glyph is swappable (person → house/car) by editing ONE
+              <symbol> path; the two arrays stack under ~520px.
+-->
+<style>
+  :root{
+    --accent:#BE123C;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .arrays{display:flex;gap:var(--s4);align-items:flex-start}
+  .array-main{flex:1 1 58%;min-width:0;position:relative}
+  .array-main svg{width:100%;height:auto;display:block;overflow:visible;cursor:default}
+  .headline-count{font-family:var(--mono);font-size:12px;color:var(--muted);margin:var(--s1) 0 0}
+  .headline-count b{color:var(--accent);font-weight:700}
+
+  .array-compare{flex:1 1 38%;min-width:0;display:flex;flex-direction:column;gap:var(--s3);padding-top:2px}
+  .compare-row{position:relative}
+  .row-label{font-size:12.5px;color:var(--ink);font-weight:600;margin:0 0 6px}
+  .row-label span{display:block;font-size:11.5px;font-weight:400;color:var(--muted);margin-top:1px}
+  .row-svg{width:100%;height:auto;display:block;overflow:visible;cursor:default}
+
+  .glyph{fill:var(--line);transition:fill .15s}
+  .glyph.a{fill:var(--accent)}
+
+  .chip{position:absolute;background:var(--ink);color:#fff;font-size:12px;font-family:var(--mono);
+    padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 10px));transition:opacity .12s;z-index:5}
+  .chip.on{opacity:1}
+
+  @media (max-width:520px){
+    .arrays{flex-direction:column}
+    .array-main,.array-compare{flex:1 1 auto;width:100%}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .glyph,.chip{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Pictorial · i31</p>
+    <h1>About 1 in 4 new users complete onboarding in their first week.</h1>
+    <p class="dek">27 of the last 100 signups finished setup — people who were walked through it were three times as likely to finish as those left to self-serve.</p>
+  </header>
+  <figure id="figure">
+    <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+      <defs>
+        <symbol id="glyph-person" viewBox="0 0 10 10">
+          <circle cx="5" cy="2.1" r="2.1"/>
+          <path d="M2.3,10 C2.3,6.05 3.5,4.55 5,4.55 C6.5,4.55 7.7,6.05 7.7,10 Z"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="arrays">
+      <div class="array-main">
+        <svg id="mainArray"></svg>
+        <p class="headline-count" id="mainCount"></p>
+      </div>
+      <div class="array-compare" id="compareRows"></div>
+    </div>
+
+    <div class="chip" id="chip"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>An icon-array (pictograph): a single glyph is stamped repeatedly so a rate reads as a count of figures rather than a percentage or a pie slice.</dd>
+    <dt>When to use it</dt><dd>Communicating a rate or risk to a general audience — "x in y" lands more intuitively as counted figures than as an abstract fraction.</dd>
+    <dt>Data shape</dt><dd><code>{k, n}</code> for the headline rate, plus a two-group comparison pair, each expressed as <code>k</code> out of 10.</dd>
+    <dt>Visual style</dt><dd>One glyph defined once as an SVG <code>&lt;symbol&gt;</code> and reused everywhere; accent marks the "yes" figures, the rest recede to a flat neutral; two 1-in-10 rows do the comparison work below the main grid.</dd>
+  </dl>
+  <p class="tags"><span>pictorial</span><span>icon array</span><span>risk communication</span><span>rate</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is an icon-array pictograph: a single person glyph is defined once as an SVG symbol and stamped one hundred times into a 10-by-10 grid, with the first several figures colored in the accent hue and the remainder left a flat neutral gray, so the eye counts the accent block as a share of the whole rather than reading a percentage off an axis. The headline states the same rate in words ("about 1 in 4") instead of as a bare number, so the takeaway doesn't depend on the reader doing arithmetic. Below the main grid, the same glyph repeats in two labeled rows of ten, one per comparison group, each filled to its own count out of ten — turning "which cohort converts better" into two directly comparable little crowds instead of two bars. Hovering the main array (or either comparison row) raises a small chip restating the count as "k in n". Under about 520px the full-population grid and the comparison rows stop sitting side by side and stack vertically instead.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i31 · icon-array &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = { k: 27, n: 100 };
+  var COMPARISON = [
+    { label: 'Self-serve signup', sub: 'no walkthrough', k: 2 },
+    { label: 'Guided onboarding', sub: 'walked through setup', k: 6 }
+  ];
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var key in attrs){ e.setAttribute(key, attrs[key]); }
+    return e;
+  }
+  function useGlyph(x, y, size, accent){
+    var u = el('use', {x:x, y:y, width:size, height:size, class:'glyph' + (accent ? ' a' : '')});
+    u.setAttribute('href', '#glyph-person');
+    return u;
+  }
+
+  var figureEl = document.getElementById('figure');
+  var chip = document.getElementById('chip');
+
+  function showChip(target, text){
+    var r = target.getBoundingClientRect();
+    var f = figureEl.getBoundingClientRect();
+    chip.textContent = text;
+    chip.style.left = (r.left + r.width/2 - f.left) + 'px';
+    chip.style.top = (r.top - f.top) + 'px';
+    chip.classList.add('on');
+  }
+  function hideChip(){ chip.classList.remove('on'); }
+  function attachHover(target, text){
+    target.addEventListener('mouseenter', function(){ showChip(target, text); });
+    target.addEventListener('mousemove', function(){ showChip(target, text); });
+    target.addEventListener('mouseleave', hideChip);
+  }
+
+  // --- main 10x10 array ---
+  var mainSvg = document.getElementById('mainArray');
+  var cols = 10, rows = 10, cell = 28, gap = 4, pad = 2;
+  var mainSize = pad * 2 + cols * cell + (cols - 1) * gap;
+  mainSvg.setAttribute('viewBox', '0 0 ' + mainSize + ' ' + mainSize);
+  mainSvg.setAttribute('role', 'img');
+  mainSvg.setAttribute('aria-label', DATA.k + ' of ' + DATA.n + ' figures highlighted, representing ' + DATA.k + ' in ' + DATA.n);
+
+  for(var i = 0; i < DATA.n; i++){
+    var r = Math.floor(i / cols), c = i % cols;
+    var x = pad + c * (cell + gap), y = pad + r * (cell + gap);
+    mainSvg.appendChild(useGlyph(x, y, cell, i < DATA.k));
+  }
+  attachHover(mainSvg, DATA.k + ' in ' + DATA.n);
+
+  document.getElementById('mainCount').innerHTML = '<b>' + DATA.k + ' in ' + DATA.n + '</b> completed onboarding';
+
+  // --- comparison rows: 1x10 each ---
+  var compareWrap = document.getElementById('compareRows');
+  var rcell = 22, rgap = 4, rpad = 2;
+  var rowW = rpad * 2 + 10 * rcell + 9 * rgap;
+
+  COMPARISON.forEach(function(group){
+    var row = document.createElement('div');
+    row.className = 'compare-row';
+
+    var label = document.createElement('p');
+    label.className = 'row-label';
+    label.innerHTML = group.label + '<span>' + group.sub + ' · ' + group.k + ' in 10</span>';
+    row.appendChild(label);
+
+    var rsvg = el('svg', {viewBox: '0 0 ' + rowW + ' ' + (rpad * 2 + rcell), class: 'row-svg', role: 'img',
+      'aria-label': group.label + ': ' + group.k + ' of 10 figures highlighted'});
+    for(var j = 0; j < 10; j++){
+      var rx = rpad + j * (rcell + rgap);
+      rsvg.appendChild(useGlyph(rx, rpad, rcell, j < group.k));
+    }
+    row.appendChild(rsvg);
+    attachHover(rsvg, group.k + ' in 10 · ' + group.label);
+
+    compareWrap.appendChild(row);
+  });
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

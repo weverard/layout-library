@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i33 · Annotated Big-Number Story — Info design scaffold</title>
+<!--
+  CHART       Annotated Big-Number Story
+  DATA SHAPE  1 hero stat (value + unit/qualifier) + 3 support facts +
+              a 12-point context sparkline series
+  INSIGHT     tell a story with one number
+  BEST FOR    Report leads, posters, exec one-pagers.
+  RE-SKIN     --accent = the number; annotations stack below the number
+              under ~560px.
+-->
+<style>
+  :root{
+    --accent:#1E3A8A;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  /* This figure is deliberately wider and more asymmetric than the standard
+     760px column — the composition (margin notes + leader lines) is the point. */
+  .fig{width:min(880px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s4)}
+
+  figure{margin:0 0 var(--s2);position:relative}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .storyfig{position:relative;display:grid;grid-template-columns:1fr 210px;column-gap:var(--s4);row-gap:var(--s3)}
+  .stat{grid-column:1;grid-row:1}
+  .hero-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .hero-value{font-family:var(--serif);font-weight:400;color:var(--accent);
+    font-size:clamp(64px,10vw,120px);line-height:.95;letter-spacing:-.02em}
+  .hero-unit{font-family:var(--sans);font-size:15px;color:var(--muted);max-width:18ch}
+  .hero-chip{display:inline-block;margin-top:12px;font-family:var(--mono);font-size:12.5px;
+    background:#EEF2F7;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .hero-date{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px}
+
+  .spark-wrap{grid-column:1;grid-row:2}
+  .spark-label{font-size:11.5px;color:var(--muted);margin:0 0 8px;letter-spacing:.02em}
+  .spark{width:260px;max-width:100%;height:56px;overflow:visible;display:block}
+  .spark-line{fill:none;stroke:var(--accent);stroke-width:2}
+  .spark-dot{fill:var(--accent)}
+
+  .notes{grid-column:2;grid-row:1 / span 2;position:relative}
+  .note{position:absolute;left:0;font-size:12.5px;color:var(--ink);max-width:200px}
+  .note b{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;margin-bottom:3px}
+  .note-date{top:2px}
+  .note-chip{top:112px}
+  .note-spark{top:224px}
+
+  .leaders{position:absolute;inset:0;pointer-events:none;overflow:visible}
+  .leaders path{fill:none;stroke:var(--muted);stroke-width:1}
+  .leaders circle{fill:var(--accent)}
+
+  @media (max-width:560px){
+    .storyfig{grid-template-columns:1fr}
+    .notes{grid-column:1;grid-row:3;position:static;margin-top:var(--s2)}
+    .note{position:static;max-width:none;margin-bottom:var(--s2);padding-left:14px;border-left:2px solid var(--line)}
+    .leaders{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .hero-value,.spark-line{transition:none}
+  }
+
+  details.spec{width:min(880px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Pictorial · i33</p>
+    <h1>Subscriber growth just crossed six figures.</h1>
+    <p class="dek">128.4K paying subscribers as of quarter-end, up 18% year over year with twelve straight weeks of net adds.</p>
+  </header>
+  <figure id="figure">
+    <div class="storyfig" id="storyfig">
+      <div class="stat">
+        <div class="hero-row">
+          <span class="hero-value" id="heroValue"></span>
+          <span class="hero-unit" id="heroUnit"></span>
+        </div>
+        <span class="hero-chip" id="heroChip"></span>
+        <p class="hero-date" id="heroDate"></p>
+      </div>
+
+      <div class="spark-wrap">
+        <p class="spark-label">12-week trend</p>
+        <svg class="spark" id="spark" viewBox="0 0 240 48"></svg>
+      </div>
+
+      <div class="notes">
+        <p class="note note-date"><b>Measured</b>As of quarter-end, not a trailing average.</p>
+        <p class="note note-chip"><b>Context</b>Every cohort acquired this year is retaining better than the last.</p>
+        <p class="note note-spark"><b>Trend</b>Twelve straight weeks of net adds — no plateau yet.</p>
+      </div>
+
+      <svg class="leaders" id="leaders"></svg>
+    </div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>An annotated big-number figure: one hero stat rendered huge, with three margin notes leadered to the specific pieces of context that back it up.</dd>
+    <dt>When to use it</dt><dd>Report leads, one-pagers, and posters where a single number carries the whole point and the supporting facts are secondary but still need a citation.</dd>
+    <dt>Data shape</dt><dd>One hero stat (value + unit/qualifier), 3 support facts, and a 12-point context sparkline series.</dd>
+    <dt>Visual style</dt><dd>An asymmetric, annotation-driven composition — deliberately not a centered, symmetric slide. The number sits huge in serif accent at the left; thin leader lines run from right-margin notes to the sparkline, a comparison chip, and a date, so every claim next to the number is pointed at, not just adjacent to it.</dd>
+  </dl>
+  <p class="tags"><span>pictorial</span><span>big number</span><span>annotation</span><span>report lead</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is an annotated big-number figure, not a slide: one hero stat is set huge in a serif accent typeface at the left of an asymmetric grid, with its unit set small beside it. Below the number sits a compact 12-point sparkline with a dot marking its endpoint, and beside it a small comparison chip and a dateline in monospace. In the right margin, three short notes — each with a one-word all-caps label — sit stacked down the page, and a thin line runs from each note to the exact thing it's annotating: one to the sparkline's endpoint, one to the comparison chip, one to the date. The leader lines are computed from the actual rendered positions of the note and its target, so they stay accurate at any width, and the composition reads as an editorial figure — deliberately asymmetric and margin-annotated — rather than a centered, symmetric KPI card. Under about 560px there isn't room for margin notes and leader lines to mean anything, so the notes drop the leaders entirely and stack as a plain, left-ruled list below the number.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i33 · big-number &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var HERO = { value: '128.4K', unit: 'paying subscribers' };
+  var CHIP_TEXT = '+18% year-over-year';
+  var DATE_TEXT = 'As of June 30, 2026';
+  var SPARKLINE = [104, 106, 109, 111, 110, 114, 117, 119, 118, 122, 125, 128]; // exactly 12 points
+
+  var svgns = 'http://www.w3.org/2000/svg';
+  function el(name, attrs){
+    var e = document.createElementNS(svgns, name);
+    for(var key in attrs){ e.setAttribute(key, attrs[key]); }
+    return e;
+  }
+
+  document.getElementById('heroValue').textContent = HERO.value;
+  document.getElementById('heroUnit').textContent = HERO.unit;
+  document.getElementById('heroChip').textContent = CHIP_TEXT;
+  document.getElementById('heroDate').textContent = DATE_TEXT;
+
+  // --- sparkline: exactly 12 points + endpoint dot ---
+  var spark = document.getElementById('spark');
+  var W = 240, H = 48, PAD = 4;
+  var min = Math.min.apply(null, SPARKLINE), max = Math.max.apply(null, SPARKLINE);
+  var range = (max - min) || 1;
+  var n = SPARKLINE.length; // 12
+  function ptX(i){ return PAD + (W - PAD * 2) * (i / (n - 1)); }
+  function ptY(v){ return PAD + (H - PAD * 2) * (1 - (v - min) / range); }
+
+  var pts = SPARKLINE.map(function(v, i){ return ptX(i) + ',' + ptY(v); }).join(' ');
+  var line = el('polyline', {class: 'spark-line', points: pts});
+  spark.appendChild(line);
+  var lastX = ptX(n - 1), lastY = ptY(SPARKLINE[n - 1]);
+  var dot = el('circle', {class: 'spark-dot', cx: lastX, cy: lastY, r: 3, id: 'sparkDot'});
+  spark.appendChild(dot);
+
+  // --- leader lines: computed from actual rendered positions ---
+  var storyfig = document.getElementById('storyfig');
+  var leaders = document.getElementById('leaders');
+  var noteDate = document.querySelector('.note-date');
+  var noteChip = document.querySelector('.note-chip');
+  var noteSpark = document.querySelector('.note-spark');
+  var heroDateEl = document.getElementById('heroDate');
+  var heroChipEl = document.getElementById('heroChip');
+  var sparkDotEl = document.getElementById('sparkDot');
+
+  function relRect(node){
+    var r = node.getBoundingClientRect();
+    var c = storyfig.getBoundingClientRect();
+    return {left: r.left - c.left, top: r.top - c.top, right: r.right - c.left, bottom: r.bottom - c.top,
+      width: r.width, height: r.height};
+  }
+
+  function drawLeader(noteEl, targetEl){
+    var n2 = relRect(noteEl);
+    var t = relRect(targetEl);
+    var x1 = n2.left, y1 = n2.top + 6;
+    var x2, y2;
+    if(targetEl === sparkDotEl){
+      // sparkDot's rect is already relative to the svg's own viewBox scaling;
+      // getBoundingClientRect gives the true rendered position, so this works directly.
+      x2 = t.left + t.width / 2;
+      y2 = t.top + t.height / 2;
+    } else {
+      x2 = t.right;
+      y2 = t.top + t.height / 2;
+    }
+    var midX = (x1 + x2) / 2;
+    var path = el('path', {d: 'M' + x1 + ',' + y1 + ' C' + midX + ',' + y1 + ' ' + midX + ',' + y2 + ' ' + x2 + ',' + y2});
+    leaders.appendChild(path);
+    leaders.appendChild(el('circle', {cx: x2, cy: y2, r: 2.6}));
+  }
+
+  function drawAllLeaders(){
+    leaders.innerHTML = '';
+    var stacked = window.matchMedia('(max-width:560px)').matches;
+    if(stacked) return;
+    drawLeader(noteDate, heroDateEl);
+    drawLeader(noteChip, heroChipEl);
+    drawLeader(noteSpark, sparkDotEl);
+  }
+
+  drawAllLeaders();
+  window.addEventListener('resize', drawAllLeaders);
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -298,6 +298,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i29` | Proportional Symbol Map | Coastline path + 10 locations (label, x, y, v) | Quantities at places (sales by city, outbreaks) |
 | `i30` | Flow Map | Coastline path + 1 origin → 6 destinations | Shipments, migration, network traffic |
 
+**Pictorial — data made human**
+
+| # | Chart | Data shape | Best for |
+| --- | --- | --- | --- |
+| `i31` | Icon-Array Pictograph | {k, n} + a two-group comparison pair | Risk communication, survey shares, "1 in N" |
+| `i32` | Proportional-Area Shapes | 4 items (label, v) + shape flag | Magnitude gaps too big for bars |
+| `i33` | Annotated Big-Number Story | 1 hero stat + 3 facts + 12-point sparkline | Report leads, posters, exec one-pagers |
+
 ---
 
 ## Backlog — ideas not yet built

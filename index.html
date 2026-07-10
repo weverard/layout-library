@@ -480,6 +480,18 @@
   .t-i-arcs .dest{fill:#dfe1e6}
   .t-i-arcs .dest.a{fill:var(--accent)}
 
+  .t-i-icons{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(4,1fr);gap:4px;padding:8px 16px}
+  .t-i-icons i{display:block;border-radius:50%;background:#dfe1e6}
+  .t-i-icons i.a{background:var(--accent)}
+  .t-i-circles svg{width:88%;height:78%;overflow:visible}
+  .t-i-circles circle{fill:#dfe1e6}
+  .t-i-circles circle.a{fill:var(--accent)}
+  .t-i-bignum{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;padding:0 16px}
+  .t-i-bignum .num{font-family:var(--mono);font-weight:800;font-size:30px;letter-spacing:-.02em;color:var(--accent);line-height:1}
+  .t-i-bignum svg{width:70%;height:14px;overflow:visible}
+  .t-i-bignum polyline{fill:none;stroke:var(--accent);stroke-width:1.6}
+  .t-i-bignum circle{fill:var(--accent)}
+
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
 </style>
@@ -673,6 +685,13 @@
       <a class="card" href="info-design/i28-tile-cartogram.html" style="--accent:#0369A1"><div class="thumb"><div class="tw t-i-tiles"><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="hole"></i><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="a"></i><i class="l4"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="l2"></i><i class="hole"></i></div></div><div class="b"><p class="n">i28</p><h3>Tile-Grid Cartogram</h3><p class="nav"><b>Hover a tile</b> for its name and value; the max and min get leader lines.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">cartogram</span></div></div></a>
       <a class="card" href="info-design/i29-symbol-map.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-symbols"><svg viewBox="0 0 60 40"><path class="land" d="M14,8 C24,4 40,5 48,12 C54,18 50,26 42,30 C32,35 18,33 12,26 C6,19 6,12 14,8 Z"/><circle class="sym a" cx="24" cy="18" r="8"/><circle class="sym" cx="38" cy="14" r="5"/><circle class="sym" cx="34" cy="27" r="4"/></svg></div></div><div class="b"><p class="n">i29</p><h3>Proportional Symbol Map</h3><p class="nav"><b>Hover a symbol</b> for its name and value; the two largest are labeled.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">symbol map</span></div></div></a>
       <a class="card" href="info-design/i30-flow-map.html" style="--accent:#7E22CE"><div class="thumb"><div class="tw t-i-arcs"><svg viewBox="0 0 60 40"><circle class="origin" cx="12" cy="20" r="3"/><path class="fa a" d="M12,20 Q34,4 50,12"/><path class="fa" d="M12,20 Q30,26 48,24"/><path class="fa" d="M12,20 Q26,34 44,33"/><circle class="dest a" cx="50" cy="12" r="2.6"/><circle class="dest" cx="48" cy="24" r="2.2"/><circle class="dest" cx="44" cy="33" r="2.2"/></svg></div></div><div class="b"><p class="n">i30</p><h3>Flow Map</h3><p class="nav"><b>Hover an arc</b> to isolate it; the hero arc carries its share of the total.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">flow map</span></div></div></a>
+    </div>
+
+    <p class="cat">Pictorial — data made human</p>
+    <div class="grid">
+      <a class="card" href="info-design/i31-icon-array.html" style="--accent:#BE123C"><div class="thumb"><div class="tw t-i-icons"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">i31</p><h3>Icon-Array Pictograph</h3><p class="nav"><b>Hover the array</b> for "k in 100"; two 1-in-10 rows compare groups below.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">icon array</span></div></div></a>
+      <a class="card" href="info-design/i32-area-shapes.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-i-circles"><svg viewBox="0 0 60 40"><circle class="a" cx="14" cy="24" r="10"/><circle cx="34" cy="27" r="7"/><circle cx="47" cy="29.5" r="4.5"/><circle cx="56" cy="31.5" r="2.5"/></svg></div></div><div class="b"><p class="n">i32</p><h3>Proportional-Area Shapes</h3><p class="nav"><b>Hover a shape</b> for its value; area — not radius — carries the comparison.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">proportional area</span></div></div></a>
+      <a class="card" href="info-design/i33-big-number.html" style="--accent:#1E3A8A"><div class="thumb"><div class="tw t-i-bignum"><span class="num">128K</span><svg viewBox="0 0 34 14"><polyline points="0,11 6,9 12,10 18,6 24,7 29,3 34,2"/><circle cx="34" cy="2" r="1.6"/></svg></div></div><div class="b"><p class="n">i33</p><h3>Annotated Big-Number Story</h3><p class="nav"><b>Follow the leader lines</b> from margin notes to the sparkline, a chip, and a date.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">big number</span></div></div></a>
     </div>
     </div>
 
