@@ -282,6 +282,14 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 | `i23` | Network Graph | 14 nodes + 18 links, positions precomputed | Collaboration, dependencies, influence maps |
 | `i24` | Icicle / Partition | 3-depth hierarchy, spans precomputed (x0,x1) | File sizes, budget trees, taxonomy weights |
 
+**Table & heatmap — dense and exact**
+
+| # | Chart | Data shape | Best for |
+| --- | --- | --- | --- |
+| `i25` | Calendar Heatmap | 52 weeks × 7 days of counts (deterministic) | Activity rhythms, habit/commit data |
+| `i26` | Matrix Heatmap with Marginals | 8×6 matrix + row/col totals | Confusion matrices, region×product, time×channel |
+| `i27` | Sparkline Table | 6 rows (name, series[12], current, prev) | Metric overviews, watchlists |
+
 ---
 
 ## Backlog — ideas not yet built

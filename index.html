@@ -446,6 +446,22 @@
   .t-i-icicle .row1{height:8px;display:flex;gap:2px}
   .t-i-icicle .row1 i{opacity:.6}
   .t-i-icicle .row1 i.a{opacity:1}
+  .t-i-cal{flex-direction:column;justify-content:center;gap:3px;padding:0 12px}
+  .t-i-cal .crow{display:flex;gap:3px}
+  .t-i-cal .crow i{flex:1;aspect-ratio:1;border-radius:2px;display:block;background:#dfe1e6}
+  .t-i-cal .crow i.l2{background:#c7c2b6}
+  .t-i-cal .crow i.l3{background:var(--accent);opacity:.5}
+  .t-i-cal .crow i.l4{background:var(--accent);opacity:.75}
+  .t-i-cal .crow i.a{background:var(--accent);opacity:1}
+  .t-i-matrix{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(4,1fr);gap:3px;padding:0 14px}
+  .t-i-matrix i{display:block;border-radius:2px;background:#dfe1e6}
+  .t-i-matrix i.l2{background:#c7c2b6}
+  .t-i-matrix i.l3{background:var(--accent);opacity:.45}
+  .t-i-matrix i.l4{background:var(--accent);opacity:.7}
+  .t-i-matrix i.a{background:var(--accent);opacity:1}
+  .t-i-spark{width:34px;height:14px;display:inline-block;vertical-align:middle;margin-left:6px}
+  .t-i-spark polyline{fill:none;stroke:var(--accent);stroke-width:1.6}
+  .t-i-spark circle{fill:var(--accent)}
 
   footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
   footer code{font-family:var(--mono)}
@@ -626,6 +642,13 @@
       <a class="card" href="info-design/i22-radial-tree.html" style="--accent:#0E7490"><div class="thumb"><div class="tw t-i-radialtree"><svg viewBox="0 0 60 40"><circle class="hub" cx="30" cy="20" r="3"/><path class="lk" d="M30,20 C20,20 15,10 8,8"/><path class="lk" d="M30,20 C20,20 15,30 8,30"/><path class="lk a" d="M30,20 C38,20 44,10 52,8"/><path class="lk a" d="M30,20 C38,20 44,14 52,16"/><circle class="nd" cx="8" cy="8" r="2"/><circle class="nd" cx="8" cy="30" r="2"/><circle class="nd a" cx="52" cy="8" r="2"/><circle class="nd a" cx="52" cy="16" r="2"/></svg></div></div><div class="b"><p class="n">i22</p><h3>Radial Tree</h3><p class="nav"><b>Click a branch</b> to collapse or expand it; ≤560px it becomes an indented outline.</p><div class="tags"><span class="tag">hierarchy</span><span class="tag">radial-tree</span></div></div></a>
       <a class="card" href="info-design/i23-network.html" style="--accent:#BE123C"><div class="thumb"><div class="tw t-i-net"><svg viewBox="0 0 60 40"><line class="lk" x1="10" y1="12" x2="18" y2="22"/><line class="lk" x1="10" y1="12" x2="14" y2="28"/><line class="lk" x1="18" y1="22" x2="14" y2="28"/><line class="lk a" x1="18" y1="22" x2="34" y2="20"/><line class="lk" x1="34" y1="20" x2="46" y2="10"/><line class="lk" x1="34" y1="20" x2="48" y2="24"/><line class="lk" x1="46" y1="10" x2="48" y2="24"/><circle class="nd" cx="10" cy="12" r="3.4"/><circle class="nd" cx="18" cy="22" r="3"/><circle class="nd" cx="14" cy="28" r="2.4"/><circle class="nd a" cx="34" cy="20" r="3.6"/><circle class="nd" cx="46" cy="10" r="3.2"/><circle class="nd" cx="48" cy="24" r="2.8"/></svg></div></div><div class="b"><p class="n">i23</p><h3>Network Graph</h3><p class="nav"><b>Hover a name</b> to trace their connections; the broker bridges both clusters.</p><div class="tags"><span class="tag">network</span><span class="tag">collaboration</span></div></div></a>
       <a class="card" href="info-design/i24-icicle.html" style="--accent:#166534"><div class="thumb"><div class="tw t-i-icicle"><i class="row0"></i><div class="row1"><i class="a" style="flex:0.42"></i><i style="flex:0.23"></i><i style="flex:0.20"></i><i style="flex:0.15"></i></div></div></div><div class="b"><p class="n">i24</p><h3>Icicle / Partition</h3><p class="nav"><b>Click a bar</b> to zoom in; a breadcrumb tracks the path back to the root.</p><div class="tags"><span class="tag">hierarchy</span><span class="tag">icicle</span></div></div></a>
+    </div>
+
+    <p class="cat">Table &amp; heatmap — dense and exact</p>
+    <div class="grid">
+      <a class="card" href="info-design/i25-calendar-heatmap.html" style="--accent:#15803D"><div class="thumb"><div class="tw t-i-cal"><div class="crow"><i></i><i class="l2"></i><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i></div><div class="crow"><i class="l2"></i><i></i><i class="l4"></i><i class="a"></i><i class="a"></i><i class="l4"></i><i class="l2"></i></div><div class="crow"><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i></i><i class="l2"></i></div></div></div><div class="b"><p class="n">i25</p><h3>Calendar Heatmap</h3><p class="nav"><b>Hover a cell</b> for its date and value; the hottest streak is circled.</p><div class="tags"><span class="tag">rhythm</span><span class="tag">calendar</span></div></div></a>
+      <a class="card" href="info-design/i26-matrix-heatmap.html" style="--accent:#B91C1C"><div class="thumb"><div class="tw t-i-matrix"><i class="l2"></i><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i></i><i class="l3"></i><i class="l2"></i><i class="a"></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i class="l2"></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i class="l2"></i><i></i><i></i><i class="l2"></i><i></i></div></div><div class="b"><p class="n">i26</p><h3>Matrix Heatmap with Marginals</h3><p class="nav"><b>Hover a cell</b> for row + column highlight; bars show each total.</p><div class="tags"><span class="tag">relate</span><span class="tag">heatmap</span></div></div></a>
+      <a class="card" href="info-design/i27-sparkline-table.html" style="--accent:#334155"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><svg class="t-i-spark" viewBox="0 0 34 14"><polyline points="0,11 6,9 12,10 18,6 24,7 29,3 34,2"/><circle cx="34" cy="2" r="1.6"/></svg></div></div><div class="b"><p class="n">i27</p><h3>Sparkline Table</h3><p class="nav"><b>Sort Current or Δ</b>; one focal row stays tinted through every sort.</p><div class="tags"><span class="tag">compare</span><span class="tag">sparkline</span></div></div></a>
     </div>
     </div>
 

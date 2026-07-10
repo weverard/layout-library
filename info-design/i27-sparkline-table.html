@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i27 · Sparkline Table — Info design scaffold</title>
+<!--
+  CHART       Sparkline Table
+  DATA SHAPE  6 rows — {name, series[12], current, prev}[]
+  INSIGHT     compare trends compactly
+  BEST FOR    Metric overviews, watchlists.
+  RE-SKIN     --accent = sparkline stroke + positive delta. The sparkline
+              column persists at any width; sort by clicking Current or Δ.
+-->
+<style>
+  :root{
+    --accent:#334155;
+    --accent-rgb:51,65,85;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2)}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .table-wrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .table-scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead tr{background:var(--bg);border-bottom:1px solid var(--line)}
+  th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:11px;font-weight:600;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  th.sortable{cursor:pointer;user-select:none;-webkit-user-select:none}
+  th.sortable:hover{color:var(--ink)}
+  th.sorted{color:var(--accent)}
+  .sort-ind{margin-left:5px;font-size:10px;opacity:.55}
+  th.sorted .sort-ind{opacity:1}
+  .col-spark{width:76px}
+  tbody tr{border-bottom:1px solid var(--line);transition:background .12s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:rgba(51,65,85,.05)}
+  tbody tr.focal{background:rgba(51,65,85,.09)}
+  tbody tr.focal:hover{background:rgba(51,65,85,.15)}
+  td{padding:9px 14px;vertical-align:middle}
+  .name-cell{font-weight:600}
+  .name-cell .focal-flag{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--accent);
+    border:1px solid currentColor;border-radius:999px;padding:1px 7px;margin-left:7px;vertical-align:middle}
+  .spark-cell svg{display:block;width:60px;height:18px;overflow:visible}
+  .spark-cell polyline{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .spark-cell circle{fill:var(--accent)}
+  .current-cell{font-family:var(--mono);font-weight:600}
+
+  .chip-delta{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:12px;
+    font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid currentColor}
+  .chip-delta.pos{color:var(--pos)}
+  .chip-delta.neg{color:var(--neg)}
+
+  @media (prefers-reduced-motion:reduce){
+    tbody tr{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Table &amp; heatmap · i27</p>
+    <h1>Cedar Ridge is the smallest account and the fastest mover.</h1>
+    <p class="dek">Six watchlist accounts, twelve months of trend, current value and change vs. last month (illustrative).</p>
+  </header>
+  <figure id="figure">
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="sp-table">
+          <thead>
+            <tr>
+              <th class="col-name">Name</th>
+              <th class="col-spark">Trend</th>
+              <th data-col="current" class="sortable">Current <span class="sort-ind">↕</span></th>
+              <th data-col="delta" class="sortable">Δ vs prior <span class="sort-ind">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="sp-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A real, sortable HTML table where each row carries its own inline sparkline alongside the current value and a delta pill.</dd>
+    <dt>When to use it</dt><dd>Watchlists and metric overviews — accounts, KPIs, portfolio positions — where the reader wants both the current number and the shape of how it got there, side by side, for several items at once.</dd>
+    <dt>Data shape</dt><dd><code>{name, series[12], current, prev}[]</code> — 6 rows; the sparkline draws <code>series</code>, the delta pill is computed as <code>current - prev</code> and never stored.</dd>
+    <dt>Visual style</dt><dd>Each sparkline is a small inline SVG polyline, self-scaled to its own row's range, with a filled dot marking the current endpoint; one focal row carries a permanent accent tint; delta pills are accent for gains and a muted red for losses.</dd>
+  </dl>
+  <p class="tags"><span>compare</span><span>table</span><span>sparkline</span><span>sortable</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a real, interactive HTML table styled to match the rest of the system rather than a chart drawn to look like one. Four columns: a name, a small inline SVG sparkline scaled to that row's own range with a filled dot marking its most recent point, a current value in monospace, and a delta pill showing an up or down arrow, colored accent for gains and a muted red for losses. One row — the one the reader should be watching — carries a permanent soft accent tint on its background, distinct from the plain hover state every row gets, and that tint stays attached to the row's data wherever it lands after a sort. Clicking the Current or Δ column header re-sorts the whole table by that column, toggling ascending and descending on repeated clicks, with a small arrow appearing next to the active header to show its direction; ties keep their prior relative order rather than jumping around. The sparkline column is the point of the design, so it never disappears or shrinks away at narrow widths — if anything else has to give, the table scrolls horizontally before the trend column is sacrificed.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i27 · sparkline-table &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = [
+    {name:'Atlas Corp',    series:[40,42,41,45,47,50,52,55,58,60,63,67], current:67, prev:63},
+    {name:'Bramble & Co',  series:[58,56,57,54,52,50,48,47,44,42,40,37], current:37, prev:40},
+    {name:'Cedar Ridge',   series:[30,33,31,36,34,39,37,42,40,45,43,49], current:49, prev:43, focal:true},
+    {name:'Delta Labs',    series:[70,69,71,68,70,67,69,66,68,65,66,63], current:63, prev:66},
+    {name:'Elm Systems',   series:[20,22,25,24,28,30,29,34,36,38,41,45], current:45, prev:41},
+    {name:'Faraday Group', series:[85,83,80,78,79,75,73,70,68,65,62,58], current:58, prev:62}
+  ];
+
+  var rows = DATA.map(function(d){
+    return {name:d.name, series:d.series, current:d.current, prev:d.prev,
+      delta:d.current - d.prev, focal: !!d.focal};
+  });
+
+  var sortState = {col:'current', dir:'desc'};
+
+  var tbody = document.getElementById('sp-body');
+  var headers = document.querySelectorAll('th[data-col]');
+
+  function stableSortBy(col, dir){
+    var mult = dir === 'asc' ? 1 : -1;
+    rows = rows
+      .map(function(row, i){ return {row:row, i:i}; })
+      .sort(function(a, b){
+        var cmp = (a.row[col] - b.row[col]) * mult;
+        if (cmp !== 0) return cmp;
+        return a.i - b.i; // stable: equal keys keep their prior order
+      })
+      .map(function(entry){ return entry.row; });
+  }
+
+  function fmtDelta(d){
+    var arrow = d >= 0 ? '▲' : '▼';
+    return arrow + Math.abs(d);
+  }
+
+  function sparkSVG(series){
+    var n = series.length;
+    var min = Math.min.apply(null, series);
+    var max = Math.max.apply(null, series);
+    var range = max - min;
+    var pad = 2, w = 60, h = 18;
+    var pts = series.map(function(v, i){
+      var x = (i / (n - 1)) * w;
+      var y = range === 0 ? h / 2 : (h - pad) - ((v - min) / range) * (h - pad * 2);
+      return [x, y];
+    });
+    var last = pts[pts.length - 1];
+    var ptStr = pts.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Trend sparkline">' +
+      '<polyline points="' + ptStr + '"></polyline>' +
+      '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="1.9"></circle>' +
+      '</svg>';
+  }
+
+  function render(){
+    tbody.innerHTML = '';
+    rows.forEach(function(row){
+      var tr = document.createElement('tr');
+      if (row.focal) tr.className = 'focal';
+      var deltaClass = row.delta >= 0 ? 'pos' : 'neg';
+      tr.innerHTML =
+        '<td class="name-cell">' + row.name + (row.focal ? '<span class="focal-flag">watch</span>' : '') + '</td>' +
+        '<td class="spark-cell">' + sparkSVG(row.series) + '</td>' +
+        '<td class="current-cell">' + row.current + '</td>' +
+        '<td><span class="chip-delta ' + deltaClass + '">' + fmtDelta(row.delta) + '</span></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateHeaderIndicators(){
+    headers.forEach(function(th){
+      var col = th.getAttribute('data-col');
+      var ind = th.querySelector('.sort-ind');
+      if (col === sortState.col){
+        th.classList.add('sorted');
+        ind.textContent = sortState.dir === 'asc' ? '▲' : '▼';
+      } else {
+        th.classList.remove('sorted');
+        ind.textContent = '↕';
+      }
+    });
+  }
+
+  headers.forEach(function(th){
+    th.addEventListener('click', function(){
+      var col = th.getAttribute('data-col');
+      if (sortState.col === col){
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.col = col;
+        sortState.dir = 'asc';
+      }
+      stableSortBy(sortState.col, sortState.dir);
+      updateHeaderIndicators();
+      render();
+    });
+  });
+
+  // Sort on load so the displayed order always matches sortState (never trusts DATA's authored order).
+  stableSortBy(sortState.col, sortState.dir);
+  updateHeaderIndicators();
+  render();
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i26 · Matrix Heatmap with Marginals — Info design scaffold</title>
+<!--
+  CHART       Matrix Heatmap with Marginals
+  DATA SHAPE  8 rows x 6 cols matrix, {rows[], cols[], matrix[8][6]} — row and
+              column totals are always recomputed from the matrix, never
+              stored, so they can never drift from the real sums
+  INSIGHT     relate (two categoricals)
+  BEST FOR    Confusion matrices, region x product, time x channel.
+  RE-SKIN     --accent = the sequential fill. Under ~560px the marginal bars
+              hide; the matrix keeps its two in-cell extreme values.
+-->
+<style>
+  :root{
+    --accent:#B91C1C;
+    --accent-rgb:185,28,28;
+    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+
+  .fig{width:min(760px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+  .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 var(--s3)}
+
+  figure{margin:0 0 var(--s2)}
+  .readout{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:1.4em;margin:0 0 var(--s1)}
+  .readout b{color:var(--ink);font-weight:600}
+  .source{color:var(--muted);font-size:12.5px;margin:var(--s2) 0 0}
+
+  .matrix-grid{display:grid;grid-template-columns:96px repeat(6,1fr) 58px;grid-template-rows:22px repeat(8,26px) 40px;gap:3px}
+  @media (max-width:560px){
+    .matrix-grid{grid-template-columns:88px repeat(6,1fr);grid-template-rows:20px repeat(8,26px)}
+    .marginal{display:none}
+  }
+
+  .collabel{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;align-items:flex-end;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rowlabel{font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;white-space:nowrap}
+  .collabel.hi,.rowlabel.hi{color:var(--ink);font-weight:700}
+
+  .cell{border-radius:3px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10.5px;font-weight:600;transition:opacity .12s;cursor:default}
+  .matrix-grid.hovering .cell{opacity:.24}
+  .matrix-grid.hovering .cell.hi{opacity:1}
+
+  .mbar{position:relative;background:#EFEBE2;border-radius:3px;overflow:hidden;transition:opacity .12s}
+  .mbar .fill{position:absolute;background:var(--ink);border-radius:3px;transition:opacity .12s}
+  .mbar.row .fill{left:0;top:0;bottom:0}
+  .mbar.col .fill{left:0;right:0;bottom:0}
+  .matrix-grid.hovering .mbar{opacity:.4}
+  .matrix-grid.hovering .mbar.hi{opacity:1}
+  .matrix-grid.hovering .mbar.hi .fill{background:var(--accent)}
+
+  @media (prefers-reduced-motion:reduce){
+    .cell,.mbar,.mbar .fill{transition:none}
+  }
+
+  details.spec{width:min(760px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+  summary:hover{color:var(--ink)}
+  dl{margin:var(--s2) 0 0;font-size:13.5px}
+  dt{font-weight:600;margin-top:var(--s1)}
+  dt:first-child{margin-top:0}
+  dd{color:var(--muted);margin:2px 0 0}
+  .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
+  .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prompt-head b{font-size:13px;font-weight:600}
+  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  #copy:hover{border-color:var(--ink)}
+  #prompt-text{margin:0;padding:14px;font-family:var(--sans);font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
+
+  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+  .scaffold a{color:#fff;opacity:.6}
+  .scaffold a:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="fig">
+  <header>
+    <p class="kicker">Table &amp; heatmap · i26</p>
+    <h1>Coastal carries Pro almost single-handedly.</h1>
+    <p class="dek">Units sold by region and product line, one quarter (illustrative). Row and column bars show each total.</p>
+  </header>
+  <figure id="figure">
+    <p class="readout" id="readout">Hover a cell for its value and both totals.</p>
+    <div class="matrix-grid" id="grid"></div>
+  </figure>
+  <p class="source">Source: placeholder data, 2026 · illustrative</p>
+</main>
+
+<details class="spec">
+  <summary>Spec — what it is, when to use it</summary>
+  <dl>
+    <dt>What it is</dt><dd>A cell grid shaded by value (sequential fill) with row and column marginal bars showing each row's and column's total.</dd>
+    <dt>When to use it</dt><dd>Relating two categorical axes at once — confusion matrices, region x product, time x channel — where both the individual cell and each axis's total matter.</dd>
+    <dt>Data shape</dt><dd><code>{rows[], cols[], matrix[8][6]}</code> — row and column totals are always summed live from the matrix, never stored separately, so they can never disagree with it.</dd>
+    <dt>Visual style</dt><dd>Cell fill steps continuously from a faint to a fully saturated accent tint; only the single highest and single lowest cell carry a printed number, so the eye anchors on the extremes instead of scanning every cell; neutral ink-colored bars on the right and bottom show row and column totals.</dd>
+  </dl>
+  <p class="tags"><span>relate</span><span>heatmap</span><span>matrix</span><span>marginals</span></p>
+  <div class="prompt">
+    <div class="prompt-head"><b>Recreate prompt</b><button id="copy" type="button">Copy prompt</button></div>
+    <pre id="prompt-text">This is a matrix heatmap: an 8-by-6 grid of cells, each shaded a continuous tint of one accent color scaled to its value, from faint at the low end to fully saturated at the high end. Row names run down the left in a small monospace label column; product names sit above each column. Only two cells carry a printed number — the single highest and single lowest value in the whole matrix — so the reader's eye anchors on the extremes rather than parsing every cell. A thin neutral bar extends from each row into a right-hand margin, and a matching bar rises from each column into a bottom margin, both scaled to that row's or column's total on a shared scale, standing in for a bar chart fused directly onto the table. Hovering any cell highlights its entire row and its entire column — both the cells and their marginal bars — while every other cell and bar fades, and a small monospace readout above the grid names the cell along with its row total and column total. Under roughly 560px the marginal bars disappear entirely, but the two in-cell extreme values keep printing so the anchor points survive the smaller layout.
+
+Rebuild this design with my data. Hand-code it as self-contained HTML/SVG (or the stack I name). Keep the headline-as-insight title, direct labels, and restrained palette. Ask me for my data series and the one insight to headline.</pre>
+  </div>
+</details>
+
+<div class="scaffold">i26 · matrix-heatmap &nbsp;<a href="../index.html#info-design">↔ gallery</a></div>
+
+<script>
+(function(){
+  var DATA = {
+    rows: ['North','South','East','West','Central','Coastal','Mountain','Valley'],
+    cols: ['Core','Plus','Pro','Mini','Max','Lite'],
+    matrix: [
+      [62,48,35,18,41,22],
+      [55,44,31,15,38,19],
+      [70,52,39,21,46,25],
+      [58,46,33,17,40,21],
+      [64,50,37,19,43,23],
+      [77,59,88,24,49,27],
+      [51,41,29,14,36,18],
+      [45,36,26, 9,31,15]
+    ]
+  };
+
+  var nR = DATA.rows.length, nC = DATA.cols.length;
+
+  // row/col totals are always recomputed from the matrix, never authored — invariant by construction
+  var rowTotals = DATA.matrix.map(function(r){ return r.reduce(function(a,b){ return a+b; }, 0); });
+  var colTotals = DATA.cols.map(function(_, j){
+    return DATA.matrix.reduce(function(a, r){ return a + r[j]; }, 0);
+  });
+
+  var flat = [];
+  DATA.matrix.forEach(function(r, i){ r.forEach(function(v, j){ flat.push({v:v, i:i, j:j}); }); });
+  var minCell = flat.reduce(function(a, b){ return b.v < a.v ? b : a; });
+  var maxCell = flat.reduce(function(a, b){ return b.v > a.v ? b : a; });
+  var minV = minCell.v, maxV = maxCell.v;
+  var maxMarginal = Math.max.apply(null, rowTotals.concat(colTotals));
+
+  var grid = document.getElementById('grid');
+  var readout = document.getElementById('readout');
+  var defaultReadout = readout.textContent;
+
+  function place(el, col, row){ el.style.gridColumn = col; el.style.gridRow = row; return el; }
+
+  // column headers (row 1, cols 2..7)
+  DATA.cols.forEach(function(name, j){
+    var el = document.createElement('div');
+    el.className = 'collabel';
+    el.dataset.col = j;
+    el.textContent = name;
+    place(el, j + 2, 1);
+    grid.appendChild(el);
+  });
+
+  var cellEls = [];
+  var rowLabelEls = [];
+  var colLabelEls = DATA.cols.map(function(name, j){
+    return grid.querySelector('.collabel[data-col="' + j + '"]');
+  });
+  var rowBarEls = [], colBarEls = [];
+
+  DATA.rows.forEach(function(name, i){
+    var lbl = document.createElement('div');
+    lbl.className = 'rowlabel';
+    lbl.textContent = name;
+    place(lbl, 1, i + 2);
+    grid.appendChild(lbl);
+    rowLabelEls.push(lbl);
+
+    DATA.matrix[i].forEach(function(v, j){
+      var frac = (v - minV) / (maxV - minV);
+      var alpha = (0.10 + frac * 0.85).toFixed(2);
+      var cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = i;
+      cell.dataset.col = j;
+      cell.style.background = 'rgba(' + getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() + ',' + alpha + ')';
+      var isExtreme = (i === minCell.i && j === minCell.j) || (i === maxCell.i && j === maxCell.j);
+      if (isExtreme){
+        cell.textContent = v;
+        cell.style.color = frac > 0.55 ? '#fff' : 'var(--ink)';
+      }
+      place(cell, j + 2, i + 2);
+      grid.appendChild(cell);
+      cellEls.push(cell);
+
+      cell.addEventListener('mouseenter', function(){ hover(i, j); });
+      cell.addEventListener('mouseleave', unhover);
+    });
+
+    // row-total marginal bar
+    var rbWrap = document.createElement('div');
+    rbWrap.className = 'mbar row marginal';
+    rbWrap.dataset.row = i;
+    var rbFill = document.createElement('div');
+    rbFill.className = 'fill';
+    rbFill.style.width = ((rowTotals[i] / maxMarginal) * 100).toFixed(1) + '%';
+    rbWrap.appendChild(rbFill);
+    place(rbWrap, nC + 2, i + 2);
+    grid.appendChild(rbWrap);
+    rowBarEls.push(rbWrap);
+  });
+
+  // col-total marginal bars (bottom row)
+  DATA.cols.forEach(function(name, j){
+    var cbWrap = document.createElement('div');
+    cbWrap.className = 'mbar col marginal';
+    cbWrap.dataset.col = j;
+    var cbFill = document.createElement('div');
+    cbFill.className = 'fill';
+    cbFill.style.height = ((colTotals[j] / maxMarginal) * 100).toFixed(1) + '%';
+    cbWrap.appendChild(cbFill);
+    place(cbWrap, j + 2, nR + 2);
+    grid.appendChild(cbWrap);
+    colBarEls.push(cbWrap);
+  });
+
+  function hover(i, j){
+    grid.classList.add('hovering');
+    cellEls.forEach(function(c){
+      var ci = +c.dataset.row, cj = +c.dataset.col;
+      c.classList.toggle('hi', ci === i || cj === j);
+    });
+    rowLabelEls.forEach(function(l, li){ l.classList.toggle('hi', li === i); });
+    colLabelEls.forEach(function(l, lj){ if (l) l.classList.toggle('hi', lj === j); });
+    rowBarEls.forEach(function(b, bi){ b.classList.toggle('hi', bi === i); });
+    colBarEls.forEach(function(b, bj){ b.classList.toggle('hi', bj === j); });
+    readout.innerHTML = '<b>' + DATA.rows[i] + ' × ' + DATA.cols[j] + ':</b> ' + DATA.matrix[i][j] +
+      ' &nbsp;·&nbsp; row total ' + rowTotals[i] + ' &nbsp;·&nbsp; column total ' + colTotals[j];
+  }
+  function unhover(){
+    grid.classList.remove('hovering');
+    cellEls.forEach(function(c){ c.classList.remove('hi'); });
+    rowLabelEls.forEach(function(l){ l.classList.remove('hi'); });
+    colLabelEls.forEach(function(l){ if (l) l.classList.remove('hi'); });
+    rowBarEls.forEach(function(b){ b.classList.remove('hi'); });
+    colBarEls.forEach(function(b){ b.classList.remove('hi'); });
+    readout.textContent = defaultReadout;
+  }
+
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', () => {
+    const txt = document.getElementById('prompt-text').textContent;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done); }
+    else {
+      const ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
