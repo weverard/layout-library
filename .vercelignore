@@ -1,0 +1,12 @@
+# Keep the deployment to the site itself.
+#
+# .superpowers/ is the SDD ledger — internal build notes, gitignored and not
+# public on GitHub. Listed explicitly rather than relying on Vercel's
+# .gitignore fallback, because publishing it would put those notes on a public
+# URL. tools/ and docs/ are dev-side only (the checker, the generator, specs
+# and plans); they are public on GitHub already, they just have no reason to
+# be served.
+.superpowers/
+tools/
+docs/
+.DS_Store
