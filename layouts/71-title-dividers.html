@@ -19,10 +19,12 @@
 -->
 <style>
   :root{
+    --accent:#0F172A; --accent-ink:#fff;
     --bg:#E9EBEF; --surface:#fff; --ink:#0F172A; --muted:#64748B; --line:rgba(15,23,42,.12);
-    --accent:#0F172A;
-    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;

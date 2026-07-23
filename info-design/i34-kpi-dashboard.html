@@ -15,14 +15,13 @@
 -->
 <style>
   :root{
-    --accent:#334155;
-    --accent-rgb:51,65,85;
-    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --accent:#334155; --accent-ink:#fff;
+    --bg:#FBFAF8; --surface:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
     --pos:var(--accent); --neg:#B3261E;
     --serif:Georgia,"Times New Roman",serif;
-    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
-    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif; --mono:ui-monospace,"SF Mono",Menlo,monospace;
     --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+    --accent-rgb:51,65,85;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
@@ -38,7 +37,7 @@
 
   .dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--s2)}
 
-  .tile{grid-column:span 3;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  .tile{grid-column:span 3;background:var(--surface);border:1px solid var(--line);border-radius:10px;
     padding:14px 16px;transition:border-color .15s,box-shadow .15s}
   .tile:hover{border-color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.06)}
   .t-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0}
@@ -52,8 +51,8 @@
   .spark polyline{fill:none;stroke:var(--accent);stroke-width:1.6}
   .spark circle{fill:var(--accent)}
 
-  .chart-panel{grid-column:span 8;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
-  .list-panel{grid-column:span 4;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .chart-panel{grid-column:span 8;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .list-panel{grid-column:span 4;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
   .panel-title{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
 
   #mainChart{width:100%;height:auto;display:block;overflow:visible}
@@ -66,7 +65,7 @@
   .hitrect{fill:transparent}
   .crosshair{stroke:var(--muted);stroke-width:1;opacity:0;transition:opacity .12s}
   .crosshair.on{opacity:1}
-  .hoverdot{fill:var(--accent);stroke:var(--panel);stroke-width:1.5;opacity:0;transition:opacity .12s}
+  .hoverdot{fill:var(--accent);stroke:var(--surface);stroke-width:1.5;opacity:0;transition:opacity .12s}
   .hoverdot.on{opacity:1}
 
   .bl-row{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line);
@@ -100,7 +99,7 @@
   dd{color:var(--muted);margin:2px 0 0}
   .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
   .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
-  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt{margin-top:var(--s3);background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
   .prompt-head b{font-size:13px;font-weight:600}
   #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);

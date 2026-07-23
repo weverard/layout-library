@@ -1,0 +1,2233 @@
+{
+  "categories": [
+    {
+      "key": "foundations",
+      "group": "layouts",
+      "name": "Foundations — app & document shells",
+      "intro": "The app and document shells most products start from — sidebars, top bars, split panes. Fork one of these when the structure should disappear behind the content."
+    },
+    {
+      "key": "spatial",
+      "group": "layouts",
+      "name": "Spatial — navigate through space",
+      "intro": "Layouts where the interface is literally a space you move through — canvases, maps, floors, isometric scenes. Reach for these when \"where am I\" matters as much as what's on screen."
+    },
+    {
+      "key": "sequence-story",
+      "group": "layouts",
+      "name": "Sequence & story — the axis is the nav",
+      "intro": "Layouts where moving through content in order, start to finish, is the whole point — timelines, filmstrips, page-turns. Fork one when the content is a story, not a menu."
+    },
+    {
+      "key": "command-conversation",
+      "group": "layouts",
+      "name": "Command & conversation — type, don't click",
+      "intro": "Interfaces you drive by typing or talking instead of clicking — command palettes, terminals, chat, voice. Fork one when the fastest way in is a keyboard or a microphone."
+    },
+    {
+      "key": "objects-cards",
+      "group": "layouts",
+      "name": "Objects & cards — the content is a thing",
+      "intro": "Layouts that treat each piece of content as a physical thing — cards, decks, boards, a departure display. Reach for these when items should feel handled, not just listed."
+    },
+    {
+      "key": "immersive",
+      "group": "layouts",
+      "name": "Immersive — cinematic",
+      "intro": "Full-bleed, cinematic layouts built to hold attention — flythroughs, spotlights, posters. Fork one for a launch page or a moment that should feel like a scene, not a form."
+    },
+    {
+      "key": "slides-frames",
+      "group": "layouts",
+      "name": "Slides & frames — presentation layouts",
+      "intro": "16:9 presentation frames — a KPI slide, a quadrant matrix, a roadmap lane. These are layout mechanics for a deck, not a chart; reach for one when the deliverable is something someone will present."
+    },
+    {
+      "key": "agentic-commerce",
+      "group": "layouts",
+      "name": "Agentic commerce — chat that buys",
+      "intro": "Chat surfaces built around an agent that can actually buy things — shopping chat, checkout journeys, approval queues. Fork one when the product is commerce conducted in conversation."
+    },
+    {
+      "key": "comparison",
+      "group": "info-design",
+      "name": "Comparison — set side by side",
+      "intro": "Charts that set two or more things side by side so the gap is the message. Reach for these when someone asks \"which is bigger, and by how much?\""
+    },
+    {
+      "key": "trend-time-series",
+      "group": "info-design",
+      "name": "Trend / Time-series — the shape of change",
+      "intro": "Charts about the shape of change over time — a line with a confidence band, a streamgraph, a bump chart of ranks. Reach for these when the question is how something got here."
+    },
+    {
+      "key": "part-to-whole",
+      "group": "info-design",
+      "name": "Part-to-whole — composition",
+      "intro": "Charts that break one total into its named pieces — a waffle grid, a treemap, a stacked bar with leader labels. Reach for these when the whole matters as much as any single part."
+    },
+    {
+      "key": "distribution",
+      "group": "info-design",
+      "name": "Distribution — the shape of the data",
+      "intro": "Charts that show the spread and shape of many values, not just their average — histograms, ridgelines, beeswarms. Reach for these when the outliers are the story, not the mean."
+    },
+    {
+      "key": "correlation",
+      "group": "info-design",
+      "name": "Correlation — how two things move",
+      "intro": "Charts that show how two or more measures move together — a scatter with a trendline, a bubble quadrant, a connected scatter. Reach for these when the relationship matters more than either metric alone."
+    },
+    {
+      "key": "ranking",
+      "group": "info-design",
+      "name": "Ranking — order matters",
+      "intro": "Charts built to put things in order, best to worst — ordered bars, a lollipop against a benchmark, a league table. Reach for these when \"where do we stand\" is the whole question."
+    },
+    {
+      "key": "flow-process",
+      "group": "info-design",
+      "name": "Flow & process — where things go",
+      "intro": "Charts that trace where something moves or drops off — a sankey, a funnel, a chord diagram. Reach for these when the path between stages matters more than any single stage."
+    },
+    {
+      "key": "hierarchy-network",
+      "group": "info-design",
+      "name": "Hierarchy & network — structure",
+      "intro": "Charts for structure — a radial tree, a network graph, an icicle partition. Reach for these when the data has parents, children, or connections worth drawing."
+    },
+    {
+      "key": "table-heatmap",
+      "group": "info-design",
+      "name": "Table & heatmap — dense and exact",
+      "intro": "Dense, exact views for reading many values at once — a calendar heatmap, a matrix with marginal totals, a sparkline table. Reach for these when a reader needs the precise number, not just the shape."
+    },
+    {
+      "key": "geospatial",
+      "group": "info-design",
+      "name": "Geospatial — where",
+      "intro": "Charts that put data on a map or a map-like grid — a tile cartogram, a symbol map, a flow map of arcs. Reach for these when where something happens is the insight."
+    },
+    {
+      "key": "pictorial",
+      "group": "info-design",
+      "name": "Pictorial — data made human",
+      "intro": "Charts that make a number feel human — an icon array, proportional shapes, a big-number lead. Reach for these when a reader should feel a rate, not just read it."
+    },
+    {
+      "key": "dashboard-multi-chart",
+      "group": "info-design",
+      "name": "Dashboard & multi-chart — the whole picture",
+      "intro": "Multi-chart views built for a recurring review — a KPI wall, small multiples, a narrative dashboard with annotations. Reach for these when one chart alone can't carry the whole update."
+    }
+  ],
+  "items": [
+    {
+      "id": "01",
+      "group": "layouts",
+      "file": "layouts/01-split-panel.html",
+      "title": "Split Panel",
+      "category": "foundations",
+      "accent": "#4F46E5",
+      "oneliner": "Nav in a <b>fixed identity panel</b>; content scrolls beside it.",
+      "tags": [
+        "landing",
+        "portfolio"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-split\"><div class=\"b2 fill\"></div><div class=\"b2 lines\"><i class=\"m\"></i><i class=\"s\"></i><i class=\"m\"></i></div></div>"
+    },
+    {
+      "id": "02",
+      "group": "layouts",
+      "file": "layouts/02-centered-doc.html",
+      "title": "Centered Document",
+      "category": "foundations",
+      "accent": "#B45309",
+      "oneliner": "<b>Sticky top bar</b> + in-page anchors; centered column.",
+      "tags": [
+        "docs",
+        "blog"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-doc\"><div class=\"b2 bar soft\"></div><div class=\"b2 colm lines\"><i class=\"m\"></i><i></i><i class=\"s\"></i></div></div>"
+    },
+    {
+      "id": "03",
+      "group": "layouts",
+      "file": "layouts/03-sidebar-app.html",
+      "title": "Sidebar App Shell",
+      "category": "foundations",
+      "accent": "#0D9488",
+      "oneliner": "<b>Persistent sidebar</b> + topbar; the app workhorse.",
+      "tags": [
+        "dashboard",
+        "SaaS"
+      ],
+      "facets": [
+        "dashboard"
+      ],
+      "thumb": "<div class=\"tw t-side\"><div class=\"b2 rail\"></div><div class=\"colx\"><div class=\"b2 top soft\"></div><div class=\"g2\"><div class=\"b2\"></div><div class=\"b2\"></div></div></div></div>"
+    },
+    {
+      "id": "04",
+      "group": "layouts",
+      "file": "layouts/04-three-pane.html",
+      "title": "Three-Pane",
+      "category": "foundations",
+      "accent": "#2563EB",
+      "oneliner": "<b>Rail → list → detail</b>; master/detail data.",
+      "tags": [
+        "inbox",
+        "IDE / CRM"
+      ],
+      "facets": [
+        "keyboard-driven"
+      ],
+      "thumb": "<div class=\"tw t-three\"><div class=\"b2 rail\"></div><div class=\"b2 list lines\"><i class=\"m\"></i><i class=\"s\"></i></div><div class=\"b2 lines\"><i class=\"m\"></i><i></i><i class=\"s\"></i></div></div>"
+    },
+    {
+      "id": "23",
+      "group": "layouts",
+      "file": "layouts/23-bento.html",
+      "title": "Bento Grid",
+      "category": "foundations",
+      "accent": "#5B5BD6",
+      "oneliner": "<b>Modular tiles</b> of mixed sizes are the homepage.",
+      "tags": [
+        "hub",
+        "dashboard"
+      ],
+      "facets": [
+        "dashboard",
+        "gallery"
+      ],
+      "thumb": "<div class=\"tw t-bento\"><i class=\"a\"></i><i></i><i></i><i></i><i></i></div>"
+    },
+    {
+      "id": "25",
+      "group": "layouts",
+      "file": "layouts/25-accordion-spine.html",
+      "title": "Accordion Spine",
+      "category": "foundations",
+      "accent": "#C2410C",
+      "oneliner": "<b>Expand one section</b> in place; others collapse.",
+      "tags": [
+        "FAQ",
+        "features"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-acc\"><div class=\"b2\"></div><div class=\"b2 open\"></div><div class=\"b2\"></div><div class=\"b2\"></div></div>"
+    },
+    {
+      "id": "26",
+      "group": "layouts",
+      "file": "layouts/26-bottom-sheet.html",
+      "title": "Bottom-Sheet",
+      "category": "foundations",
+      "accent": "#1E9E5A",
+      "oneliner": "<b>Draggable sheet</b> over a map; snaps peek/half/full.",
+      "tags": [
+        "mobile",
+        "maps"
+      ],
+      "facets": [
+        "mobile",
+        "geospatial"
+      ],
+      "thumb": "<div class=\"tw t-sheet\"><span class=\"sh\"></span></div>"
+    },
+    {
+      "id": "31",
+      "group": "layouts",
+      "file": "layouts/31-tabbed-workspace.html",
+      "title": "Tabbed Workspace",
+      "category": "foundations",
+      "accent": "#4338CA",
+      "oneliner": "<b>Switch tabs</b> — browser-style; close, add, drag to reorder.",
+      "tags": [
+        "editor",
+        "multi-doc"
+      ],
+      "facets": [
+        "keyboard-driven"
+      ],
+      "thumb": "<div class=\"tw t-tabs\"><div class=\"row\"><i class=\"a\"></i><i></i><i></i></div><div class=\"pane\"></div></div>"
+    },
+    {
+      "id": "32",
+      "group": "layouts",
+      "file": "layouts/32-mobile-tabbar.html",
+      "title": "Mobile Tab-Bar Shell",
+      "category": "foundations",
+      "accent": "#0EA5A4",
+      "oneliner": "<b>Bottom tabs</b> — tap or swipe between four sections.",
+      "tags": [
+        "mobile",
+        "app"
+      ],
+      "facets": [
+        "mobile"
+      ],
+      "thumb": "<div class=\"tw t-phone\"><div class=\"scr\"><div class=\"bar\"><span class=\"a\"></span><span></span><span></span><span></span></div></div></div>"
+    },
+    {
+      "id": "06",
+      "group": "layouts",
+      "file": "layouts/06-infinite-canvas.html",
+      "title": "Infinite Canvas",
+      "category": "spatial",
+      "accent": "#7C5CFF",
+      "oneliner": "<b>Pan + zoom</b> a plane of nodes; semantic zoom.",
+      "tags": [
+        "knowledge map",
+        "diagram"
+      ],
+      "facets": [
+        "hierarchy",
+        "playful"
+      ],
+      "thumb": "<div class=\"tw t-canvas\"><span class=\"nd\" style=\"left:8%;top:18%\"></span><span class=\"nd\" style=\"left:54%;top:34%\"></span><span class=\"nd\" style=\"left:30%;top:64%\"></span></div>"
+    },
+    {
+      "id": "07",
+      "group": "layouts",
+      "file": "layouts/07-zettelkasten.html",
+      "title": "Zettelkasten Panes",
+      "category": "spatial",
+      "accent": "#A33A2B",
+      "oneliner": "Links open as <b>new sliding columns</b>; the trail stays.",
+      "tags": [
+        "wiki",
+        "notes"
+      ],
+      "facets": [
+        "hierarchy",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-zettel\"><div class=\"b2 lines\"><i class=\"m\"></i><i class=\"s\"></i></div><div class=\"b2 lines\"><i class=\"m\"></i><i></i></div><div class=\"b2 soft\"></div></div>"
+    },
+    {
+      "id": "08",
+      "group": "layouts",
+      "file": "layouts/08-radial-orbit.html",
+      "title": "Radial Orbit",
+      "category": "spatial",
+      "accent": "#2DD4BF",
+      "oneliner": "Peers <b>orbit a hub</b>; click to rotate one to the top.",
+      "tags": [
+        "index",
+        "modes"
+      ],
+      "facets": [
+        "hierarchy",
+        "playful"
+      ],
+      "thumb": "<div class=\"tw t-ring\"><span class=\"ring\"></span><span class=\"o\" style=\"left:50%;top:14px;margin-left:-5px\"></span><span class=\"o\" style=\"left:80%;top:42%\"></span><span class=\"o\" style=\"left:12%;top:50%\"></span><span class=\"o\" style=\"left:50%;bottom:14px;margin-left:-5px\"></span></div>"
+    },
+    {
+      "id": "09",
+      "group": "layouts",
+      "file": "layouts/09-map-pinned.html",
+      "title": "Map-Pinned",
+      "category": "spatial",
+      "accent": "#FF7A45",
+      "oneliner": "Content at <b>coordinates</b>; click a pin for its brief.",
+      "tags": [
+        "geography",
+        "world map"
+      ],
+      "facets": [
+        "geospatial",
+        "gallery"
+      ],
+      "thumb": "<div class=\"tw t-map\"><span class=\"dot\" style=\"left:24%;top:30%\"></span><span class=\"dot\" style=\"left:62%;top:56%\"></span><span class=\"dot\" style=\"left:78%;top:24%\"></span></div>"
+    },
+    {
+      "id": "27",
+      "group": "layouts",
+      "file": "layouts/27-elevator.html",
+      "title": "Elevator Floors",
+      "category": "spatial",
+      "accent": "#D97706",
+      "oneliner": "<b>Ride between floors</b> via an elevator panel.",
+      "tags": [
+        "playful",
+        "one-pager"
+      ],
+      "facets": [
+        "playful",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-elev\"><div class=\"floors\"><i></i><i class=\"a\"></i><i></i></div><div class=\"panel\"><i></i><i class=\"a\"></i><i></i></div></div>"
+    },
+    {
+      "id": "28",
+      "group": "layouts",
+      "file": "layouts/28-rooms.html",
+      "title": "Arrow Rooms",
+      "category": "spatial",
+      "accent": "#6D28D9",
+      "oneliner": "<b>Walk a 2D grid</b> of rooms with arrow keys.",
+      "tags": [
+        "game-like",
+        "explore"
+      ],
+      "facets": [
+        "playful",
+        "keyboard-driven"
+      ],
+      "thumb": "<div class=\"tw t-rooms\"><i></i><i></i><i></i><i></i><i class=\"a\"></i><i></i><i></i><i></i><i></i></div>"
+    },
+    {
+      "id": "33",
+      "group": "layouts",
+      "file": "layouts/33-column-view.html",
+      "title": "Folder Column-View",
+      "category": "spatial",
+      "accent": "#9333EA",
+      "oneliner": "<b>Drill into columns</b> — selecting cascades children to the right.",
+      "tags": [
+        "files",
+        "taxonomy"
+      ],
+      "facets": [
+        "hierarchy"
+      ],
+      "thumb": "<div class=\"tw t-cols\"><div class=\"b2\"><i></i><i class=\"a\"></i><i></i></div><div class=\"b2\"><i class=\"a\"></i><i></i><i></i></div><div class=\"b2\"><i></i><i></i></div></div>"
+    },
+    {
+      "id": "34",
+      "group": "layouts",
+      "file": "layouts/34-isometric.html",
+      "title": "Isometric Scene",
+      "category": "spatial",
+      "accent": "#0891B2",
+      "oneliner": "<b>Travel a 2.5D plane</b> — click a zone; arrow keys move focus.",
+      "tags": [
+        "world-select",
+        "playful"
+      ],
+      "facets": [
+        "playful",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-iso\"><div class=\"plane\"><i></i><i></i><i></i><i></i><i class=\"a\"></i><i></i><i></i><i></i><i></i></div></div>"
+    },
+    {
+      "id": "35",
+      "group": "layouts",
+      "file": "layouts/35-mind-map.html",
+      "title": "Mind-Map Tree",
+      "category": "spatial",
+      "accent": "#DB2777",
+      "oneliner": "<b>Expand branches</b> — click a node to grow its children.",
+      "tags": [
+        "topics",
+        "structure"
+      ],
+      "facets": [
+        "hierarchy",
+        "playful"
+      ],
+      "thumb": "<div class=\"tw t-tree\"><svg class=\"tree-svg\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\"><path d=\"M24,50 C42,50 46,24 60,24\"/><path d=\"M24,50 H60\"/><path d=\"M24,50 C42,50 46,76 60,76\"/></svg><span class=\"root\"></span><span class=\"kid\" style=\"top:18%\"></span><span class=\"kid\" style=\"top:50%;transform:translateY(-50%)\"></span><span class=\"kid\" style=\"bottom:18%\"></span></div>"
+    },
+    {
+      "id": "64",
+      "group": "layouts",
+      "file": "layouts/64-globe.html",
+      "title": "Globe (3D Points)",
+      "category": "spatial",
+      "accent": "#0891B2",
+      "oneliner": "<b>Drag to spin</b> a point globe; click a dot to open its brief.",
+      "tags": [
+        "network",
+        "footprint"
+      ],
+      "facets": [
+        "geospatial",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-globe\"><span class=\"gd\" style=\"left:30%;top:26%\"></span><span class=\"gd\" style=\"left:60%;top:46%\"></span><span class=\"gd\" style=\"left:42%;top:68%\"></span><span class=\"gd sm\" style=\"left:18%;top:52%\"></span><span class=\"gd sm\" style=\"left:70%;top:26%\"></span><span class=\"gd sm\" style=\"left:54%;top:34%\"></span><span class=\"gd sm\" style=\"left:34%;top:44%\"></span></div>"
+    },
+    {
+      "id": "05",
+      "group": "layouts",
+      "file": "layouts/05-scrollytelling.html",
+      "title": "Scrollytelling",
+      "category": "sequence-story",
+      "accent": "#E11D48",
+      "oneliner": "<b>Scroll-driven</b> full-bleed scenes + progress dots.",
+      "tags": [
+        "narrative",
+        "pitch"
+      ],
+      "facets": [
+        "narrative",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-scroll\"><div class=\"band\" style=\"background:#15161A\"></div><div class=\"band soft\"></div><div class=\"band fill\"></div></div>"
+    },
+    {
+      "id": "10",
+      "group": "layouts",
+      "file": "layouts/10-timeline-scrubber.html",
+      "title": "Timeline Scrubber",
+      "category": "sequence-story",
+      "accent": "#FFC34D",
+      "oneliner": "A <b>draggable time axis</b> reveals events as you scrub.",
+      "tags": [
+        "roadmap",
+        "history"
+      ],
+      "facets": [
+        "time",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-timeline\"><span class=\"ln\"></span><span class=\"dot\" style=\"left:18%;top:50%;transform:translateY(-50%)\"></span><span class=\"dot\" style=\"left:46%;top:50%;transform:translateY(-50%)\"></span><span class=\"dot\" style=\"left:74%;top:50%;transform:translateY(-50%)\"></span><span class=\"th\" style=\"left:46%\"></span></div>"
+    },
+    {
+      "id": "11",
+      "group": "layouts",
+      "file": "layouts/11-filmstrip.html",
+      "title": "Horizontal Filmstrip",
+      "category": "sequence-story",
+      "accent": "#E8513C",
+      "oneliner": "<b>Sideways snap</b> between full-height panels.",
+      "tags": [
+        "lookbook",
+        "case studies"
+      ],
+      "facets": [
+        "gallery",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-strip\"><div class=\"b2\"></div><div class=\"b2\"></div><div class=\"b2\"></div></div>"
+    },
+    {
+      "id": "12",
+      "group": "layouts",
+      "file": "layouts/12-sticky-stack.html",
+      "title": "Sticky-Stack Chapters",
+      "category": "sequence-story",
+      "accent": "#1F6F5C",
+      "oneliner": "Chapters <b>pin and stack</b> over each other on scroll.",
+      "tags": [
+        "narrative",
+        "walkthrough"
+      ],
+      "facets": [
+        "narrative",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-stack\"><span class=\"c\" style=\"top:16%\"></span><span class=\"c\" style=\"top:33%\"></span><span class=\"c\" style=\"top:50%\"></span></div>"
+    },
+    {
+      "id": "36",
+      "group": "layouts",
+      "file": "layouts/36-dial-picker.html",
+      "title": "Dial / Wheel Picker",
+      "category": "sequence-story",
+      "accent": "#F59E0B",
+      "oneliner": "<b>Spin a wheel</b> — drag or scroll; the centred item is selected.",
+      "tags": [
+        "picker",
+        "time/date"
+      ],
+      "facets": [
+        "mobile",
+        "playful"
+      ],
+      "thumb": "<div class=\"tw t-wheel\"><i></i><i></i><i class=\"a\"></i><i></i><i></i></div>"
+    },
+    {
+      "id": "37",
+      "group": "layouts",
+      "file": "layouts/37-stepper.html",
+      "title": "Stepper / Wizard",
+      "category": "sequence-story",
+      "accent": "#2563EB",
+      "oneliner": "<b>Advance steps</b> — a progress rail; jump back to done steps.",
+      "tags": [
+        "checkout",
+        "onboarding"
+      ],
+      "facets": [
+        "narrative",
+        "commerce"
+      ],
+      "thumb": "<div class=\"tw t-step\"><span class=\"nd a\"></span><span class=\"ln a\"></span><span class=\"nd a\"></span><span class=\"ln\"></span><span class=\"nd\"></span><span class=\"ln\"></span><span class=\"nd\"></span></div>"
+    },
+    {
+      "id": "38",
+      "group": "layouts",
+      "file": "layouts/38-page-turn.html",
+      "title": "Page-Turn Book",
+      "category": "sequence-story",
+      "accent": "#B45309",
+      "oneliner": "<b>Flip pages</b> — click an edge or arrows; spreads fold over.",
+      "tags": [
+        "lookbook",
+        "report"
+      ],
+      "facets": [
+        "gallery",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-book\"><span class=\"pg l\"></span><span class=\"pg turn\"></span><span class=\"pg r\"></span></div>"
+    },
+    {
+      "id": "39",
+      "group": "layouts",
+      "file": "layouts/39-story-tap.html",
+      "title": "Story Tap-Through",
+      "category": "sequence-story",
+      "accent": "#E11D48",
+      "oneliner": "<b>Tap to advance</b> — timed segments; hold to pause.",
+      "tags": [
+        "mobile",
+        "tour"
+      ],
+      "facets": [
+        "mobile",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-story\"><div class=\"segs\"><i class=\"done\"></i><i class=\"a\"></i><i></i><i></i></div><div class=\"body\"></div></div>"
+    },
+    {
+      "id": "40",
+      "group": "layouts",
+      "file": "layouts/40-carousel.html",
+      "title": "Carousel / Slideshow",
+      "category": "sequence-story",
+      "accent": "#7C3AED",
+      "oneliner": "<b>Page slides</b> — arrows, dots, autoplay that pauses on hover.",
+      "tags": [
+        "hero",
+        "gallery"
+      ],
+      "facets": [
+        "gallery",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-carousel\"><span class=\"pane\"></span><span class=\"dots\"><i></i><i class=\"a\"></i><i></i><i></i></span></div>"
+    },
+    {
+      "id": "13",
+      "group": "layouts",
+      "file": "layouts/13-command-palette.html",
+      "title": "Command-Palette-First",
+      "category": "command-conversation",
+      "accent": "#5B8CFF",
+      "oneliner": "A <b>⌘K palette</b> is the primary way to move.",
+      "tags": [
+        "power-user",
+        "docs"
+      ],
+      "facets": [
+        "keyboard-driven"
+      ],
+      "thumb": "<div class=\"tw t-palette\"><span class=\"bar\"></span><span class=\"r\" style=\"top:54%\"></span><span class=\"r\" style=\"top:68%;opacity:.5\"></span></div>"
+    },
+    {
+      "id": "14",
+      "group": "layouts",
+      "file": "layouts/14-terminal.html",
+      "title": "Terminal / CLI",
+      "category": "command-conversation",
+      "accent": "#39d98a",
+      "oneliner": "The site is a <b>command line</b>; output scrolls.",
+      "tags": [
+        "dev portfolio",
+        "playful"
+      ],
+      "facets": [
+        "keyboard-driven",
+        "playful"
+      ],
+      "thumb": "<div class=\"tw t-term\"><span class=\"ln a\" style=\"left:14px;top:24%;width:30%\"></span><span class=\"ln\" style=\"left:14px;top:42%;width:60%\"></span><span class=\"ln\" style=\"left:14px;top:60%;width:44%\"></span><span class=\"ln a\" style=\"left:14px;top:78%;width:16%\"></span></div>"
+    },
+    {
+      "id": "15",
+      "group": "layouts",
+      "file": "layouts/15-chat-first.html",
+      "title": "Chat-First",
+      "category": "command-conversation",
+      "accent": "#8B7BFF",
+      "oneliner": "<b>Ask</b>, and content blocks render inline.",
+      "tags": [
+        "AI-native",
+        "support"
+      ],
+      "facets": [
+        "conversational",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-chat\"><span class=\"bub l\" style=\"top:22%\"></span><span class=\"bub r\" style=\"top:48%\"></span><span class=\"bub l\" style=\"top:74%;width:36%\"></span></div>"
+    },
+    {
+      "id": "41",
+      "group": "layouts",
+      "file": "layouts/41-conversational-form.html",
+      "title": "Conversational Form",
+      "category": "command-conversation",
+      "accent": "#10B981",
+      "oneliner": "<b>One question at a time</b> — Enter advances; progress fills.",
+      "tags": [
+        "survey",
+        "onboarding"
+      ],
+      "facets": [
+        "conversational",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-form\"><span class=\"prog\"></span><span class=\"ql\"></span><span class=\"inp\"></span></div>"
+    },
+    {
+      "id": "42",
+      "group": "layouts",
+      "file": "layouts/42-notebook-cells.html",
+      "title": "Notebook / REPL Cells",
+      "category": "command-conversation",
+      "accent": "#EA580C",
+      "oneliner": "<b>Run a cell</b> — ⇧⏎ renders output below; add cells.",
+      "tags": [
+        "data",
+        "tutorial"
+      ],
+      "facets": [
+        "keyboard-driven"
+      ],
+      "thumb": "<div class=\"tw t-cells\"><div class=\"cell\"><span class=\"run\"></span><span class=\"code\"></span></div><span class=\"out\"></span><div class=\"cell\"><span class=\"run\"></span><span class=\"code\"></span></div></div>"
+    },
+    {
+      "id": "43",
+      "group": "layouts",
+      "file": "layouts/43-keyboard-inbox.html",
+      "title": "Keyboard Inbox",
+      "category": "command-conversation",
+      "accent": "#4F46E5",
+      "oneliner": "<b>j / k / Enter / e</b> — drive a list entirely by keys.",
+      "tags": [
+        "power-user",
+        "triage"
+      ],
+      "facets": [
+        "keyboard-driven"
+      ],
+      "thumb": "<div class=\"tw t-inbox\"><span class=\"row\"></span><span class=\"row sel\"></span><span class=\"row\"></span><span class=\"row\"></span><span class=\"row\"></span></div>"
+    },
+    {
+      "id": "44",
+      "group": "layouts",
+      "file": "layouts/44-slash-editor.html",
+      "title": "Slash-Command Editor",
+      "category": "command-conversation",
+      "accent": "#0D9488",
+      "oneliner": "Type <b>/</b> to summon a block menu inline.",
+      "tags": [
+        "editor",
+        "CMS"
+      ],
+      "facets": [
+        "keyboard-driven",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-slash\"><span class=\"ln\"></span><span class=\"ln s\"></span><div class=\"menu\"><i class=\"a\"></i><i></i><i></i></div><span class=\"ln\"></span></div>"
+    },
+    {
+      "id": "45",
+      "group": "layouts",
+      "file": "layouts/45-filter-search.html",
+      "title": "Live Filter Search",
+      "category": "command-conversation",
+      "accent": "#0284C7",
+      "oneliner": "<b>Search as you type</b> — facet chips filter instantly.",
+      "tags": [
+        "directory",
+        "catalog"
+      ],
+      "facets": [
+        "keyboard-driven"
+      ],
+      "thumb": "<div class=\"tw t-filter\"><span class=\"search\"></span><span class=\"chips\"><i class=\"a\"></i><i></i><i></i></span><span class=\"res\"></span><span class=\"res s\"></span></div>"
+    },
+    {
+      "id": "46",
+      "group": "layouts",
+      "file": "layouts/46-voice-assistant.html",
+      "title": "Voice Assistant",
+      "category": "command-conversation",
+      "accent": "#7E22CE",
+      "oneliner": "<b>Tap the mic</b> — query transcribes, then an answer card.",
+      "tags": [
+        "voice",
+        "kiosk"
+      ],
+      "facets": [
+        "conversational",
+        "mobile"
+      ],
+      "thumb": "<div class=\"tw t-voice\"><span class=\"miccircle\"></span><span class=\"wave\"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>"
+    },
+    {
+      "id": "16",
+      "group": "layouts",
+      "file": "layouts/16-desktop-os.html",
+      "title": "Desktop OS",
+      "category": "objects-cards",
+      "accent": "#3B82F6",
+      "oneliner": "<b>Draggable windows</b> from a dock; a site as an OS.",
+      "tags": [
+        "personal",
+        "playful"
+      ],
+      "facets": [
+        "playful",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-desktop\" style=\"inset:0\"><span class=\"win\"></span><span class=\"dock\"></span></div>"
+    },
+    {
+      "id": "17",
+      "group": "layouts",
+      "file": "layouts/17-card-deck.html",
+      "title": "Card-Deck Swipe",
+      "category": "objects-cards",
+      "accent": "#FF5D8F",
+      "oneliner": "<b>Flick</b> through a stack; the top card is focus.",
+      "tags": [
+        "mobile",
+        "onboarding"
+      ],
+      "facets": [
+        "mobile",
+        "gallery"
+      ],
+      "thumb": "<div class=\"tw t-stack t-pin\"><span class=\"c\" style=\"top:20%;transform:scale(.92)\"></span><span class=\"c\" style=\"top:34%;transform:scale(.96)\"></span><span class=\"c\" style=\"top:48%\"></span></div>"
+    },
+    {
+      "id": "18",
+      "group": "layouts",
+      "file": "layouts/18-pinboard.html",
+      "title": "Pinboard Wall",
+      "category": "objects-cards",
+      "accent": "#C0392B",
+      "oneliner": "<b>Pinned notes</b> at angles; scan, lift, open.",
+      "tags": [
+        "moodboard",
+        "scrapbook"
+      ],
+      "facets": [
+        "gallery",
+        "playful"
+      ],
+      "thumb": "<div class=\"tw t-stack t-pin\" style=\"inset:14px\"><span class=\"c\" style=\"left:10%;top:14%;width:34%;height:42%;transform:rotate(-6deg)\"></span><span class=\"c\" style=\"left:52%;top:22%;width:34%;height:42%;transform:rotate(5deg)\"></span><span class=\"c\" style=\"left:30%;top:52%;width:34%;height:40%;transform:rotate(-3deg)\"></span></div>"
+    },
+    {
+      "id": "19",
+      "group": "layouts",
+      "file": "layouts/19-split-flap.html",
+      "title": "Split-Flap Board",
+      "category": "objects-cards",
+      "accent": "#FFD23F",
+      "oneliner": "A <b>departure board</b>; filters re-flip the rows.",
+      "tags": [
+        "listings",
+        "schedule"
+      ],
+      "facets": [
+        "animated",
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-flap\" style=\"inset:0\"><i class=\"a\"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class=\"a\"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class=\"a\"></i></div>"
+    },
+    {
+      "id": "24",
+      "group": "layouts",
+      "file": "layouts/24-coverflow.html",
+      "title": "Cover Flow",
+      "alias": "3D",
+      "category": "objects-cards",
+      "accent": "#1FB6A6",
+      "oneliner": "<b>3D carousel</b>; side cards angle back in perspective.",
+      "tags": [
+        "gallery",
+        "featured"
+      ],
+      "facets": [
+        "gallery",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-cover\"><span class=\"c l\"></span><span class=\"c r\"></span><span class=\"c mid\"></span></div>"
+    },
+    {
+      "id": "47",
+      "group": "layouts",
+      "file": "layouts/47-kanban.html",
+      "title": "Kanban Board",
+      "category": "objects-cards",
+      "accent": "#EA580C",
+      "oneliner": "<b>Drag cards</b> across To-do / Doing / Done columns.",
+      "tags": [
+        "tasks",
+        "pipeline"
+      ],
+      "facets": [
+        "playful"
+      ],
+      "thumb": "<div class=\"tw t-kanban\"><div class=\"col\"><span class=\"h\"></span><i></i><i></i></div><div class=\"col\"><span class=\"h\"></span><i></i><i></i><i></i></div><div class=\"col\"><span class=\"h\"></span><i></i></div></div>"
+    },
+    {
+      "id": "48",
+      "group": "layouts",
+      "file": "layouts/48-masonry.html",
+      "title": "Masonry Gallery",
+      "category": "objects-cards",
+      "accent": "#DB2777",
+      "oneliner": "<b>Staggered grid</b> → click a tile to open a lightbox.",
+      "tags": [
+        "gallery",
+        "moodboard"
+      ],
+      "facets": [
+        "gallery",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-masonry\"><i></i><i class=\"a\"></i><i></i><i></i><i></i><i></i><i></i></div>"
+    },
+    {
+      "id": "49",
+      "group": "layouts",
+      "file": "layouts/49-card-wallet.html",
+      "title": "Card Wallet",
+      "category": "objects-cards",
+      "accent": "#0F766E",
+      "oneliner": "<b>Tap a pass</b> to raise it, tap again to flip for detail.",
+      "tags": [
+        "passes",
+        "loyalty"
+      ],
+      "facets": [
+        "mobile",
+        "commerce"
+      ],
+      "thumb": "<div class=\"tw t-wallet\"><span class=\"p\"></span><span class=\"p\"></span><span class=\"p\"></span></div>"
+    },
+    {
+      "id": "50",
+      "group": "layouts",
+      "file": "layouts/50-data-table.html",
+      "title": "Data Table",
+      "category": "objects-cards",
+      "accent": "#475569",
+      "oneliner": "<b>Sort columns</b>, click a row for a detail drawer.",
+      "tags": [
+        "admin",
+        "records"
+      ],
+      "facets": [
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-table\"><span class=\"hr\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span></div>"
+    },
+    {
+      "id": "65",
+      "group": "layouts",
+      "file": "layouts/65-ticker-board.html",
+      "title": "Ticker / Stock-Board",
+      "category": "objects-cards",
+      "accent": "#22C55E",
+      "oneliner": "<b>Values tick live</b> — a marquee runs above; click a row for its sparkline.",
+      "tags": [
+        "markets",
+        "leaderboard"
+      ],
+      "facets": [
+        "ranking",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-board\"><div class=\"brow\"><span class=\"lbl\"></span><span class=\"chip up\"></span></div><div class=\"brow\"><span class=\"lbl\"></span><span class=\"chip down\"></span></div><div class=\"brow\"><span class=\"lbl\"></span><span class=\"chip up\"></span></div><div class=\"brow\"><span class=\"lbl\"></span><span class=\"chip up\"></span></div></div>"
+    },
+    {
+      "id": "20",
+      "group": "layouts",
+      "file": "layouts/20-zaxis-flythrough.html",
+      "title": "Z-Axis Fly-Through",
+      "category": "immersive",
+      "accent": "#22D3EE",
+      "oneliner": "<b>Scroll = camera</b> moving forward through depth.",
+      "tags": [
+        "reveal",
+        "cinematic"
+      ],
+      "facets": [
+        "animated",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-zaxis\"><span class=\"r\" style=\"width:70%;height:70%;opacity:.3\"></span><span class=\"r\" style=\"width:50%;height:50%;opacity:.55\"></span><span class=\"r\" style=\"width:30%;height:30%\"></span></div>"
+    },
+    {
+      "id": "21",
+      "group": "layouts",
+      "file": "layouts/21-grid-morph.html",
+      "title": "Grid-to-Detail Morph",
+      "category": "immersive",
+      "accent": "#22D3EE",
+      "oneliner": "A tile <b>expands in place</b> into a full page.",
+      "tags": [
+        "gallery",
+        "portfolio"
+      ],
+      "facets": [
+        "gallery",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-grid\"><i style=\"height:34px\"></i><i style=\"height:48px\"></i><i style=\"height:30px\"></i><i style=\"height:44px\"></i><i style=\"height:30px\"></i><i style=\"height:40px\"></i></div>"
+    },
+    {
+      "id": "22",
+      "group": "layouts",
+      "file": "layouts/22-poster.html",
+      "title": "Poster / Full-Bleed",
+      "category": "immersive",
+      "accent": "#E8413B",
+      "oneliner": "<b>Vertical snap</b> between full-screen posters.",
+      "tags": [
+        "fashion",
+        "agency"
+      ],
+      "facets": [
+        "editorial",
+        "gallery"
+      ],
+      "thumb": "<div class=\"tw t-poster\" style=\"inset:0\"><span class=\"big\"></span></div>"
+    },
+    {
+      "id": "29",
+      "group": "layouts",
+      "file": "layouts/29-marquee.html",
+      "title": "Marquee Index",
+      "category": "immersive",
+      "accent": "#65A30D",
+      "oneliner": "<b>Auto-scrolling type</b> rows; hover pauses, click opens.",
+      "tags": [
+        "kinetic",
+        "editorial"
+      ],
+      "facets": [
+        "editorial",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-marq\"><i style=\"left:6%;top:22%;width:72%\"></i><i style=\"left:22%;top:45%;width:66%;opacity:.55\"></i><i style=\"left:2%;top:68%;width:80%\"></i></div>"
+    },
+    {
+      "id": "30",
+      "group": "layouts",
+      "file": "layouts/30-spotlight.html",
+      "title": "Spotlight Scroll",
+      "category": "immersive",
+      "accent": "#FF4D4D",
+      "oneliner": "<b>A spotlight follows</b> the cursor; the rest goes dark.",
+      "tags": [
+        "cinematic",
+        "finale"
+      ],
+      "facets": [
+        "animated",
+        "playful"
+      ],
+      "thumb": "<div class=\"tw t-spot\"></div>"
+    },
+    {
+      "id": "56",
+      "group": "layouts",
+      "file": "layouts/56-parallax-hero.html",
+      "title": "Parallax Mouse Hero",
+      "category": "immersive",
+      "accent": "#22D3EE",
+      "oneliner": "<b>Layers shift with the cursor</b> — depth that follows your mouse.",
+      "tags": [
+        "hero",
+        "landing"
+      ],
+      "facets": [
+        "animated",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-parallax\"><i></i><i></i><i></i></div>"
+    },
+    {
+      "id": "57",
+      "group": "layouts",
+      "file": "layouts/57-diagonal-editorial.html",
+      "title": "Diagonal / Skewed Editorial",
+      "category": "immersive",
+      "accent": "#F97316",
+      "oneliner": "<b>Skewed sections</b> + rotated type reveal on scroll.",
+      "tags": [
+        "editorial",
+        "fashion"
+      ],
+      "facets": [
+        "editorial",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-diag\"><span class=\"band a\"></span><span class=\"band b\"></span><span class=\"ttl\"></span></div>"
+    },
+    {
+      "id": "58",
+      "group": "layouts",
+      "file": "layouts/58-starfield.html",
+      "title": "Particle Starfield Hero",
+      "category": "immersive",
+      "accent": "#6366F1",
+      "oneliner": "<b>Animated star field</b> drifts behind bold type.",
+      "tags": [
+        "tech",
+        "launch"
+      ],
+      "facets": [
+        "animated",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-stars\"><span class=\"s\" style=\"left:14%;top:22%\"></span><span class=\"s a\" style=\"left:62%;top:30%\"></span><span class=\"s\" style=\"left:80%;top:18%\"></span><span class=\"s\" style=\"left:30%;top:66%\"></span><span class=\"s a\" style=\"left:74%;top:70%\"></span><span class=\"s\" style=\"left:48%;top:14%\"></span><span class=\"ttl\"></span></div>"
+    },
+    {
+      "id": "59",
+      "group": "layouts",
+      "file": "layouts/59-cursor-mask.html",
+      "title": "Cursor-Mask Reveal",
+      "category": "immersive",
+      "accent": "#EF4444",
+      "oneliner": "<b>A mask follows the cursor</b>, revealing a different layer beneath.",
+      "tags": [
+        "before/after",
+        "teaser"
+      ],
+      "facets": [
+        "before/after",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-mask\"><span class=\"under\"></span><span class=\"cur\"></span></div>"
+    },
+    {
+      "id": "66",
+      "group": "layouts",
+      "file": "layouts/66-kpi-slide.html",
+      "title": "KPI Big-Number Slide",
+      "category": "slides-frames",
+      "accent": "#B45309",
+      "oneliner": "<b>One number leads</b> — arrows cycle variants; the stat counts up, bars re-fill.",
+      "tags": [
+        "QBR",
+        "exec summary"
+      ],
+      "facets": [
+        "dashboard",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-kpi\"><span class=\"num\"></span><span class=\"bar\"></span><span class=\"bar lo\"></span></div>"
+    },
+    {
+      "id": "67",
+      "group": "layouts",
+      "file": "layouts/67-steps-slide.html",
+      "title": "Numbered-Steps Slide",
+      "category": "slides-frames",
+      "accent": "#2563EB",
+      "oneliner": "<b>1-2-3 highlight</b> — click a step or arrow along; the caption swaps.",
+      "tags": [
+        "how-it-works",
+        "process"
+      ],
+      "facets": [
+        "narrative",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-steps\"><span class=\"sq a\"></span><span class=\"ln a\"></span><span class=\"sq\"></span><span class=\"ln\"></span><span class=\"sq\"></span></div>"
+    },
+    {
+      "id": "68",
+      "group": "layouts",
+      "file": "layouts/68-quadrant-matrix.html",
+      "title": "2×2 Quadrant Matrix",
+      "category": "slides-frames",
+      "accent": "#7C3AED",
+      "oneliner": "<b>Four quadrants</b> — hover a dot for its note; click a quadrant to focus it.",
+      "tags": [
+        "prioritisation",
+        "positioning"
+      ],
+      "facets": [
+        "ranking",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-quad\"><i class=\"f\"></i><i></i><i></i><i></i><span class=\"dot\" style=\"left:28%;top:30%\"></span><span class=\"dot\" style=\"left:66%;top:38%\"></span><span class=\"dot\" style=\"left:40%;top:70%\"></span></div>"
+    },
+    {
+      "id": "69",
+      "group": "layouts",
+      "file": "layouts/69-versus-slide.html",
+      "title": "Versus / Comparison Slide",
+      "category": "slides-frames",
+      "accent": "#E11D48",
+      "oneliner": "<b>Drag the divider</b> — A-vs-B rows stay aligned; double-click resets 50/50.",
+      "tags": [
+        "before/after",
+        "build-vs-buy"
+      ],
+      "facets": [
+        "before/after",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-vs\"><div class=\"b2 a\"></div><div class=\"b2\"></div><span class=\"knob\"></span></div>"
+    },
+    {
+      "id": "70",
+      "group": "layouts",
+      "file": "layouts/70-roadmap-slide.html",
+      "title": "Roadmap / Timeline Slide",
+      "category": "slides-frames",
+      "accent": "#0D9488",
+      "oneliner": "<b>Click a phase to zoom</b> — Now / Next / Later lanes re-flow around it.",
+      "tags": [
+        "roadmap",
+        "programme"
+      ],
+      "facets": [
+        "time",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-roadmap\"><div class=\"lane\"><i class=\"a\" style=\"width:34%\"></i><i style=\"width:26%\"></i></div><div class=\"lane\"><i class=\"a\" style=\"width:22%\"></i><i style=\"width:38%\"></i><i style=\"width:18%\"></i></div><div class=\"lane\"><i class=\"a\" style=\"width:44%\"></i><i style=\"width:20%\"></i></div></div>"
+    },
+    {
+      "id": "71",
+      "group": "layouts",
+      "file": "layouts/71-title-dividers.html",
+      "title": "Title + Section-Divider System",
+      "category": "slides-frames",
+      "accent": "#0F172A",
+      "oneliner": "<b>Page a mini deck</b> — cover, dividers, closing; arrows, dots, edge-click.",
+      "tags": [
+        "deck skeleton",
+        "template"
+      ],
+      "facets": [
+        "editorial",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-frames\"><div class=\"pane\"><span class=\"gn\"></span><span class=\"t\"></span></div><span class=\"dots\"><i class=\"a\"></i><i></i><i></i><i></i><i></i></span></div>"
+    },
+    {
+      "id": "51",
+      "group": "layouts",
+      "file": "layouts/51-shop-chat.html",
+      "title": "Mobile Shopping Chat",
+      "category": "agentic-commerce",
+      "accent": "#0EA5E9",
+      "oneliner": "<b>Chat to shop</b> — assistant replies with product cards you add to a cart.",
+      "tags": [
+        "concierge",
+        "mobile"
+      ],
+      "facets": [
+        "conversational",
+        "commerce"
+      ],
+      "thumb": "<div class=\"tw t-shopchat\"><div class=\"scr\"><span class=\"b\"></span><span class=\"b u\"></span><span class=\"b\"></span><span class=\"pc\"><i></i></span></div></div>"
+    },
+    {
+      "id": "52",
+      "group": "layouts",
+      "file": "layouts/52-checkout-journey.html",
+      "title": "Agentic Checkout Journey",
+      "alias": "deck",
+      "category": "agentic-commerce",
+      "accent": "#8B5CF6",
+      "oneliner": "<b>Step deck</b> through a buy flow — arrows, keys, progress.",
+      "tags": [
+        "demo",
+        "walkthrough"
+      ],
+      "facets": [
+        "commerce",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-journey\"><div class=\"scr\"><span class=\"segs\"><i class=\"a\"></i><i class=\"a\"></i><i></i><i></i></span><span class=\"body\"></span><span class=\"cta\"></span></div></div>"
+    },
+    {
+      "id": "53",
+      "group": "layouts",
+      "file": "layouts/53-agent-trace.html",
+      "title": "Streaming Agent Trace",
+      "category": "agentic-commerce",
+      "accent": "#059669",
+      "oneliner": "<b>Watch the agent work</b> — reasoning + tool calls, then the answer.",
+      "tags": [
+        "transparency",
+        "tool-calls"
+      ],
+      "facets": [
+        "conversational",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-trace\"><span class=\"u\"></span><span class=\"tc\"><i></i></span><span class=\"tc\"><i></i></span><span class=\"tc\"><i></i></span><span class=\"ans\"></span></div>"
+    },
+    {
+      "id": "54",
+      "group": "layouts",
+      "file": "layouts/54-agent-handoff.html",
+      "title": "Multi-Agent Handoff",
+      "category": "agentic-commerce",
+      "accent": "#F43F5E",
+      "oneliner": "<b>Agents hand off</b> — shopper → payments → fulfilment.",
+      "tags": [
+        "orchestration",
+        "workflow"
+      ],
+      "facets": [
+        "conversational",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-handoff\"><span class=\"bar\"><i></i><i class=\"a\"></i><i></i></span><span class=\"m\"></span><span class=\"hand\"></span><span class=\"m2\"></span></div>"
+    },
+    {
+      "id": "55",
+      "group": "layouts",
+      "file": "layouts/55-chatgpt-commerce.html",
+      "title": "ChatGPT Agentic Commerce",
+      "alias": "Shopping Research + Instant Checkout",
+      "category": "agentic-commerce",
+      "accent": "#10A37F",
+      "oneliner": "<b>Research → buy in chat</b> — buyer's guide, then inline checkout.",
+      "tags": [
+        "ChatGPT-style",
+        "instant checkout"
+      ],
+      "facets": [
+        "conversational",
+        "commerce"
+      ],
+      "thumb": "<div class=\"tw t-gpt\"><div class=\"side\"><i class=\"a\"></i><i></i><i></i><i></i></div><div class=\"main\"><span class=\"l\"></span><span class=\"l s\"></span><span class=\"l\"></span><span class=\"buy\"></span></div></div>"
+    },
+    {
+      "id": "60",
+      "group": "layouts",
+      "file": "layouts/60-chatgpt-mobile.html",
+      "title": "ChatGPT Mobile Commerce",
+      "alias": "mobile chat + bottom-sheet checkout",
+      "category": "agentic-commerce",
+      "accent": "#10A37F",
+      "oneliner": "<b>Buy in the chat</b> — mobile ChatGPT; checkout slides up as a sheet.",
+      "tags": [
+        "mobile",
+        "instant checkout"
+      ],
+      "facets": [
+        "mobile",
+        "commerce"
+      ],
+      "thumb": "<div class=\"tw t-gptm\"><div class=\"scr\"><span class=\"bar\"></span><div class=\"pc\"><span class=\"img\"></span><span class=\"ln\"></span><span class=\"buy\"></span></div><span class=\"composer\"></span></div></div>"
+    },
+    {
+      "id": "61",
+      "group": "layouts",
+      "file": "layouts/61-agent-canvas.html",
+      "title": "Chat + Live Product Canvas",
+      "category": "agentic-commerce",
+      "accent": "#22D3EE",
+      "oneliner": "<b>Chat drives a canvas</b> — each agent reply lands product tiles; hover a message to see its tiles.",
+      "tags": [
+        "curation",
+        "artifacts"
+      ],
+      "facets": [
+        "conversational",
+        "gallery"
+      ],
+      "thumb": "<div class=\"tw t-agentcanvas\"><div class=\"rail\"><i></i><i class=\"a\"></i><i></i></div><div class=\"board\"><i class=\"a\"></i><i></i><i></i><i></i></div></div>"
+    },
+    {
+      "id": "62",
+      "group": "layouts",
+      "file": "layouts/62-approval-queue.html",
+      "title": "Human-in-the-Loop Approvals",
+      "category": "agentic-commerce",
+      "accent": "#F97316",
+      "oneliner": "<b>Approve the agent</b> — proposals queue up; you approve, edit, or reject each.",
+      "tags": [
+        "guardrails",
+        "moderation"
+      ],
+      "facets": [
+        "conversational"
+      ],
+      "thumb": "<div class=\"tw t-queue\"><span class=\"p\"><span class=\"ln\"></span><i class=\"ok\"></i></span><span class=\"p\"><span class=\"ln\"></span><i class=\"ok\"></i><i class=\"no\"></i></span><span class=\"p\"><span class=\"ln\"></span><i class=\"no\"></i></span></div>"
+    },
+    {
+      "id": "63",
+      "group": "layouts",
+      "file": "layouts/63-comparison-chat.html",
+      "title": "Comparison-in-Chat",
+      "category": "agentic-commerce",
+      "accent": "#6366F1",
+      "oneliner": "<b>Mentions become columns</b> — chat grows a comparison tray; toggle diffs, pick a winner.",
+      "tags": [
+        "comparison",
+        "tier chooser"
+      ],
+      "facets": [
+        "conversational",
+        "before/after"
+      ],
+      "thumb": "<div class=\"tw t-compare\"><div class=\"col\"><i></i><i></i><i></i><i></i></div><div class=\"col w\"><i></i><i></i><i></i><i></i></div><div class=\"col\"><i></i><i></i><i></i><i></i></div></div>"
+    },
+    {
+      "id": "i01",
+      "group": "info-design",
+      "file": "info-design/i01-grouped-bars.html",
+      "title": "Grouped Bars with Annotation",
+      "category": "comparison",
+      "accent": "#B45309",
+      "oneliner": "Two-series category comparisons; plan vs actual.",
+      "tags": [
+        "comparison",
+        "plan-vs-actual"
+      ],
+      "facets": [
+        "before/after",
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-i-bars\"><i class=\"a\" style=\"height:70px\"></i><i style=\"height:46px\"></i><i class=\"a\" style=\"height:52px\"></i><i style=\"height:48px\"></i><i class=\"a\" style=\"height:82px\"></i><i style=\"height:34px\"></i></div>",
+      "chooserCat": "Comparison",
+      "shape": "4 categories × 2 series",
+      "verbs": [
+        "compare"
+      ],
+      "when": "two-series category comparisons; plan vs actual"
+    },
+    {
+      "id": "i02",
+      "group": "info-design",
+      "file": "info-design/i02-slope.html",
+      "title": "Slope Chart",
+      "category": "comparison",
+      "accent": "#1D4ED8",
+      "oneliner": "Before/after across many entities; rank shifts.",
+      "tags": [
+        "before/after",
+        "rank shift"
+      ],
+      "facets": [
+        "before/after",
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-i-slope\"><span class=\"post l\"></span><span class=\"post r\"></span><svg class=\"lns\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\"><path class=\"a\" d=\"M14,78 L86,20\"/><path d=\"M14,30 L86,55\"/><path d=\"M14,55 L86,68\"/></svg></div>",
+      "chooserCat": "Comparison",
+      "shape": "6 entities × 2 time points",
+      "verbs": [
+        "compare"
+      ],
+      "when": "before/after across many entities; rank shifts"
+    },
+    {
+      "id": "i03",
+      "group": "info-design",
+      "file": "info-design/i03-dumbbell.html",
+      "title": "Dumbbell / Dot-Range",
+      "category": "comparison",
+      "accent": "#0F766E",
+      "oneliner": "Gap analysis; before/after by group.",
+      "tags": [
+        "gap analysis",
+        "before/after"
+      ],
+      "facets": [
+        "before/after",
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-i-dumbbell\"><div class=\"drow\"><i class=\"o\" style=\"left:14%\"></i><i class=\"f\" style=\"left:64%\"></i></div><div class=\"drow\"><i class=\"o\" style=\"left:30%\"></i><i class=\"f\" style=\"left:56%\"></i></div><div class=\"drow\"><i class=\"o\" style=\"left:44%\"></i><i class=\"f\" style=\"left:52%\"></i></div></div>",
+      "chooserCat": "Comparison",
+      "shape": "8 rows × 2 values, sorted by delta",
+      "verbs": [
+        "compare"
+      ],
+      "when": "gap analysis; before/after by group"
+    },
+    {
+      "id": "i04",
+      "group": "info-design",
+      "file": "info-design/i04-band-line.html",
+      "title": "Line with Confidence Band + Events",
+      "category": "trend-time-series",
+      "accent": "#BE123C",
+      "oneliner": "KPIs with uncertainty, forecasts, experiments.",
+      "tags": [
+        "trend",
+        "uncertainty"
+      ],
+      "facets": [
+        "time",
+        "dashboard"
+      ],
+      "thumb": "<div class=\"tw t-i-line\"><svg viewBox=\"0 0 60 40\" preserveAspectRatio=\"none\"><path class=\"lband\" d=\"M2,30 L15,22 L28,26 L40,14 L52,18 L58,10 L58,34 L2,34 Z\"/><path class=\"lline\" d=\"M2,30 L15,22 L28,26 L40,14 L52,18 L58,10\"/></svg></div>",
+      "chooserCat": "Trend",
+      "shape": "1 series × 36 monthly points + band",
+      "verbs": [
+        "reveal-change"
+      ],
+      "when": "KPIs with uncertainty, forecasts, experiments"
+    },
+    {
+      "id": "i05",
+      "group": "info-design",
+      "file": "info-design/i05-streamgraph.html",
+      "title": "Streamgraph",
+      "category": "trend-time-series",
+      "accent": "#6D28D9",
+      "oneliner": "Evolving share of voice/volume.",
+      "tags": [
+        "composition",
+        "share of whole"
+      ],
+      "facets": [
+        "time",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-i-stream\"><svg viewBox=\"0 0 60 40\" preserveAspectRatio=\"none\"><path class=\"s1\" d=\"M0,14 C15,8 45,18 60,12 L60,22 C45,28 15,18 0,24 Z\"/><path class=\"s2\" d=\"M0,20 C15,14 45,24 60,18 L60,28 C45,34 15,24 0,30 Z\"/><path class=\"s3\" d=\"M0,26 C15,20 45,30 60,24 L60,34 C45,40 15,30 0,36 Z\"/></svg></div>",
+      "chooserCat": "Trend",
+      "shape": "5 series × 12 monthly points, stacked",
+      "verbs": [
+        "reveal-change",
+        "show-composition"
+      ],
+      "when": "evolving share of voice/volume"
+    },
+    {
+      "id": "i06",
+      "group": "info-design",
+      "file": "info-design/i06-bump.html",
+      "title": "Bump Chart",
+      "category": "trend-time-series",
+      "accent": "#0E7490",
+      "oneliner": "League positions, brand rankings over time.",
+      "tags": [
+        "ranking",
+        "league table"
+      ],
+      "facets": [
+        "time",
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-i-bump\"><svg viewBox=\"0 0 60 40\"><path class=\"n1\" d=\"M4,8 L30,28 L56,14\"/><path class=\"n2\" d=\"M4,20 L30,10 L56,30\"/><path class=\"a\" d=\"M4,32 L30,18 L56,6\"/></svg></div>",
+      "chooserCat": "Trend",
+      "shape": "6 entities × 6 periods of ranks",
+      "verbs": [
+        "rank"
+      ],
+      "when": "league positions, brand rankings over time"
+    },
+    {
+      "id": "i07",
+      "group": "info-design",
+      "file": "info-design/i07-waffle.html",
+      "title": "Waffle Grid",
+      "category": "part-to-whole",
+      "accent": "#B45309",
+      "oneliner": "Shares of a population, survey splits.",
+      "tags": [
+        "part-to-whole",
+        "survey split"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-waffle\"><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"b\"></i><i class=\"b\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"b\"></i><i></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"b\"></i><i></i><i></i><i></i><i class=\"b\"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>",
+      "chooserCat": "Part-to-whole",
+      "shape": "3 named segments + remainder, sum to 100",
+      "verbs": [
+        "show-composition"
+      ],
+      "when": "shares of a population, survey splits"
+    },
+    {
+      "id": "i08",
+      "group": "info-design",
+      "file": "info-design/i08-treemap.html",
+      "title": "Treemap",
+      "category": "part-to-whole",
+      "accent": "#166534",
+      "oneliner": "Budgets, portfolio weights, storage.",
+      "tags": [
+        "part-to-whole",
+        "budget"
+      ],
+      "facets": [
+        "hierarchy"
+      ],
+      "thumb": "<div class=\"tw t-i-treemap\"><svg viewBox=\"0 0 60 40\"><rect class=\"g1\" x=\"0\" y=\"0\" width=\"34\" height=\"40\"/><rect class=\"g2\" x=\"34\" y=\"0\" width=\"14\" height=\"24\"/><rect class=\"g3\" x=\"34\" y=\"24\" width=\"14\" height=\"16\"/><rect class=\"g3\" x=\"48\" y=\"0\" width=\"12\" height=\"40\"/></svg></div>",
+      "chooserCat": "Part-to-whole",
+      "shape": "8 leaves across 3 groups, rects precomputed",
+      "verbs": [
+        "show-composition"
+      ],
+      "when": "budgets, portfolio weights, storage"
+    },
+    {
+      "id": "i09",
+      "group": "info-design",
+      "file": "info-design/i09-stacked-leader.html",
+      "title": "Stacked Bar with Leader Labels",
+      "category": "part-to-whole",
+      "accent": "#9F1239",
+      "oneliner": "Single-total breakdowns where each part deserves a sentence.",
+      "tags": [
+        "part-to-whole",
+        "single total"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-stackbar\"><svg viewBox=\"0 0 60 40\"><line class=\"tick\" x1=\"14\" y1=\"18\" x2=\"14\" y2=\"8\"/><circle class=\"dot\" cx=\"14\" cy=\"8\" r=\"1.6\"/><line class=\"tick\" x1=\"35\" y1=\"26\" x2=\"35\" y2=\"34\"/><circle class=\"dot\" cx=\"35\" cy=\"34\" r=\"1.6\"/><rect class=\"seg-a\" x=\"2\" y=\"18\" width=\"24\" height=\"8\"/><rect class=\"seg-b\" x=\"26\" y=\"18\" width=\"18\" height=\"8\"/><rect class=\"seg-c\" x=\"44\" y=\"18\" width=\"14\" height=\"8\"/></svg></div>",
+      "chooserCat": "Part-to-whole",
+      "shape": "5 segments of one whole",
+      "verbs": [
+        "show-composition"
+      ],
+      "when": "single-total breakdowns where each part deserves a sentence"
+    },
+    {
+      "id": "i10",
+      "group": "info-design",
+      "file": "info-design/i10-histogram.html",
+      "title": "Histogram with Summary Stats",
+      "category": "distribution",
+      "accent": "#1E40AF",
+      "oneliner": "Response times, prices, scores.",
+      "tags": [
+        "distribution",
+        "skew"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-hist\"><i style=\"height:22px\"></i><i style=\"height:40px\"></i><i class=\"a\" style=\"height:64px\"></i><i class=\"a\" style=\"height:82px\"></i><i class=\"a\" style=\"height:58px\"></i><i style=\"height:36px\"></i><i style=\"height:20px\"></i><i style=\"height:10px\"></i></div>",
+      "chooserCat": "Distribution",
+      "shape": "~200 values pre-binned into 20 buckets",
+      "verbs": [
+        "distribute"
+      ],
+      "when": "response times, prices, scores"
+    },
+    {
+      "id": "i11",
+      "group": "info-design",
+      "file": "info-design/i11-ridgeline.html",
+      "title": "Ridgeline",
+      "alias": "joyplot",
+      "category": "distribution",
+      "accent": "#7C2D12",
+      "oneliner": "Distributions across groups / time-of-day.",
+      "tags": [
+        "distribution",
+        "compare-groups"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-ridge\"><svg viewBox=\"0 0 60 40\"><path class=\"r1\" d=\"M0,30 C10,26 16,10 24,10 C32,10 38,26 48,30 L48,34 C38,30 32,14 24,14 C16,14 10,30 0,34 Z\"/><path class=\"r2\" d=\"M4,34 C14,30 20,18 30,18 C40,18 46,30 56,34 L56,38 C46,34 40,22 30,22 C20,22 14,38 4,38 Z\"/></svg></div>",
+      "chooserCat": "Distribution",
+      "shape": "5 groups × precomputed density curves",
+      "verbs": [
+        "distribute"
+      ],
+      "when": "distributions across groups / time-of-day"
+    },
+    {
+      "id": "i12",
+      "group": "info-design",
+      "file": "info-design/i12-beeswarm.html",
+      "title": "Beeswarm / Dot Strip",
+      "category": "distribution",
+      "accent": "#115E59",
+      "oneliner": "Small-n distributions where individual points matter.",
+      "tags": [
+        "distribution",
+        "outlier"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-swarm\"><div class=\"srow\"><i class=\"a\" style=\"left:20%;top:30%\"></i><i class=\"a\" style=\"left:34%;top:60%\"></i><i class=\"a\" style=\"left:44%;top:20%\"></i><i style=\"left:58%;top:70%\"></i><i style=\"left:80%;top:40%\"></i></div><div class=\"srow\"><i style=\"left:15%;top:50%\"></i><i style=\"left:28%;top:20%\"></i><i style=\"left:40%;top:65%\"></i><i style=\"left:52%;top:35%\"></i><i style=\"left:66%;top:60%\"></i></div></div>",
+      "chooserCat": "Distribution",
+      "shape": "3 categories × ~40 values, jitter precomputed",
+      "verbs": [
+        "distribute"
+      ],
+      "when": "small-n distributions where individual points matter"
+    },
+    {
+      "id": "i13",
+      "group": "info-design",
+      "file": "info-design/i13-scatter-trend.html",
+      "title": "Annotated Scatter with Trendline",
+      "category": "correlation",
+      "accent": "#A21CAF",
+      "oneliner": "Two-metric relationships with exceptions worth naming.",
+      "tags": [
+        "correlation",
+        "regression"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-scatter\"><svg viewBox=\"0 0 60 40\"><line class=\"fl\" x1=\"4\" y1=\"34\" x2=\"56\" y2=\"8\"/><circle class=\"d\" cx=\"10\" cy=\"30\" r=\"2.2\"/><circle class=\"d\" cx=\"18\" cy=\"24\" r=\"2.2\"/><circle class=\"d\" cx=\"26\" cy=\"21\" r=\"2.2\"/><circle class=\"d a\" cx=\"30\" cy=\"10\" r=\"2.6\"/><circle class=\"d\" cx=\"36\" cy=\"16\" r=\"2.2\"/><circle class=\"d\" cx=\"44\" cy=\"12\" r=\"2.2\"/><circle class=\"d\" cx=\"50\" cy=\"9\" r=\"2.2\"/></svg></div>",
+      "chooserCat": "Correlation",
+      "shape": "30 points + precomputed regression line",
+      "verbs": [
+        "relate"
+      ],
+      "when": "two-metric relationships with exceptions worth naming"
+    },
+    {
+      "id": "i14",
+      "group": "info-design",
+      "file": "info-design/i14-bubble-quadrant.html",
+      "title": "Bubble Quadrant",
+      "category": "correlation",
+      "accent": "#B91C1C",
+      "oneliner": "Effort/impact, risk/return, growth/share.",
+      "tags": [
+        "correlation",
+        "effort-impact"
+      ],
+      "facets": [
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-i-quadbub\"><svg viewBox=\"0 0 60 40\"><line class=\"mid\" x1=\"30\" y1=\"2\" x2=\"30\" y2=\"38\"/><line class=\"mid\" x1=\"2\" y1=\"20\" x2=\"58\" y2=\"20\"/><circle class=\"bub a\" cx=\"16\" cy=\"10\" r=\"7\"/><circle class=\"bub\" cx=\"46\" cy=\"12\" r=\"9\"/><circle class=\"bub\" cx=\"18\" cy=\"30\" r=\"4\"/><circle class=\"bub\" cx=\"44\" cy=\"28\" r=\"5.5\"/></svg></div>",
+      "chooserCat": "Correlation",
+      "shape": "12 items — {label, x, y, size}",
+      "verbs": [
+        "relate"
+      ],
+      "when": "effort/impact, risk/return, growth/share"
+    },
+    {
+      "id": "i15",
+      "group": "info-design",
+      "file": "info-design/i15-connected-scatter.html",
+      "title": "Connected Scatter",
+      "category": "correlation",
+      "accent": "#1D4ED8",
+      "oneliner": "Two metrics evolving together over time.",
+      "tags": [
+        "correlation",
+        "time series"
+      ],
+      "facets": [
+        "time"
+      ],
+      "thumb": "<div class=\"tw t-i-connscatter\"><svg viewBox=\"0 0 60 40\"><path class=\"cs-ghost\" d=\"M7,35 L21,27 L35,15 L53,7\"/><path class=\"cs-path\" d=\"M6,34 L20,26 L34,14 L52,6\"/><polygon class=\"cs-arrow\" points=\"-3,-2.5 3,0 -3,2.5\" transform=\"translate(27,20) rotate(-34)\"/><circle class=\"cs-pt\" cx=\"6\" cy=\"34\" r=\"2.2\"/><circle class=\"cs-pt\" cx=\"52\" cy=\"6\" r=\"2.2\"/></svg></div>",
+      "chooserCat": "Correlation",
+      "shape": "One entity × 12 yearly points",
+      "verbs": [
+        "relate"
+      ],
+      "when": "two metrics evolving together over time"
+    },
+    {
+      "id": "i16",
+      "group": "info-design",
+      "file": "info-design/i16-ordered-bars.html",
+      "title": "Ordered Bars with Highlight",
+      "category": "ranking",
+      "accent": "#B45309",
+      "oneliner": "\"where do we stand\" rankings.",
+      "tags": [
+        "ranking",
+        "highlight"
+      ],
+      "facets": [
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-i-rankbars\"><i class=\"a\" style=\"width:86%\"></i><i style=\"width:76%\"></i><i style=\"width:70%\"></i><i style=\"width:62%\"></i><i style=\"width:52%\"></i></div>",
+      "chooserCat": "Ranking",
+      "shape": "10 items sorted descending",
+      "verbs": [
+        "rank"
+      ],
+      "when": "\"where do we stand\" rankings"
+    },
+    {
+      "id": "i17",
+      "group": "info-design",
+      "file": "info-design/i17-lollipop.html",
+      "title": "Lollipop with Benchmark",
+      "category": "ranking",
+      "accent": "#4D7C0F",
+      "oneliner": "Targets, SLAs, peer medians.",
+      "tags": [
+        "ranking",
+        "benchmark"
+      ],
+      "facets": [
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-i-lolli\"><svg viewBox=\"0 0 60 40\"><line class=\"bench\" x1=\"34\" y1=\"4\" x2=\"34\" y2=\"36\"/><line class=\"stem a\" x1=\"10\" y1=\"8\" x2=\"46\" y2=\"8\"/><circle class=\"dot a\" cx=\"46\" cy=\"8\" r=\"2.4\"/><line class=\"stem a\" x1=\"10\" y1=\"16\" x2=\"40\" y2=\"16\"/><circle class=\"dot a\" cx=\"40\" cy=\"16\" r=\"2.4\"/><line class=\"stem\" x1=\"10\" y1=\"24\" x2=\"28\" y2=\"24\"/><circle class=\"dot\" cx=\"28\" cy=\"24\" r=\"2.4\"/><line class=\"stem\" x1=\"10\" y1=\"32\" x2=\"20\" y2=\"32\"/><circle class=\"dot\" cx=\"20\" cy=\"32\" r=\"2.4\"/></svg></div>",
+      "chooserCat": "Ranking",
+      "shape": "12 items + a single benchmark value",
+      "verbs": [
+        "rank"
+      ],
+      "when": "targets, SLAs, peer medians"
+    },
+    {
+      "id": "i18",
+      "group": "info-design",
+      "file": "info-design/i18-league-table.html",
+      "title": "League Table with Deltas",
+      "category": "ranking",
+      "accent": "#0F766E",
+      "oneliner": "Leaderboards, portfolio tables, team metrics.",
+      "tags": [
+        "ranking",
+        "table"
+      ],
+      "facets": [
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-table\"><span class=\"hr\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span></div>",
+      "chooserCat": "Ranking",
+      "shape": "8 rows (name, v, prev)",
+      "verbs": [
+        "rank"
+      ],
+      "when": "leaderboards, portfolio tables, team metrics"
+    },
+    {
+      "id": "i19",
+      "group": "info-design",
+      "file": "info-design/i19-sankey.html",
+      "title": "Sankey",
+      "category": "flow-process",
+      "accent": "#1E40AF",
+      "oneliner": "Traffic sources → outcomes, budget flows, energy.",
+      "tags": [
+        "flow",
+        "sankey"
+      ],
+      "facets": [
+        "hierarchy"
+      ],
+      "thumb": "<div class=\"tw t-i-sankey\"><svg viewBox=\"0 0 60 40\"><rect class=\"nd\" x=\"6\" y=\"6\" width=\"4\" height=\"12\"/><rect class=\"nd\" x=\"6\" y=\"22\" width=\"4\" height=\"10\"/><rect class=\"nd\" x=\"50\" y=\"4\" width=\"4\" height=\"10\"/><rect class=\"nd\" x=\"50\" y=\"18\" width=\"4\" height=\"9\"/><rect class=\"nd\" x=\"50\" y=\"31\" width=\"4\" height=\"5\"/><path class=\"rb a\" d=\"M10,8 C30,8 30,6 50,7 L50,12 C30,11 30,13 10,15 Z\"/><path class=\"rb\" d=\"M10,20 C30,20 30,21 50,20 L50,25 C30,25 30,26 10,27 Z\"/></svg></div>",
+      "chooserCat": "Flow",
+      "shape": "3 sources → 4 targets",
+      "verbs": [
+        "show-flow"
+      ],
+      "when": "traffic sources → outcomes, budget flows, energy"
+    },
+    {
+      "id": "i20",
+      "group": "info-design",
+      "file": "info-design/i20-funnel.html",
+      "title": "Funnel",
+      "category": "flow-process",
+      "accent": "#C2410C",
+      "oneliner": "Signup/checkout funnels, pipeline stages.",
+      "tags": [
+        "flow",
+        "funnel"
+      ],
+      "facets": [
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-i-funnel\"><i style=\"width:70%;height:9px\"></i><i class=\"b2\" style=\"width:54%;height:9px\"></i><i class=\"b3\" style=\"width:40%;height:9px\"></i><i class=\"b4\" style=\"width:28%;height:9px\"></i></div>",
+      "chooserCat": "Flow",
+      "shape": "5 stages, descending",
+      "verbs": [
+        "show-flow"
+      ],
+      "when": "signup/checkout funnels, pipeline stages"
+    },
+    {
+      "id": "i21",
+      "group": "info-design",
+      "file": "info-design/i21-chord.html",
+      "title": "Chord Diagram",
+      "category": "flow-process",
+      "accent": "#6D28D9",
+      "oneliner": "Migrations, trade, who-talks-to-whom.",
+      "tags": [
+        "flow",
+        "chord"
+      ],
+      "facets": [
+        "hierarchy"
+      ],
+      "thumb": "<div class=\"tw t-i-chord\"><svg viewBox=\"0 0 60 40\"><circle class=\"ring\" cx=\"30\" cy=\"20\" r=\"15\"/><path class=\"ring a\" d=\"M30,5 A15,15 0 0 1 44,15\" fill=\"none\"/><path class=\"rb\" d=\"M20,8 Q30,20 40,32\"/><path class=\"rb\" d=\"M40,8 Q30,20 20,32\"/><path class=\"rb\" d=\"M15,22 Q30,20 45,22\"/></svg></div>",
+      "chooserCat": "Flow",
+      "shape": "5 entities, symmetric flow matrix",
+      "verbs": [
+        "show-flow"
+      ],
+      "when": "migrations, trade, who-talks-to-whom"
+    },
+    {
+      "id": "i22",
+      "group": "info-design",
+      "file": "info-design/i22-radial-tree.html",
+      "title": "Radial Tree",
+      "category": "hierarchy-network",
+      "accent": "#0E7490",
+      "oneliner": "Org/topic structures with a focal branch.",
+      "tags": [
+        "hierarchy",
+        "radial-tree"
+      ],
+      "facets": [
+        "hierarchy"
+      ],
+      "thumb": "<div class=\"tw t-i-radialtree\"><svg viewBox=\"0 0 60 40\"><circle class=\"hub\" cx=\"30\" cy=\"20\" r=\"3\"/><path class=\"lk\" d=\"M30,20 C20,20 15,10 8,8\"/><path class=\"lk\" d=\"M30,20 C20,20 15,30 8,30\"/><path class=\"lk a\" d=\"M30,20 C38,20 44,10 52,8\"/><path class=\"lk a\" d=\"M30,20 C38,20 44,14 52,16\"/><circle class=\"nd\" cx=\"8\" cy=\"8\" r=\"2\"/><circle class=\"nd\" cx=\"8\" cy=\"30\" r=\"2\"/><circle class=\"nd a\" cx=\"52\" cy=\"8\" r=\"2\"/><circle class=\"nd a\" cx=\"52\" cy=\"16\" r=\"2\"/></svg></div>",
+      "chooserCat": "Hierarchy",
+      "shape": "root + 2 levels (6 branches × 2–4 leaves)",
+      "verbs": [
+        "show-composition"
+      ],
+      "when": "org/topic structures with a focal branch"
+    },
+    {
+      "id": "i23",
+      "group": "info-design",
+      "file": "info-design/i23-network.html",
+      "title": "Network Graph",
+      "category": "hierarchy-network",
+      "accent": "#BE123C",
+      "oneliner": "Collaboration, dependencies, influence maps.",
+      "tags": [
+        "network",
+        "collaboration"
+      ],
+      "facets": [
+        "hierarchy"
+      ],
+      "thumb": "<div class=\"tw t-i-net\"><svg viewBox=\"0 0 60 40\"><line class=\"lk\" x1=\"10\" y1=\"12\" x2=\"18\" y2=\"22\"/><line class=\"lk\" x1=\"10\" y1=\"12\" x2=\"14\" y2=\"28\"/><line class=\"lk\" x1=\"18\" y1=\"22\" x2=\"14\" y2=\"28\"/><line class=\"lk a\" x1=\"18\" y1=\"22\" x2=\"34\" y2=\"20\"/><line class=\"lk\" x1=\"34\" y1=\"20\" x2=\"46\" y2=\"10\"/><line class=\"lk\" x1=\"34\" y1=\"20\" x2=\"48\" y2=\"24\"/><line class=\"lk\" x1=\"46\" y1=\"10\" x2=\"48\" y2=\"24\"/><circle class=\"nd\" cx=\"10\" cy=\"12\" r=\"3.4\"/><circle class=\"nd\" cx=\"18\" cy=\"22\" r=\"3\"/><circle class=\"nd\" cx=\"14\" cy=\"28\" r=\"2.4\"/><circle class=\"nd a\" cx=\"34\" cy=\"20\" r=\"3.6\"/><circle class=\"nd\" cx=\"46\" cy=\"10\" r=\"3.2\"/><circle class=\"nd\" cx=\"48\" cy=\"24\" r=\"2.8\"/></svg></div>",
+      "chooserCat": "Hierarchy",
+      "shape": "14 nodes, 18 links, positions precomputed",
+      "verbs": [
+        "relate"
+      ],
+      "when": "collaboration, dependencies, influence maps"
+    },
+    {
+      "id": "i24",
+      "group": "info-design",
+      "file": "info-design/i24-icicle.html",
+      "title": "Icicle / Partition",
+      "category": "hierarchy-network",
+      "accent": "#166534",
+      "oneliner": "File sizes, budget trees, taxonomy weights.",
+      "tags": [
+        "hierarchy",
+        "icicle"
+      ],
+      "facets": [
+        "hierarchy"
+      ],
+      "thumb": "<div class=\"tw t-i-icicle\"><i class=\"row0\"></i><div class=\"row1\"><i class=\"a\" style=\"flex:0.42\"></i><i style=\"flex:0.23\"></i><i style=\"flex:0.20\"></i><i style=\"flex:0.15\"></i></div></div>",
+      "chooserCat": "Hierarchy",
+      "shape": "3-depth hierarchy, spans precomputed",
+      "verbs": [
+        "show-composition"
+      ],
+      "when": "file sizes, budget trees, taxonomy weights"
+    },
+    {
+      "id": "i25",
+      "group": "info-design",
+      "file": "info-design/i25-calendar-heatmap.html",
+      "title": "Calendar Heatmap",
+      "category": "table-heatmap",
+      "accent": "#15803D",
+      "oneliner": "Activity rhythms, habit/commit data.",
+      "tags": [
+        "rhythm",
+        "calendar"
+      ],
+      "facets": [
+        "time"
+      ],
+      "thumb": "<div class=\"tw t-i-cal\"><div class=\"crow\"><i></i><i class=\"l2\"></i><i></i><i class=\"l3\"></i><i></i><i class=\"l2\"></i><i></i></div><div class=\"crow\"><i class=\"l2\"></i><i></i><i class=\"l4\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"l4\"></i><i class=\"l2\"></i></div><div class=\"crow\"><i></i><i class=\"l3\"></i><i></i><i class=\"l2\"></i><i></i><i></i><i class=\"l2\"></i></div></div>",
+      "chooserCat": "Table/Heatmap",
+      "shape": "52 weeks × 7 days of counts",
+      "verbs": [
+        "reveal-change"
+      ],
+      "when": "activity rhythms, habit/commit data"
+    },
+    {
+      "id": "i26",
+      "group": "info-design",
+      "file": "info-design/i26-matrix-heatmap.html",
+      "title": "Matrix Heatmap with Marginals",
+      "category": "table-heatmap",
+      "accent": "#B91C1C",
+      "oneliner": "Confusion matrices, region×product, time×channel.",
+      "tags": [
+        "relate",
+        "heatmap"
+      ],
+      "facets": [
+        "ranking"
+      ],
+      "thumb": "<div class=\"tw t-i-matrix\"><i class=\"l2\"></i><i></i><i class=\"l3\"></i><i></i><i class=\"l2\"></i><i></i><i></i><i class=\"l3\"></i><i class=\"l2\"></i><i class=\"a\"></i><i class=\"l3\"></i><i></i><i class=\"l2\"></i><i></i><i class=\"l2\"></i><i class=\"l3\"></i><i></i><i class=\"l2\"></i><i></i><i class=\"l2\"></i><i></i><i></i><i class=\"l2\"></i><i></i></div>",
+      "chooserCat": "Table/Heatmap",
+      "shape": "8 rows × 6 cols matrix + totals",
+      "verbs": [
+        "relate"
+      ],
+      "when": "confusion matrices, region×product, time×channel"
+    },
+    {
+      "id": "i27",
+      "group": "info-design",
+      "file": "info-design/i27-sparkline-table.html",
+      "title": "Sparkline Table",
+      "category": "table-heatmap",
+      "accent": "#334155",
+      "oneliner": "Metric overviews, watchlists.",
+      "tags": [
+        "compare",
+        "sparkline"
+      ],
+      "facets": [
+        "time"
+      ],
+      "thumb": "<div class=\"tw t-table\"><span class=\"hr\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span><span class=\"r\"></span><svg class=\"t-i-spark\" viewBox=\"0 0 34 14\"><polyline points=\"0,11 6,9 12,10 18,6 24,7 29,3 34,2\"/><circle cx=\"34\" cy=\"2\" r=\"1.6\"/></svg></div>",
+      "chooserCat": "Table/Heatmap",
+      "shape": "6 rows — {name, series[12], current, prev}",
+      "verbs": [
+        "compare"
+      ],
+      "when": "metric overviews, watchlists"
+    },
+    {
+      "id": "i28",
+      "group": "info-design",
+      "file": "info-design/i28-tile-cartogram.html",
+      "title": "Tile-Grid Cartogram",
+      "category": "geospatial",
+      "accent": "#0369A1",
+      "oneliner": "Per-region rates where area shouldn’t dominate.",
+      "tags": [
+        "geospatial",
+        "cartogram"
+      ],
+      "facets": [
+        "geospatial"
+      ],
+      "thumb": "<div class=\"tw t-i-tiles\"><i class=\"hole\"></i><i class=\"l2\"></i><i class=\"l3\"></i><i class=\"l2\"></i><i class=\"hole\"></i><i class=\"hole\"></i><i class=\"l2\"></i><i class=\"l3\"></i><i class=\"a\"></i><i class=\"l4\"></i><i class=\"l3\"></i><i class=\"l2\"></i><i class=\"l3\"></i><i class=\"l4\"></i><i class=\"l3\"></i><i class=\"l2\"></i><i class=\"l3\"></i><i class=\"l4\"></i><i class=\"hole\"></i><i class=\"l2\"></i><i class=\"l3\"></i><i class=\"l2\"></i><i class=\"l2\"></i><i class=\"hole\"></i></div>",
+      "chooserCat": "Geospatial",
+      "shape": "24 regions — {code, label, col, row, v}",
+      "verbs": [
+        "locate"
+      ],
+      "when": "per-region rates where area shouldn’t dominate"
+    },
+    {
+      "id": "i29",
+      "group": "info-design",
+      "file": "info-design/i29-symbol-map.html",
+      "title": "Proportional Symbol Map",
+      "category": "geospatial",
+      "accent": "#B45309",
+      "oneliner": "Quantities at places (sales by city, outbreaks).",
+      "tags": [
+        "geospatial",
+        "symbol map"
+      ],
+      "facets": [
+        "geospatial"
+      ],
+      "thumb": "<div class=\"tw t-i-symbols\"><svg viewBox=\"0 0 60 40\"><path class=\"land\" d=\"M14,8 C24,4 40,5 48,12 C54,18 50,26 42,30 C32,35 18,33 12,26 C6,19 6,12 14,8 Z\"/><circle class=\"sym a\" cx=\"24\" cy=\"18\" r=\"8\"/><circle class=\"sym\" cx=\"38\" cy=\"14\" r=\"5\"/><circle class=\"sym\" cx=\"34\" cy=\"27\" r=\"4\"/></svg></div>",
+      "chooserCat": "Geospatial",
+      "shape": "coastline path + 10 locations",
+      "verbs": [
+        "locate"
+      ],
+      "when": "quantities at places (sales by city, outbreaks)"
+    },
+    {
+      "id": "i30",
+      "group": "info-design",
+      "file": "info-design/i30-flow-map.html",
+      "title": "Flow Map",
+      "category": "geospatial",
+      "accent": "#7E22CE",
+      "oneliner": "Shipments, migration, network traffic.",
+      "tags": [
+        "geospatial",
+        "flow map"
+      ],
+      "facets": [
+        "geospatial",
+        "animated"
+      ],
+      "thumb": "<div class=\"tw t-i-arcs\"><svg viewBox=\"0 0 60 40\"><circle class=\"origin\" cx=\"12\" cy=\"20\" r=\"3\"/><path class=\"fa a\" d=\"M12,20 Q34,4 50,12\"/><path class=\"fa\" d=\"M12,20 Q30,26 48,24\"/><path class=\"fa\" d=\"M12,20 Q26,34 44,33\"/><circle class=\"dest a\" cx=\"50\" cy=\"12\" r=\"2.6\"/><circle class=\"dest\" cx=\"48\" cy=\"24\" r=\"2.2\"/><circle class=\"dest\" cx=\"44\" cy=\"33\" r=\"2.2\"/></svg></div>",
+      "chooserCat": "Geospatial",
+      "shape": "coastline path + 1 origin + 6 destinations",
+      "verbs": [
+        "show-flow",
+        "locate"
+      ],
+      "when": "shipments, migration, network traffic"
+    },
+    {
+      "id": "i31",
+      "group": "info-design",
+      "file": "info-design/i31-icon-array.html",
+      "title": "Icon-Array Pictograph",
+      "category": "pictorial",
+      "accent": "#BE123C",
+      "oneliner": "Risk communication, survey shares, \"1 in N\".",
+      "tags": [
+        "pictorial",
+        "icon array"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-icons\"><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>",
+      "chooserCat": "Pictorial",
+      "shape": "{k, n} rate + a two-group comparison pair",
+      "verbs": [
+        "tell-a-story"
+      ],
+      "when": "risk communication, survey shares, \"1 in N\""
+    },
+    {
+      "id": "i32",
+      "group": "info-design",
+      "file": "info-design/i32-area-shapes.html",
+      "title": "Proportional-Area Shapes",
+      "category": "pictorial",
+      "accent": "#0F766E",
+      "oneliner": "Magnitude gaps too big for bars.",
+      "tags": [
+        "pictorial",
+        "proportional area"
+      ],
+      "facets": [
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-circles\"><svg viewBox=\"0 0 60 40\"><circle class=\"a\" cx=\"14\" cy=\"24\" r=\"10\"/><circle cx=\"34\" cy=\"27\" r=\"7\"/><circle cx=\"47\" cy=\"29.5\" r=\"4.5\"/><circle cx=\"56\" cy=\"31.5\" r=\"2.5\"/></svg></div>",
+      "chooserCat": "Pictorial",
+      "shape": "4 items + a shape flag",
+      "verbs": [
+        "compare"
+      ],
+      "when": "magnitude gaps too big for bars"
+    },
+    {
+      "id": "i33",
+      "group": "info-design",
+      "file": "info-design/i33-big-number.html",
+      "title": "Annotated Big-Number Story",
+      "category": "pictorial",
+      "accent": "#1E3A8A",
+      "oneliner": "Report leads, posters, exec one-pagers.",
+      "tags": [
+        "pictorial",
+        "big number"
+      ],
+      "facets": [
+        "narrative",
+        "editorial"
+      ],
+      "thumb": "<div class=\"tw t-i-bignum\"><span class=\"num\">128K</span><svg viewBox=\"0 0 34 14\"><polyline points=\"0,11 6,9 12,10 18,6 24,7 29,3 34,2\"/><circle cx=\"34\" cy=\"2\" r=\"1.6\"/></svg></div>",
+      "chooserCat": "Pictorial",
+      "shape": "1 hero stat + 3 support facts + sparkline",
+      "verbs": [
+        "tell-a-story"
+      ],
+      "when": "report leads, posters, exec one-pagers"
+    },
+    {
+      "id": "i34",
+      "group": "info-design",
+      "file": "info-design/i34-kpi-dashboard.html",
+      "title": "KPI Dashboard",
+      "category": "dashboard-multi-chart",
+      "accent": "#334155",
+      "oneliner": "Weekly ops reviews, product health.",
+      "tags": [
+        "dashboard",
+        "kpi"
+      ],
+      "facets": [
+        "dashboard"
+      ],
+      "thumb": "<div class=\"tw t-i-kpi\"><div class=\"row\"><i class=\"tile a\"></i><i class=\"tile\"></i></div><svg class=\"hint\" viewBox=\"0 0 40 14\"><polyline points=\"0,10 8,8 16,9 24,5 32,6 40,2\"/></svg><div class=\"row\"><i class=\"bar a\"></i><i class=\"bar\"></i></div></div>",
+      "chooserCat": "Dashboard",
+      "shape": "4 KPIs + 1 main series + breakdown",
+      "verbs": [
+        "compare"
+      ],
+      "when": "weekly ops reviews, product health"
+    },
+    {
+      "id": "i35",
+      "group": "info-design",
+      "file": "info-design/i35-small-multiples.html",
+      "title": "Small Multiples",
+      "category": "dashboard-multi-chart",
+      "accent": "#1D4ED8",
+      "oneliner": "Regions/products over time without spaghetti.",
+      "tags": [
+        "dashboard",
+        "small multiples"
+      ],
+      "facets": [
+        "dashboard"
+      ],
+      "thumb": "<div class=\"tw t-i-multiples\"><svg viewBox=\"0 0 20 14\"><line class=\"med\" x1=\"0\" y1=\"7\" x2=\"20\" y2=\"7\"/><polyline points=\"0,11 5,10 10,8 15,9 20,5\"/></svg><svg viewBox=\"0 0 20 14\"><line class=\"med\" x1=\"0\" y1=\"7\" x2=\"20\" y2=\"7\"/><polyline points=\"0,4 5,6 10,5 15,8 20,10\"/></svg><svg viewBox=\"0 0 20 14\"><line class=\"med\" x1=\"0\" y1=\"7\" x2=\"20\" y2=\"7\"/><polyline points=\"0,9 5,7 10,8 15,6 20,4\"/></svg><svg viewBox=\"0 0 20 14\" class=\"a\"><line class=\"med\" x1=\"0\" y1=\"7\" x2=\"20\" y2=\"7\"/><polyline points=\"0,3 5,5 10,6 15,9 20,12\"/></svg><svg viewBox=\"0 0 20 14\"><line class=\"med\" x1=\"0\" y1=\"7\" x2=\"20\" y2=\"7\"/><polyline points=\"0,10 5,9 10,7 15,6 20,5\"/></svg><svg viewBox=\"0 0 20 14\"><line class=\"med\" x1=\"0\" y1=\"7\" x2=\"20\" y2=\"7\"/><polyline points=\"0,8 5,8 10,6 15,7 20,5\"/></svg></div>",
+      "chooserCat": "Dashboard",
+      "shape": "12 series × 12 points, shared y-scale",
+      "verbs": [
+        "compare"
+      ],
+      "when": "regions/products over time without spaghetti"
+    },
+    {
+      "id": "i36",
+      "group": "info-design",
+      "file": "info-design/i36-narrative-dashboard.html",
+      "title": "Narrative Dashboard",
+      "category": "dashboard-multi-chart",
+      "accent": "#B45309",
+      "oneliner": "Post-mortems, monthly narratives, board packs.",
+      "tags": [
+        "dashboard",
+        "narrative"
+      ],
+      "facets": [
+        "dashboard",
+        "narrative"
+      ],
+      "thumb": "<div class=\"tw t-i-narrative\"><svg class=\"nchart\" viewBox=\"0 0 60 40\"><path class=\"nl\" d=\"M0,30 L15,20 L30,24 L45,10 L60,14\"/><circle class=\"nd\" cx=\"15\" cy=\"20\" r=\"2.4\"/><circle class=\"nd a\" cx=\"45\" cy=\"10\" r=\"2.6\"/></svg><div class=\"rail\"><i></i><i class=\"a\"></i><i></i></div></div>",
+      "chooserCat": "Dashboard",
+      "shape": "1 main series (24 points) + 4 annotations",
+      "verbs": [
+        "reveal-change"
+      ],
+      "when": "post-mortems, monthly narratives, board packs"
+    }
+  ]
+}

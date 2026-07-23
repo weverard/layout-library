@@ -1,0 +1,10 @@
+/* Canonical :root vocabulary — NAMES AND ORDER are contract, values are per-file
+   unless marked canonical. Extra file-specific tokens are allowed AFTER these 16. */
+:root{
+  --accent:/*file*/; --accent-ink:/*file; default #fff*/;
+  --bg:/*file*/; --surface:/*file*/; --ink:/*file*/; --muted:/*file*/; --line:/*file*/;
+  --pos:/*file; default var(--accent)*/; --neg:/*file; default #B3261E*/;
+  --serif:/*file; default Georgia,"Times New Roman",serif*/;
+  --sans:/*file*/; --mono:/*file*/;
+  --s1:8px; --s2:14px; --s3:24px; --s4:40px; /* canonical values */
+}

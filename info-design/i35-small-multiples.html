@@ -14,12 +14,11 @@
 -->
 <style>
   :root{
-    --accent:#1D4ED8;
-    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --accent:#1D4ED8; --accent-ink:#fff;
+    --bg:#FBFAF8; --surface:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
     --pos:var(--accent); --neg:#B3261E;
     --serif:Georgia,"Times New Roman",serif;
-    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
-    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif; --mono:ui-monospace,"SF Mono",Menlo,monospace;
     --s1:8px; --s2:14px; --s3:24px; --s4:40px;
   }
   *{box-sizing:border-box}
@@ -41,7 +40,7 @@
   @media (max-width:700px){ .grid-panels{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:460px){ .grid-panels{grid-template-columns:1fr} }
 
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:2px;
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:2px;
     transition:transform .15s,box-shadow .15s,border-color .15s;position:relative}
   .panel:hover{transform:scale(1.05);box-shadow:0 10px 22px rgba(0,0,0,.09);border-color:var(--ink);z-index:2}
   .panel.focal{border-color:var(--accent)}
@@ -78,7 +77,7 @@
   dd{color:var(--muted);margin:2px 0 0}
   .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
   .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
-  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt{margin-top:var(--s3);background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
   .prompt-head b{font-size:13px;font-weight:600}
   #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);

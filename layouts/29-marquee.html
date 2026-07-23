@@ -14,9 +14,12 @@
 -->
 <style>
   :root{
-    --bg:#0c0c0d; --ink:#f3f3f1; --muted:#7c7c84; --accent:#D6FF3F;
-    --sans:"Helvetica Neue",Inter,ui-sans-serif,system-ui,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --accent:#D6FF3F; --accent-ink:#fff;
+    --bg:#0c0c0d; --surface:#fff; --ink:#f3f3f1; --muted:#7c7c84; --line:rgba(0,0,0,.12);
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:"Helvetica Neue",Inter,ui-sans-serif,system-ui,Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}

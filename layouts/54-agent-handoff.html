@@ -19,27 +19,16 @@
              tint; stacks on screens below 600px.
 -->
 <style>
-  :root {
-    --bg: #F6F5F3;
-    --surface: #ffffff;
-    --ink: #141417;
-    --muted: #72737c;
-    --line: rgba(20,20,23,.10);
-    --accent: #F43F5E;
-
-    /* agent colour palette */
-    --agent-shopper: #F43F5E;
-    --agent-shopper-bg: #fff1f3;
-    --agent-payments: #7C3AED;
-    --agent-payments-bg: #f5f3ff;
-    --agent-fulfil: #0284C7;
-    --agent-fulfil-bg: #f0f9ff;
-
-    --user-bg: #1a1a1f;
-    --user-ink: #f0f0ee;
-
-    --sans: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono: ui-monospace,SFMono-Regular,Menlo,monospace;
+  :root{
+    --accent:#F43F5E; --accent-ink:#fff;
+    --bg:#F6F5F3; --surface:#ffffff; --ink:#141417; --muted:#72737c; --line:rgba(20,20,23,.10);
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+    --agent-shopper:#F43F5E; --agent-shopper-bg:#fff1f3; --agent-payments:#7C3AED;
+    --agent-payments-bg:#f5f3ff; --agent-fulfil:#0284C7; --agent-fulfil-bg:#f0f9ff;
+    --user-bg:#1a1a1f; --user-ink:#f0f0ee;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {

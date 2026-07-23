@@ -3,47 +3,681 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Layout Scaffolds — gallery</title>
+<title>Layout Scaffold Library</title>
 <!--
-  A library of reusable, standalone layout + navigation scaffolds. Each file is
-  self-contained (inline CSS/JS, no build, no deps) and neutrally themed with
-  CSS variables at :root — fork one as the basis for a new build. 71 layout
-  scaffolds across 7 categories of navigation paradigm, plus 36 info-design
-  scaffolds (hand-coded chart figures) in a second tab.
+  A library of reusable, self-contained layout + info-design scaffolds. Each
+  file is standalone (inline CSS/JS, no build, no deps) and neutrally themed
+  with CSS variables at :root — fork one as the basis for a new build. This
+  page is one master view: 71 layout scaffolds across 8 categories, plus 36
+  info-design scaffolds (hand-coded chart figures) across 12 categories, plus
+  a two-question chart chooser. The cards below are generated from
+  catalog.json — edit that file, then run `node tools/build.mjs`; never
+  hand-edit the content between a `gen:index-cards:<key>` marker pair
+  directly, it will be overwritten.
 -->
+<style id="wb-base-ui" data-wb-version="1.0.0">
+/* ============================================================
+   wb-base-ui · TOKENS  (the theme layer)
+   This is the ONLY file you edit per project.
+   Change colours, radius, and density here. Never touch components.css.
+   Re-declare [data-theme="dark"] on any container to theme a single
+   canvas panel independently.
+   ============================================================ */
+
+:root {
+  /* ---- Palette (edit these per project) ---- */
+  --wb-color-bg:              #ffffff;
+  --wb-color-surface:         #ffffff;
+  --wb-color-surface-2:       #f5f6f8;
+  --wb-color-border:          #e2e5ea;
+  --wb-color-border-strong:   #c8cdd6;
+  --wb-color-text:            #1a1d23;
+  --wb-color-text-muted:      #626875;
+  --wb-color-text-subtle:     #6b7280;  /* AA-normal 4.83:1 on bg */
+
+  --wb-color-primary:         #2b59ff;
+  --wb-color-primary-hover:   #1e46d6;
+  --wb-color-primary-active:  #1839b0;
+  --wb-color-on-primary:      #ffffff;
+
+  --wb-color-danger:          #d92d20;
+  --wb-color-danger-hover:    #b42318;
+  --wb-color-on-danger:       #ffffff;
+
+  --wb-color-success:         #128a50;
+  --wb-color-warning:         #b25a00;
+
+  --wb-color-focus-ring:      color-mix(in srgb, var(--wb-color-primary) 45%, transparent);
+
+  /* ---- Radius (edit for softer/sharper look) ---- */
+  --wb-radius-sm:  6px;
+  --wb-radius-md:  10px;
+  --wb-radius-lg:  16px;
+  --wb-radius-full: 999px;
+
+  /* ---- Spacing scale (4px base) ---- */
+  --wb-space-1: 4px;
+  --wb-space-2: 8px;
+  --wb-space-3: 12px;
+  --wb-space-4: 16px;
+  --wb-space-5: 20px;
+  --wb-space-6: 24px;
+  --wb-space-8: 32px;
+
+  /* ---- Typography ---- */
+  --wb-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --wb-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --wb-text-xs:   0.75rem;   /* 12 */
+  --wb-text-sm:   0.875rem;  /* 14 */
+  --wb-text-md:   1rem;      /* 16 */
+  --wb-text-lg:   1.125rem;  /* 18 */
+  --wb-text-xl:   1.375rem;  /* 22 */
+
+  --wb-weight-normal:   400;
+  --wb-weight-medium:   500;
+  --wb-weight-semibold: 600;
+
+  --wb-leading-tight: 1.25;
+  --wb-leading-normal: 1.5;
+
+  /* ---- Elevation ---- */
+  --wb-shadow-sm: 0 1px 2px rgba(16,20,28,0.06), 0 1px 1px rgba(16,20,28,0.04);
+  --wb-shadow-md: 0 4px 12px rgba(16,20,28,0.10), 0 2px 4px rgba(16,20,28,0.06);
+
+  /* ---- Controls (density knob) ----
+     md = 44px meets Apple HIG minimum tap target (44pt).
+     sm = 36px is for pointer/dense desktop contexts only — not primary
+     touch targets. lg for prominent CTAs. */
+  --wb-control-h-sm: 36px;
+  --wb-control-h-md: 44px;
+  --wb-control-h-lg: 52px;
+  --wb-control-pad-x: var(--wb-space-4);
+  /* Minimum tap target enforced on checkable rows regardless of glyph size. */
+  --wb-tap-min: 44px;
+
+  /* ---- Motion ---- */
+  --wb-transition: 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ---- Dark theme ----
+   Apply on <html data-theme="dark"> for a whole page,
+   or on any container for a single canvas panel. */
+[data-theme="dark"] {
+  --wb-color-bg:              #0e1116;
+  --wb-color-surface:         #161a21;
+  --wb-color-surface-2:       #1e232c;
+  --wb-color-border:          #2a303a;
+  --wb-color-border-strong:   #3a414d;
+  --wb-color-text:            #eef1f5;
+  --wb-color-text-muted:      #a4abb8;
+  --wb-color-text-subtle:     #7f8794;  /* AA-normal 5.22:1 on dark bg */
+
+  --wb-color-primary:         #5b82ff;
+  --wb-color-primary-hover:   #7091ff;
+  --wb-color-primary-active:  #90a8ff;
+  --wb-color-on-primary:      #0b1020;
+
+  --wb-color-danger:          #f0554a;
+  --wb-color-danger-hover:    #ff6d63;
+  --wb-color-on-danger:       #1a0a08;
+
+  --wb-color-success:         #35c67f;
+  --wb-color-warning:         #e39a3a;
+
+  --wb-shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --wb-shadow-md: 0 4px 14px rgba(0,0,0,0.5);
+}
+
+/* ============================================================
+   wb-base-ui · COMPONENTS  (the atoms)
+   DO NOT EDIT per project. Every colour/size comes from tokens.css.
+   Editing this file breaks the cross-file consistency guarantee.
+   All classes are prefixed `wb-` to avoid collisions on merge.
+   Scope: buttons, form controls, cards/panels, badges/chips.
+   Intentionally NO layout/nav — layout stays yours.
+   ============================================================ */
+
+/* ---- Shared control resets ---- */
+.wb-btn,
+.wb-input,
+.wb-textarea,
+.wb-select {
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-sm);
+  color: var(--wb-color-text);
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   BUTTONS
+   .wb-btn  +  --primary | --secondary | --ghost | --danger
+             +  --sm | --lg   (default is md)
+   ============================================================ */
+.wb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wb-space-2);
+  height: var(--wb-control-h-md);
+  padding: 0 var(--wb-control-pad-x);
+  border: 1px solid transparent;
+  border-radius: var(--wb-radius-md);
+  font-weight: var(--wb-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--wb-transition), border-color var(--wb-transition),
+              color var(--wb-transition), box-shadow var(--wb-transition);
+}
+.wb-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wb-color-focus-ring);
+}
+.wb-btn:disabled,
+.wb-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.wb-btn svg { width: 1.05em; height: 1.05em; flex: none; }
+
+/* sizes */
+.wb-btn--sm { height: var(--wb-control-h-sm); padding: 0 var(--wb-space-3); font-size: var(--wb-text-xs); }
+.wb-btn--lg { height: var(--wb-control-h-lg); padding: 0 var(--wb-space-6); font-size: var(--wb-text-md); }
+
+/* variants */
+.wb-btn--primary {
+  background: var(--wb-color-primary);
+  color: var(--wb-color-on-primary);
+}
+.wb-btn--primary:hover { background: var(--wb-color-primary-hover); }
+.wb-btn--primary:active { background: var(--wb-color-primary-active); }
+
+.wb-btn--secondary {
+  background: var(--wb-color-surface);
+  color: var(--wb-color-text);
+  border-color: var(--wb-color-border-strong);
+}
+.wb-btn--secondary:hover { background: var(--wb-color-surface-2); }
+
+.wb-btn--ghost {
+  background: transparent;
+  color: var(--wb-color-text);
+}
+.wb-btn--ghost:hover { background: var(--wb-color-surface-2); }
+
+.wb-btn--danger {
+  background: var(--wb-color-danger);
+  color: var(--wb-color-on-danger);
+}
+.wb-btn--danger:hover { background: var(--wb-color-danger-hover); }
+
+/* ============================================================
+   FORM FIELDS
+   Wrap in .wb-field for label + control + help stacking.
+   ============================================================ */
+.wb-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-space-2);
+}
+.wb-label {
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-sm);
+  font-weight: var(--wb-weight-medium);
+  color: var(--wb-color-text);
+}
+.wb-help {
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-xs);
+  color: var(--wb-color-text-muted);
+}
+.wb-help--error { color: var(--wb-color-danger); }
+
+.wb-input,
+.wb-textarea,
+.wb-select {
+  width: 100%;
+  height: var(--wb-control-h-md);
+  padding: 0 var(--wb-space-3);
+  /* 16px prevents iOS Safari auto-zoom on focus. Do not lower below 16px. */
+  font-size: var(--wb-text-md);
+  background: var(--wb-color-surface);
+  border: 1px solid var(--wb-color-border-strong);
+  border-radius: var(--wb-radius-md);
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--wb-transition), box-shadow var(--wb-transition);
+}
+.wb-textarea {
+  height: auto;
+  min-height: calc(var(--wb-control-h-md) * 2);
+  padding: var(--wb-space-3);
+  resize: vertical;
+  line-height: var(--wb-leading-normal);
+}
+.wb-input::placeholder,
+.wb-textarea::placeholder { color: var(--wb-color-text-subtle); }
+
+.wb-input:focus,
+.wb-textarea:focus,
+.wb-select:focus {
+  outline: none;
+  border-color: var(--wb-color-primary);
+  box-shadow: 0 0 0 3px var(--wb-color-focus-ring);
+}
+.wb-input:disabled,
+.wb-textarea:disabled,
+.wb-select:disabled {
+  background: var(--wb-color-surface-2);
+  color: var(--wb-color-text-subtle);
+  cursor: not-allowed;
+}
+.wb-input--error,
+.wb-textarea--error,
+.wb-select--error { border-color: var(--wb-color-danger); }
+
+/* native select chevron */
+.wb-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: var(--wb-space-8);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23888' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--wb-space-3) center;
+  background-size: 12px;
+}
+
+/* ---- Checkbox & radio (accessible, styles the native input) ---- */
+.wb-check,
+.wb-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-2);
+  min-height: var(--wb-tap-min);   /* whole row is a 44px tap target */
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-sm);
+  color: var(--wb-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.wb-check input,
+.wb-radio input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 1.5px solid var(--wb-color-border-strong);
+  background: var(--wb-color-surface);
+  cursor: pointer;
+  flex: none;
+  transition: background var(--wb-transition), border-color var(--wb-transition);
+}
+.wb-check input { border-radius: var(--wb-radius-sm); }
+.wb-radio input { border-radius: var(--wb-radius-full); }
+.wb-check input:checked,
+.wb-radio input:checked {
+  background: var(--wb-color-primary);
+  border-color: var(--wb-color-primary);
+}
+.wb-check input:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.6 9.5 3.6' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.wb-radio input:checked { box-shadow: inset 0 0 0 3.5px var(--wb-color-surface); }
+.wb-check input:focus-visible,
+.wb-radio input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wb-color-focus-ring);
+}
+
+/* ---- Switch / toggle ---- */
+.wb-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-2);
+  min-height: var(--wb-tap-min);   /* 44px tap row */
+  cursor: pointer;
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-sm);
+  color: var(--wb-color-text);
+  -webkit-tap-highlight-color: transparent;
+}
+.wb-switch input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: var(--wb-radius-full);
+  background: var(--wb-color-border-strong);
+  cursor: pointer;
+  flex: none;
+  transition: background var(--wb-transition);
+}
+.wb-switch input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--wb-radius-full);
+  background: #fff;
+  box-shadow: var(--wb-shadow-sm);
+  transition: transform var(--wb-transition);
+}
+.wb-switch input:checked { background: var(--wb-color-primary); }
+.wb-switch input:checked::after { transform: translateX(18px); }
+.wb-switch input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wb-color-focus-ring);
+}
+
+/* ============================================================
+   CARDS / PANELS
+   ============================================================ */
+.wb-card {
+  background: var(--wb-color-surface);
+  border: 1px solid var(--wb-color-border);
+  border-radius: var(--wb-radius-lg);
+  box-shadow: var(--wb-shadow-sm);
+  overflow: hidden;
+  font-family: var(--wb-font-sans);
+  color: var(--wb-color-text);
+}
+.wb-card__header,
+.wb-card__body,
+.wb-card__footer { padding: var(--wb-space-5); }
+.wb-card__header { border-bottom: 1px solid var(--wb-color-border); }
+.wb-card__footer {
+  border-top: 1px solid var(--wb-color-border);
+  background: var(--wb-color-surface-2);
+  display: flex;
+  gap: var(--wb-space-3);
+  justify-content: flex-end;
+}
+.wb-card__title {
+  margin: 0;
+  font-size: var(--wb-text-lg);
+  font-weight: var(--wb-weight-semibold);
+  line-height: var(--wb-leading-tight);
+}
+.wb-card__subtitle {
+  margin: var(--wb-space-1) 0 0;
+  font-size: var(--wb-text-sm);
+  color: var(--wb-color-text-muted);
+}
+
+/* Flat panel variant (no shadow) for dense canvas surfaces */
+.wb-panel {
+  background: var(--wb-color-surface);
+  border: 1px solid var(--wb-color-border);
+  border-radius: var(--wb-radius-md);
+  padding: var(--wb-space-4);
+  font-family: var(--wb-font-sans);
+  color: var(--wb-color-text);
+}
+
+/* ============================================================
+   BADGES / CHIPS
+   .wb-badge + --primary | --success | --warning | --danger | --neutral
+   ============================================================ */
+.wb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-1);
+  padding: 2px var(--wb-space-2);
+  border-radius: var(--wb-radius-full);
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-xs);
+  font-weight: var(--wb-weight-medium);
+  line-height: 1.4;
+  background: var(--wb-color-surface-2);
+  color: var(--wb-color-text-muted);
+}
+.wb-badge--primary { background: color-mix(in srgb, var(--wb-color-primary) 14%, transparent); color: var(--wb-color-primary); }
+.wb-badge--success { background: color-mix(in srgb, var(--wb-color-success) 14%, transparent); color: var(--wb-color-success); }
+.wb-badge--warning { background: color-mix(in srgb, var(--wb-color-warning) 16%, transparent); color: var(--wb-color-warning); }
+.wb-badge--danger  { background: color-mix(in srgb, var(--wb-color-danger)  14%, transparent); color: var(--wb-color-danger); }
+
+/* Chip = interactive/removable badge */
+.wb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-2);
+  height: var(--wb-control-h-sm);
+  padding: 0 var(--wb-space-3);
+  border: 1px solid var(--wb-color-border-strong);
+  border-radius: var(--wb-radius-full);
+  background: var(--wb-color-surface);
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-xs);
+  color: var(--wb-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--wb-transition), border-color var(--wb-transition);
+}
+.wb-chip:hover { background: var(--wb-color-surface-2); }
+.wb-chip[aria-pressed="true"] {
+  background: var(--wb-color-primary);
+  border-color: var(--wb-color-primary);
+  color: var(--wb-color-on-primary);
+}
+
+/* ---- Respect reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .wb-btn, .wb-input, .wb-textarea, .wb-select,
+  .wb-check input, .wb-radio input, .wb-switch input,
+  .wb-switch input::after, .wb-chip { transition: none; }
+}
+</style>
 <style>
-  :root{
-    --bg:#FAFAF8; --surface:#fff; --ink:#15161A; --muted:#6b6f76;
-    --line:rgba(20,20,26,.12); --accent:#4F46E5;
-    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+/* ============================================================
+   Project look — palette overrides only (wb-base-ui components.css
+   above is byte-identical and untouched; theme lives here).
+   ============================================================ */
+:root{
+  --wb-color-bg:#FBFAF8;
+  --wb-color-surface:#FFFFFF;
+  --wb-color-text:#191919;
+  --wb-color-text-muted:#6E6A63;
+  --wb-color-border:#E5E1D8;
+  --wb-color-primary:#4F46E5;
+
+  /* Legacy scaffold/thumbnail tokens — read by the verbatim thumbnail CSS
+     below (copied unchanged from the old gallery). Distinct names from the
+     --wb-* tokens above, so the two vocabularies coexist without collision. */
+  --ink:#15161A;
+  --muted:#6b6f76;
+  --line:rgba(20,20,26,.12);
+  --accent:#4F46E5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+
+/* ============================================================
+   wl-nav layout shell (Layer 2) — verbatim from
+   ~/.claude/skills/wb-base-ui/layouts/wl-nav.html
+   ============================================================ */
+/* ============================================================
+   LAYER 2 · LAYOUT SHELL  (wl-nav)
+   Pure structure + responsive CSS. No app logic.
+   Consumes wb-base-ui tokens; adds nothing to the atoms.
+   Prefix wl- keeps it clear of wb- so a layout and the atoms
+   never collide, and two shells can't clash if combined.
+   ============================================================ */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--wb-color-bg);
+  color: var(--wb-color-text);
+  font-family: var(--wb-font-sans);
+  /* dvh avoids the iOS URL-bar height jump */
+  min-height: 100dvh;
+}
+
+.wl-nav { display: flex; min-height: 100dvh; }
+
+/* ---- Sidebar ---- */
+.wl-nav__sidebar {
+  flex: none;
+  width: 264px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-space-2);
+  padding: var(--wb-space-4);
+  padding-top: calc(var(--wb-space-4) + env(safe-area-inset-top));
+  padding-left: calc(var(--wb-space-4) + env(safe-area-inset-left));
+  background: var(--wb-color-surface);
+  border-right: 1px solid var(--wb-color-border);
+  /* desktop: stays put while content scrolls */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.wl-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-space-2);
+  font-weight: var(--wb-weight-semibold);
+  font-size: var(--wb-text-md);
+  padding: var(--wb-space-2) var(--wb-space-2) var(--wb-space-3);
+}
+.wl-nav__brand-mark {
+  width: 26px; height: 26px; flex: none;
+  border-radius: var(--wb-radius-sm);
+  background: var(--wb-color-primary);
+}
+.wl-nav__section {
+  font-size: var(--wb-text-xs);
+  color: var(--wb-color-text-subtle);
+  font-weight: var(--wb-weight-semibold);
+  padding: var(--wb-space-3) var(--wb-space-2) var(--wb-space-1);
+}
+.wl-nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-space-3);
+  min-height: 44px;                 /* HIG tap target */
+  padding: 0 var(--wb-space-3);
+  border-radius: var(--wb-radius-md);
+  color: var(--wb-color-text);
+  text-decoration: none;
+  font-size: var(--wb-text-sm);
+  font-weight: var(--wb-weight-medium);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--wb-transition), color var(--wb-transition);
+}
+.wl-nav__item svg { width: 18px; height: 18px; flex: none; opacity: .8; }
+.wl-nav__item:hover { background: var(--wb-color-surface-2); }
+.wl-nav__item:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--wb-color-focus-ring); }
+.wl-nav__item[aria-current="page"] {
+  background: color-mix(in srgb, var(--wb-color-primary) 12%, transparent);
+  color: var(--wb-color-primary);
+}
+.wl-nav__spacer { flex: 1 1 auto; }
+
+/* ---- Main column ---- */
+.wl-nav__main {
+  flex: 1 1 auto;
+  min-width: 0;                     /* lets content shrink instead of overflow */
+  display: flex;
+  flex-direction: column;
+}
+.wl-nav__topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-space-3);
+  min-height: 56px;
+  padding: var(--wb-space-2) var(--wb-space-4);
+  padding-top: calc(var(--wb-space-2) + env(safe-area-inset-top));
+  padding-right: calc(var(--wb-space-4) + env(safe-area-inset-right));
+  border-bottom: 1px solid var(--wb-color-border);
+  background: var(--wb-color-bg);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.wl-nav__title { font-size: var(--wb-text-md); font-weight: var(--wb-weight-semibold); margin: 0; }
+.wl-nav__content {
+  /* capped well so ultrawide desktops don't stretch line lengths */
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--wb-space-6) var(--wb-space-6);
+  padding-bottom: calc(var(--wb-space-6) + env(safe-area-inset-bottom));
+}
+
+/* ---- Hamburger + scrim (drawer only) ---- */
+.wl-nav__hamburger {
+  display: none;                    /* hidden on desktop */
+  width: 44px; height: 44px;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--wb-color-border-strong);
+  border-radius: var(--wb-radius-md);
+  background: var(--wb-color-surface);
+  color: var(--wb-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.wl-nav__scrim { display: none; }
+
+/* ---- Drawer mode ---- */
+@media (max-width: 820px) {
+  .wl-nav__hamburger { display: inline-flex; }
+  .wl-nav__sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 30;
+    width: min(84vw, 320px);
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform var(--wb-transition);
+    box-shadow: var(--wb-shadow-md);
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.55}
-  a{color:inherit;text-decoration:none}
+  .wl-nav.is-open .wl-nav__sidebar { transform: none; }
+  .wl-nav.is-open .wl-nav__scrim {
+    display: block;
+    position: fixed; inset: 0;
+    z-index: 20;
+    background: rgba(0,0,0,.42);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-nav__sidebar { transition: none; }
+}
 
-  .wrap{max-width:1140px;margin:0 auto;padding:72px 28px 110px}
-  header.intro{max-width:62ch;margin-bottom:40px}
-  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  h1{font-size:clamp(34px,5vw,54px);line-height:1.04;letter-spacing:-.025em;margin:12px 0 16px}
-  header.intro p{color:var(--muted);font-size:18px;max-width:56ch}
-  header.intro code{font-family:var(--mono);font-size:.85em;background:#eceaf6;color:var(--accent);padding:.1em .4em;border-radius:4px}
+/* body scroll lock while drawer is open */
+.wl-locked { overflow: hidden; }
 
-  .tabs{display:flex;gap:8px;margin-bottom:40px}
-  .tab{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-    background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 18px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
-  .tab:hover{border-color:var(--ink);color:var(--ink)}
-  .tab.on{background:var(--ink);border-color:var(--ink);color:#fff}
-  .pane[hidden]{display:none}
+/* Gradient kept on this one rail item: it is the only entry that opens a
+   tool rather than scrolling to a catalogue section, and it deliberately
+   echoes the chooser banner's existing violet so the two read as the same
+   destination. Used once, for that distinction — not rail decoration. */
+.wl-nav__item--chooser{
+  background:linear-gradient(135deg,#1c1030,#3b1f63);
+  color:#fff;
+}
+.wl-nav__item--chooser:hover{background:linear-gradient(135deg,#241340,#452470)}
 
-  .cat{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
-    margin:44px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-  @media (max-width:880px){.grid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:560px){.grid{grid-template-columns:1fr}}
-
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:15px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,transform .15s,box-shadow .15s}
-  .card:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.07)}
+/* ============================================================
+   Thumbnail CSS — copied VERBATIM from the pre-rebuild index.html
+   (git show HEAD:index.html). Do not retype, reformat, or consolidate.
+   Reads var(--accent) from each card's inline style="--accent:#...".
+   Also reads the legacy --ink / --muted / --line / --mono tokens defined
+   above. This block is what preserves pixel-identical thumbnails.
+   ============================================================ */
   .thumb{position:relative;height:128px;border-bottom:1px solid var(--line);background:#F1F2F4;overflow:hidden}
   .b{padding:14px 16px 16px}
   .b .n{font-family:var(--mono);font-size:11px;color:var(--muted)}
@@ -526,254 +1160,599 @@
   .t-i-narrative .rail i{display:block;height:5px;border-radius:3px;background:#dfe1e6}
   .t-i-narrative .rail i.a{background:var(--accent)}
 
-  footer{margin-top:54px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
-  footer code{font-family:var(--mono)}
+/* ============================================================
+   Page-specific layout — hero, category sections, asset cards.
+   ============================================================ */
+.hero{max-width:64ch;margin:4px 0 40px}
+/* Uppercase letter-spaced kicker kept: it is the gallery's existing masthead
+   signature (old index .kicker, and .cb-kicker on the chooser banner below),
+   not new ornament. .14em is the house value — keep both kickers in step. */
+.hero .kicker{font-family:var(--wb-font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--wb-color-text-muted);margin:0 0 10px}
+.hero p{color:var(--wb-color-text-muted);font-size:16px;margin:0}
+
+.cat-section{margin-top:52px;scroll-margin-top:76px}
+.cat-section:first-of-type{margin-top:0}
+.cat-section h2{font-size:21px;letter-spacing:-.01em;margin:0 0 8px;padding-bottom:10px;border-bottom:1px solid var(--wb-color-border)}
+.cat-section .intro{color:var(--wb-color-text-muted);font-size:14px;max-width:66ch;margin:0 0 20px;line-height:1.5}
+
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+
+.asset-card{
+  display:flex;flex-direction:column;
+  text-decoration:none;color:inherit;
+  transition:border-color .15s,transform .15s,box-shadow .15s;
+}
+/* Hover lift kept: it is the old gallery's card affordance carried over
+   verbatim (translateY -2px + the same shadow), and on a page that is
+   entirely a grid of links the lift is the click cue. Border darkens to the
+   text colour rather than the light border-strong token — a 107-card grid
+   needs the stronger hover edge the old gallery had (it used --ink). */
+.asset-card:hover{
+  border-color:var(--wb-color-text);
+  transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(0,0,0,.07);
+}
+
+.chooser-banner{margin-bottom:32px}
+
+/* Filter bar. .wb-chip and its [aria-pressed="true"] state come from the
+   immutable wb-base-ui component layer — only layout and the count badge
+   are added here. The count sits at .65 rather than a lighter dim: at .55 it
+   computed 3.95:1 on the chip surface, under the 4.5:1 AA floor for text this
+   small, and the count is information (how many scaffolds), not ornament. */
+.facet-bar{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.facet-chip{cursor:pointer;font:inherit;font-size:var(--wb-text-xs)}
+.facet-n{opacity:.65;font-variant-numeric:tabular-nums;margin-left:2px}
+.facet-status{margin:0 0 28px;color:var(--wb-color-text-muted);font-size:var(--wb-text-xs)}
+.asset-card .wb-chip{cursor:pointer}
+
+/* .asset-card is display:flex and .cat-section is a block with margin, so the
+   `hidden` attribute alone does NOT hide either — the class rules win on
+   specificity. This restores what `hidden` is supposed to mean. */
+.asset-card[hidden],.cat-section[hidden]{display:none !important}
+
+/* A rail entry whose section has no matches: dimmed, never removed —
+   removing it would make the rail jump as chips toggle. .5 not .35: at .35
+   the label computed 2.20:1 against the page, which is below the 3:1 floor
+   even for a de-emphasised state. .5 gives 3.32:1 and still reads clearly
+   as unavailable next to the 17.58:1 live entries. */
+.wl-nav__item.is-muted{opacity:.5}
+
+/* Credit footer. Plain rule + muted body text, no card and no divider
+   flourish: it is an acknowledgement at the end of a 107-card scroll, and
+   giving it a surface would make it read as another asset. */
+.site-foot{margin:56px 0 8px;padding-top:20px;border-top:1px solid var(--wb-color-border)}
+.site-foot p{margin:0;max-width:68ch;color:var(--wb-color-text-muted);font-size:var(--wb-text-sm);line-height:1.55}
+.site-foot a{color:var(--wb-color-text);text-decoration:underline;text-underline-offset:2px}
+.site-foot a:hover{color:var(--wb-color-primary)}
+
+/* ---- Topbar: mobile only ----------------------------------------------
+   On desktop the topbar's title and the sidebar brand both read "Layout
+   Scaffold Library" and are visible together — the same title twice, side
+   by side. The topbar is HIDDEN, not removed: it holds #hamburger, and the
+   nav IIFE reads that element with no null guard, so deleting the header
+   throws on load and kills the mobile drawer outright. The breakpoint
+   mirrors the drawer's own (max-width:820px) in the wb-base-ui layer, so
+   the topbar appears exactly when the drawer does.
+
+   The <h1> moved to .wl-nav__brand for this: hiding the topbar would
+   otherwise leave desktop with no h1 at all. The topbar keeps the same
+   text as a plain <div>, so there is one h1 on the page at every width.
+   .wl-nav__title already sets margin:0; .wl-nav__brand did not, and now
+   carries an h1's default margin, so it is zeroed here rather than in the
+   immutable component layer above. */
+.wl-nav__brand{margin:0}
+@media (min-width:821px){
+  .wl-nav__topbar{display:none}
+}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="intro">
-      <p class="kicker">Reusable scaffolds · 71 layouts · 36 info designs</p>
-      <h1>Seventy-one ways to navigate. Thirty-six ways to show data.</h1>
-      <p>Standalone HTML templates — self-contained, no build, neutral tokens in
-      <code>:root</code>. Fork one as a starting point. Each file opens with a comment
-      describing its pattern, nav model, and regions; the <code>.scaffold</code> badge is safe to delete.</p>
+<div class="wl-nav" id="shell">
+
+  <div class="wl-nav__scrim" id="scrim" hidden></div>
+
+  <aside class="wl-nav__sidebar" id="sidebar">
+    <h1 class="wl-nav__brand"><span class="wl-nav__brand-mark"></span> Layout Scaffold Library</h1>
+    <nav aria-label="Primary">
+      <div class="wl-nav__section">Layouts</div>
+      <a class="wl-nav__item" href="#cat-foundations">Foundations</a>
+      <a class="wl-nav__item" href="#cat-spatial">Spatial</a>
+      <a class="wl-nav__item" href="#cat-sequence-story">Sequence &amp; story</a>
+      <a class="wl-nav__item" href="#cat-command-conversation">Command &amp; conversation</a>
+      <a class="wl-nav__item" href="#cat-objects-cards">Objects &amp; cards</a>
+      <a class="wl-nav__item" href="#cat-immersive">Immersive</a>
+      <a class="wl-nav__item" href="#cat-slides-frames">Slides &amp; frames</a>
+      <a class="wl-nav__item" href="#cat-agentic-commerce">Agentic commerce</a>
+      <div class="wl-nav__section">Info design</div>
+      <a class="wl-nav__item wl-nav__item--chooser" href="info-design/chooser.html">Chart chooser →</a>
+      <a class="wl-nav__item" href="#cat-comparison">Comparison</a>
+      <a class="wl-nav__item" href="#cat-trend-time-series">Trend / Time-series</a>
+      <a class="wl-nav__item" href="#cat-part-to-whole">Part-to-whole</a>
+      <a class="wl-nav__item" href="#cat-distribution">Distribution</a>
+      <a class="wl-nav__item" href="#cat-correlation">Correlation</a>
+      <a class="wl-nav__item" href="#cat-ranking">Ranking</a>
+      <a class="wl-nav__item" href="#cat-flow-process">Flow &amp; process</a>
+      <a class="wl-nav__item" href="#cat-hierarchy-network">Hierarchy &amp; network</a>
+      <a class="wl-nav__item" href="#cat-table-heatmap">Table &amp; heatmap</a>
+      <a class="wl-nav__item" href="#cat-geospatial">Geospatial</a>
+      <a class="wl-nav__item" href="#cat-pictorial">Pictorial</a>
+      <a class="wl-nav__item" href="#cat-dashboard-multi-chart">Dashboard &amp; multi-chart</a>
+    </nav>
+    <div class="wl-nav__spacer"></div>
+    <a class="wl-nav__item" href="https://github.com/weverard/layout-library/blob/main/README.md" target="_blank" rel="noopener">README ↗</a>
+  </aside>
+
+  <div class="wl-nav__main">
+    <header class="wl-nav__topbar">
+      <button class="wl-nav__hamburger" id="hamburger" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="wl-nav__title">Layout Scaffold Library</div>
     </header>
 
-    <nav class="tabs">
-      <button class="tab on" data-pane="layouts">Layouts</button>
-      <button class="tab" data-pane="info-design">Info design</button>
-    </nav>
-
-    <div class="pane" id="layouts">
-    <p class="cat">Foundations — app & document shells</p>
-    <div class="grid">
-      <a class="card" href="layouts/01-split-panel.html" style="--accent:#4F46E5"><div class="thumb"><div class="tw t-split"><div class="b2 fill"></div><div class="b2 lines"><i class="m"></i><i class="s"></i><i class="m"></i></div></div></div><div class="b"><p class="n">01</p><h3>Split Panel</h3><p class="nav">Nav in a <b>fixed identity panel</b>; content scrolls beside it.</p><div class="tags"><span class="tag">landing</span><span class="tag">portfolio</span></div></div></a>
-      <a class="card" href="layouts/02-centered-doc.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-doc"><div class="b2 bar soft"></div><div class="b2 colm lines"><i class="m"></i><i></i><i class="s"></i></div></div></div><div class="b"><p class="n">02</p><h3>Centered Document</h3><p class="nav"><b>Sticky top bar</b> + in-page anchors; centered column.</p><div class="tags"><span class="tag">docs</span><span class="tag">blog</span></div></div></a>
-      <a class="card" href="layouts/03-sidebar-app.html" style="--accent:#0D9488"><div class="thumb"><div class="tw t-side"><div class="b2 rail"></div><div class="colx"><div class="b2 top soft"></div><div class="g2"><div class="b2"></div><div class="b2"></div></div></div></div></div><div class="b"><p class="n">03</p><h3>Sidebar App Shell</h3><p class="nav"><b>Persistent sidebar</b> + topbar; the app workhorse.</p><div class="tags"><span class="tag">dashboard</span><span class="tag">SaaS</span></div></div></a>
-      <a class="card" href="layouts/04-three-pane.html" style="--accent:#2563EB"><div class="thumb"><div class="tw t-three"><div class="b2 rail"></div><div class="b2 list lines"><i class="m"></i><i class="s"></i></div><div class="b2 lines"><i class="m"></i><i></i><i class="s"></i></div></div></div><div class="b"><p class="n">04</p><h3>Three-Pane</h3><p class="nav"><b>Rail → list → detail</b>; master/detail data.</p><div class="tags"><span class="tag">inbox</span><span class="tag">IDE / CRM</span></div></div></a>
-      <a class="card" href="layouts/23-bento.html" style="--accent:#5B5BD6"><div class="thumb"><div class="tw t-bento"><i class="a"></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">23</p><h3>Bento Grid</h3><p class="nav"><b>Modular tiles</b> of mixed sizes are the homepage.</p><div class="tags"><span class="tag">hub</span><span class="tag">dashboard</span></div></div></a>
-      <a class="card" href="layouts/25-accordion-spine.html" style="--accent:#C2410C"><div class="thumb"><div class="tw t-acc"><div class="b2"></div><div class="b2 open"></div><div class="b2"></div><div class="b2"></div></div></div><div class="b"><p class="n">25</p><h3>Accordion Spine</h3><p class="nav"><b>Expand one section</b> in place; others collapse.</p><div class="tags"><span class="tag">FAQ</span><span class="tag">features</span></div></div></a>
-      <a class="card" href="layouts/26-bottom-sheet.html" style="--accent:#1E9E5A"><div class="thumb"><div class="tw t-sheet"><span class="sh"></span></div></div><div class="b"><p class="n">26</p><h3>Bottom-Sheet</h3><p class="nav"><b>Draggable sheet</b> over a map; snaps peek/half/full.</p><div class="tags"><span class="tag">mobile</span><span class="tag">maps</span></div></div></a>
-      <a class="card" href="layouts/31-tabbed-workspace.html" style="--accent:#4338CA"><div class="thumb"><div class="tw t-tabs"><div class="row"><i class="a"></i><i></i><i></i></div><div class="pane"></div></div></div><div class="b"><p class="n">31</p><h3>Tabbed Workspace</h3><p class="nav"><b>Switch tabs</b> — browser-style; close, add, drag to reorder.</p><div class="tags"><span class="tag">editor</span><span class="tag">multi-doc</span></div></div></a>
-      <a class="card" href="layouts/32-mobile-tabbar.html" style="--accent:#0EA5A4"><div class="thumb"><div class="tw t-phone"><div class="scr"><div class="bar"><span class="a"></span><span></span><span></span><span></span></div></div></div></div><div class="b"><p class="n">32</p><h3>Mobile Tab-Bar Shell</h3><p class="nav"><b>Bottom tabs</b> — tap or swipe between four sections.</p><div class="tags"><span class="tag">mobile</span><span class="tag">app</span></div></div></a>
-    </div>
-
-    <p class="cat">Spatial — navigate through space</p>
-    <div class="grid">
-      <a class="card" href="layouts/06-infinite-canvas.html" style="--accent:#7C5CFF"><div class="thumb"><div class="tw t-canvas"><span class="nd" style="left:8%;top:18%"></span><span class="nd" style="left:54%;top:34%"></span><span class="nd" style="left:30%;top:64%"></span></div></div><div class="b"><p class="n">06</p><h3>Infinite Canvas</h3><p class="nav"><b>Pan + zoom</b> a plane of nodes; semantic zoom.</p><div class="tags"><span class="tag">knowledge map</span><span class="tag">diagram</span></div></div></a>
-      <a class="card" href="layouts/07-zettelkasten.html" style="--accent:#A33A2B"><div class="thumb"><div class="tw t-zettel"><div class="b2 lines"><i class="m"></i><i class="s"></i></div><div class="b2 lines"><i class="m"></i><i></i></div><div class="b2 soft"></div></div></div><div class="b"><p class="n">07</p><h3>Zettelkasten Panes</h3><p class="nav">Links open as <b>new sliding columns</b>; the trail stays.</p><div class="tags"><span class="tag">wiki</span><span class="tag">notes</span></div></div></a>
-      <a class="card" href="layouts/08-radial-orbit.html" style="--accent:#2DD4BF"><div class="thumb"><div class="tw t-ring"><span class="ring"></span><span class="o" style="left:50%;top:14px;margin-left:-5px"></span><span class="o" style="left:80%;top:42%"></span><span class="o" style="left:12%;top:50%"></span><span class="o" style="left:50%;bottom:14px;margin-left:-5px"></span></div></div><div class="b"><p class="n">08</p><h3>Radial Orbit</h3><p class="nav">Peers <b>orbit a hub</b>; click to rotate one to the top.</p><div class="tags"><span class="tag">index</span><span class="tag">modes</span></div></div></a>
-      <a class="card" href="layouts/09-map-pinned.html" style="--accent:#FF7A45"><div class="thumb"><div class="tw t-map"><span class="dot" style="left:24%;top:30%"></span><span class="dot" style="left:62%;top:56%"></span><span class="dot" style="left:78%;top:24%"></span></div></div><div class="b"><p class="n">09</p><h3>Map-Pinned</h3><p class="nav">Content at <b>coordinates</b>; click a pin for its brief.</p><div class="tags"><span class="tag">geography</span><span class="tag">world map</span></div></div></a>
-      <a class="card" href="layouts/27-elevator.html" style="--accent:#D97706"><div class="thumb"><div class="tw t-elev"><div class="floors"><i></i><i class="a"></i><i></i></div><div class="panel"><i></i><i class="a"></i><i></i></div></div></div><div class="b"><p class="n">27</p><h3>Elevator Floors</h3><p class="nav"><b>Ride between floors</b> via an elevator panel.</p><div class="tags"><span class="tag">playful</span><span class="tag">one-pager</span></div></div></a>
-      <a class="card" href="layouts/28-rooms.html" style="--accent:#6D28D9"><div class="thumb"><div class="tw t-rooms"><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">28</p><h3>Arrow Rooms</h3><p class="nav"><b>Walk a 2D grid</b> of rooms with arrow keys.</p><div class="tags"><span class="tag">game-like</span><span class="tag">explore</span></div></div></a>
-      <a class="card" href="layouts/33-column-view.html" style="--accent:#9333EA"><div class="thumb"><div class="tw t-cols"><div class="b2"><i></i><i class="a"></i><i></i></div><div class="b2"><i class="a"></i><i></i><i></i></div><div class="b2"><i></i><i></i></div></div></div><div class="b"><p class="n">33</p><h3>Folder Column-View</h3><p class="nav"><b>Drill into columns</b> — selecting cascades children to the right.</p><div class="tags"><span class="tag">files</span><span class="tag">taxonomy</span></div></div></a>
-      <a class="card" href="layouts/34-isometric.html" style="--accent:#0891B2"><div class="thumb"><div class="tw t-iso"><div class="plane"><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">34</p><h3>Isometric Scene</h3><p class="nav"><b>Travel a 2.5D plane</b> — click a zone; arrow keys move focus.</p><div class="tags"><span class="tag">world-select</span><span class="tag">playful</span></div></div></a>
-      <a class="card" href="layouts/35-mind-map.html" style="--accent:#DB2777"><div class="thumb"><div class="tw t-tree"><svg class="tree-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M24,50 C42,50 46,24 60,24"/><path d="M24,50 H60"/><path d="M24,50 C42,50 46,76 60,76"/></svg><span class="root"></span><span class="kid" style="top:18%"></span><span class="kid" style="top:50%;transform:translateY(-50%)"></span><span class="kid" style="bottom:18%"></span></div></div><div class="b"><p class="n">35</p><h3>Mind-Map Tree</h3><p class="nav"><b>Expand branches</b> — click a node to grow its children.</p><div class="tags"><span class="tag">topics</span><span class="tag">structure</span></div></div></a>
-      <a class="card" href="layouts/64-globe.html" style="--accent:#0891B2"><div class="thumb"><div class="tw t-globe"><span class="gd" style="left:30%;top:26%"></span><span class="gd" style="left:60%;top:46%"></span><span class="gd" style="left:42%;top:68%"></span><span class="gd sm" style="left:18%;top:52%"></span><span class="gd sm" style="left:70%;top:26%"></span><span class="gd sm" style="left:54%;top:34%"></span><span class="gd sm" style="left:34%;top:44%"></span></div></div><div class="b"><p class="n">64</p><h3>Globe (3D Points)</h3><p class="nav"><b>Drag to spin</b> a point globe; click a dot to open its brief.</p><div class="tags"><span class="tag">network</span><span class="tag">footprint</span></div></div></a>
-    </div>
-
-    <p class="cat">Sequence & story — the axis is the nav</p>
-    <div class="grid">
-      <a class="card" href="layouts/05-scrollytelling.html" style="--accent:#E11D48"><div class="thumb"><div class="tw t-scroll"><div class="band" style="background:#15161A"></div><div class="band soft"></div><div class="band fill"></div></div></div><div class="b"><p class="n">05</p><h3>Scrollytelling</h3><p class="nav"><b>Scroll-driven</b> full-bleed scenes + progress dots.</p><div class="tags"><span class="tag">narrative</span><span class="tag">pitch</span></div></div></a>
-      <a class="card" href="layouts/10-timeline-scrubber.html" style="--accent:#FFC34D"><div class="thumb"><div class="tw t-timeline"><span class="ln"></span><span class="dot" style="left:18%;top:50%;transform:translateY(-50%)"></span><span class="dot" style="left:46%;top:50%;transform:translateY(-50%)"></span><span class="dot" style="left:74%;top:50%;transform:translateY(-50%)"></span><span class="th" style="left:46%"></span></div></div><div class="b"><p class="n">10</p><h3>Timeline Scrubber</h3><p class="nav">A <b>draggable time axis</b> reveals events as you scrub.</p><div class="tags"><span class="tag">roadmap</span><span class="tag">history</span></div></div></a>
-      <a class="card" href="layouts/11-filmstrip.html" style="--accent:#E8513C"><div class="thumb"><div class="tw t-strip"><div class="b2"></div><div class="b2"></div><div class="b2"></div></div></div><div class="b"><p class="n">11</p><h3>Horizontal Filmstrip</h3><p class="nav"><b>Sideways snap</b> between full-height panels.</p><div class="tags"><span class="tag">lookbook</span><span class="tag">case studies</span></div></div></a>
-      <a class="card" href="layouts/12-sticky-stack.html" style="--accent:#1F6F5C"><div class="thumb"><div class="tw t-stack"><span class="c" style="top:16%"></span><span class="c" style="top:33%"></span><span class="c" style="top:50%"></span></div></div><div class="b"><p class="n">12</p><h3>Sticky-Stack Chapters</h3><p class="nav">Chapters <b>pin and stack</b> over each other on scroll.</p><div class="tags"><span class="tag">narrative</span><span class="tag">walkthrough</span></div></div></a>
-      <a class="card" href="layouts/36-dial-picker.html" style="--accent:#F59E0B"><div class="thumb"><div class="tw t-wheel"><i></i><i></i><i class="a"></i><i></i><i></i></div></div><div class="b"><p class="n">36</p><h3>Dial / Wheel Picker</h3><p class="nav"><b>Spin a wheel</b> — drag or scroll; the centred item is selected.</p><div class="tags"><span class="tag">picker</span><span class="tag">time/date</span></div></div></a>
-      <a class="card" href="layouts/37-stepper.html" style="--accent:#2563EB"><div class="thumb"><div class="tw t-step"><span class="nd a"></span><span class="ln a"></span><span class="nd a"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span></div></div><div class="b"><p class="n">37</p><h3>Stepper / Wizard</h3><p class="nav"><b>Advance steps</b> — a progress rail; jump back to done steps.</p><div class="tags"><span class="tag">checkout</span><span class="tag">onboarding</span></div></div></a>
-      <a class="card" href="layouts/38-page-turn.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-book"><span class="pg l"></span><span class="pg turn"></span><span class="pg r"></span></div></div><div class="b"><p class="n">38</p><h3>Page-Turn Book</h3><p class="nav"><b>Flip pages</b> — click an edge or arrows; spreads fold over.</p><div class="tags"><span class="tag">lookbook</span><span class="tag">report</span></div></div></a>
-      <a class="card" href="layouts/39-story-tap.html" style="--accent:#E11D48"><div class="thumb"><div class="tw t-story"><div class="segs"><i class="done"></i><i class="a"></i><i></i><i></i></div><div class="body"></div></div></div><div class="b"><p class="n">39</p><h3>Story Tap-Through</h3><p class="nav"><b>Tap to advance</b> — timed segments; hold to pause.</p><div class="tags"><span class="tag">mobile</span><span class="tag">tour</span></div></div></a>
-      <a class="card" href="layouts/40-carousel.html" style="--accent:#7C3AED"><div class="thumb"><div class="tw t-carousel"><span class="pane"></span><span class="dots"><i></i><i class="a"></i><i></i><i></i></span></div></div><div class="b"><p class="n">40</p><h3>Carousel / Slideshow</h3><p class="nav"><b>Page slides</b> — arrows, dots, autoplay that pauses on hover.</p><div class="tags"><span class="tag">hero</span><span class="tag">gallery</span></div></div></a>
-    </div>
-
-    <p class="cat">Command & conversation — type, don't click</p>
-    <div class="grid">
-      <a class="card" href="layouts/13-command-palette.html" style="--accent:#5B8CFF"><div class="thumb"><div class="tw t-palette"><span class="bar"></span><span class="r" style="top:54%"></span><span class="r" style="top:68%;opacity:.5"></span></div></div><div class="b"><p class="n">13</p><h3>Command-Palette-First</h3><p class="nav">A <b>⌘K palette</b> is the primary way to move.</p><div class="tags"><span class="tag">power-user</span><span class="tag">docs</span></div></div></a>
-      <a class="card" href="layouts/14-terminal.html" style="--accent:#39d98a"><div class="thumb"><div class="tw t-term"><span class="ln a" style="left:14px;top:24%;width:30%"></span><span class="ln" style="left:14px;top:42%;width:60%"></span><span class="ln" style="left:14px;top:60%;width:44%"></span><span class="ln a" style="left:14px;top:78%;width:16%"></span></div></div><div class="b"><p class="n">14</p><h3>Terminal / CLI</h3><p class="nav">The site is a <b>command line</b>; output scrolls.</p><div class="tags"><span class="tag">dev portfolio</span><span class="tag">playful</span></div></div></a>
-      <a class="card" href="layouts/15-chat-first.html" style="--accent:#8B7BFF"><div class="thumb"><div class="tw t-chat"><span class="bub l" style="top:22%"></span><span class="bub r" style="top:48%"></span><span class="bub l" style="top:74%;width:36%"></span></div></div><div class="b"><p class="n">15</p><h3>Chat-First</h3><p class="nav"><b>Ask</b>, and content blocks render inline.</p><div class="tags"><span class="tag">AI-native</span><span class="tag">support</span></div></div></a>
-      <a class="card" href="layouts/41-conversational-form.html" style="--accent:#10B981"><div class="thumb"><div class="tw t-form"><span class="prog"></span><span class="ql"></span><span class="inp"></span></div></div><div class="b"><p class="n">41</p><h3>Conversational Form</h3><p class="nav"><b>One question at a time</b> — Enter advances; progress fills.</p><div class="tags"><span class="tag">survey</span><span class="tag">onboarding</span></div></div></a>
-      <a class="card" href="layouts/42-notebook-cells.html" style="--accent:#EA580C"><div class="thumb"><div class="tw t-cells"><div class="cell"><span class="run"></span><span class="code"></span></div><span class="out"></span><div class="cell"><span class="run"></span><span class="code"></span></div></div></div><div class="b"><p class="n">42</p><h3>Notebook / REPL Cells</h3><p class="nav"><b>Run a cell</b> — ⇧⏎ renders output below; add cells.</p><div class="tags"><span class="tag">data</span><span class="tag">tutorial</span></div></div></a>
-      <a class="card" href="layouts/43-keyboard-inbox.html" style="--accent:#4F46E5"><div class="thumb"><div class="tw t-inbox"><span class="row"></span><span class="row sel"></span><span class="row"></span><span class="row"></span><span class="row"></span></div></div><div class="b"><p class="n">43</p><h3>Keyboard Inbox</h3><p class="nav"><b>j / k / Enter / e</b> — drive a list entirely by keys.</p><div class="tags"><span class="tag">power-user</span><span class="tag">triage</span></div></div></a>
-      <a class="card" href="layouts/44-slash-editor.html" style="--accent:#0D9488"><div class="thumb"><div class="tw t-slash"><span class="ln"></span><span class="ln s"></span><div class="menu"><i class="a"></i><i></i><i></i></div><span class="ln"></span></div></div><div class="b"><p class="n">44</p><h3>Slash-Command Editor</h3><p class="nav">Type <b>/</b> to summon a block menu inline.</p><div class="tags"><span class="tag">editor</span><span class="tag">CMS</span></div></div></a>
-      <a class="card" href="layouts/45-filter-search.html" style="--accent:#0284C7"><div class="thumb"><div class="tw t-filter"><span class="search"></span><span class="chips"><i class="a"></i><i></i><i></i></span><span class="res"></span><span class="res s"></span></div></div><div class="b"><p class="n">45</p><h3>Live Filter Search</h3><p class="nav"><b>Search as you type</b> — facet chips filter instantly.</p><div class="tags"><span class="tag">directory</span><span class="tag">catalog</span></div></div></a>
-      <a class="card" href="layouts/46-voice-assistant.html" style="--accent:#7E22CE"><div class="thumb"><div class="tw t-voice"><span class="miccircle"></span><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i></span></div></div><div class="b"><p class="n">46</p><h3>Voice Assistant</h3><p class="nav"><b>Tap the mic</b> — query transcribes, then an answer card.</p><div class="tags"><span class="tag">voice</span><span class="tag">kiosk</span></div></div></a>
-    </div>
-
-    <p class="cat">Objects & cards — the content is a thing</p>
-    <div class="grid">
-      <a class="card" href="layouts/16-desktop-os.html" style="--accent:#3B82F6"><div class="thumb"><div class="tw t-desktop" style="inset:0"><span class="win"></span><span class="dock"></span></div></div><div class="b"><p class="n">16</p><h3>Desktop OS</h3><p class="nav"><b>Draggable windows</b> from a dock; a site as an OS.</p><div class="tags"><span class="tag">personal</span><span class="tag">playful</span></div></div></a>
-      <a class="card" href="layouts/17-card-deck.html" style="--accent:#FF5D8F"><div class="thumb"><div class="tw t-stack t-pin"><span class="c" style="top:20%;transform:scale(.92)"></span><span class="c" style="top:34%;transform:scale(.96)"></span><span class="c" style="top:48%"></span></div></div><div class="b"><p class="n">17</p><h3>Card-Deck Swipe</h3><p class="nav"><b>Flick</b> through a stack; the top card is focus.</p><div class="tags"><span class="tag">mobile</span><span class="tag">onboarding</span></div></div></a>
-      <a class="card" href="layouts/18-pinboard.html" style="--accent:#C0392B"><div class="thumb"><div class="tw t-stack t-pin" style="inset:14px"><span class="c" style="left:10%;top:14%;width:34%;height:42%;transform:rotate(-6deg)"></span><span class="c" style="left:52%;top:22%;width:34%;height:42%;transform:rotate(5deg)"></span><span class="c" style="left:30%;top:52%;width:34%;height:40%;transform:rotate(-3deg)"></span></div></div><div class="b"><p class="n">18</p><h3>Pinboard Wall</h3><p class="nav"><b>Pinned notes</b> at angles; scan, lift, open.</p><div class="tags"><span class="tag">moodboard</span><span class="tag">scrapbook</span></div></div></a>
-      <a class="card" href="layouts/19-split-flap.html" style="--accent:#FFD23F"><div class="thumb"><div class="tw t-flap" style="inset:0"><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i></div></div><div class="b"><p class="n">19</p><h3>Split-Flap Board</h3><p class="nav">A <b>departure board</b>; filters re-flip the rows.</p><div class="tags"><span class="tag">listings</span><span class="tag">schedule</span></div></div></a>
-      <a class="card" href="layouts/24-coverflow.html" style="--accent:#1FB6A6"><div class="thumb"><div class="tw t-cover"><span class="c l"></span><span class="c r"></span><span class="c mid"></span></div></div><div class="b"><p class="n">24</p><h3>Cover Flow</h3><p class="nav"><b>3D carousel</b>; side cards angle back in perspective.</p><div class="tags"><span class="tag">gallery</span><span class="tag">featured</span></div></div></a>
-      <a class="card" href="layouts/47-kanban.html" style="--accent:#EA580C"><div class="thumb"><div class="tw t-kanban"><div class="col"><span class="h"></span><i></i><i></i></div><div class="col"><span class="h"></span><i></i><i></i><i></i></div><div class="col"><span class="h"></span><i></i></div></div></div><div class="b"><p class="n">47</p><h3>Kanban Board</h3><p class="nav"><b>Drag cards</b> across To-do / Doing / Done columns.</p><div class="tags"><span class="tag">tasks</span><span class="tag">pipeline</span></div></div></a>
-      <a class="card" href="layouts/48-masonry.html" style="--accent:#DB2777"><div class="thumb"><div class="tw t-masonry"><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">48</p><h3>Masonry Gallery</h3><p class="nav"><b>Staggered grid</b> → click a tile to open a lightbox.</p><div class="tags"><span class="tag">gallery</span><span class="tag">moodboard</span></div></div></a>
-      <a class="card" href="layouts/49-card-wallet.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-wallet"><span class="p"></span><span class="p"></span><span class="p"></span></div></div><div class="b"><p class="n">49</p><h3>Card Wallet</h3><p class="nav"><b>Tap a pass</b> to raise it, tap again to flip for detail.</p><div class="tags"><span class="tag">passes</span><span class="tag">loyalty</span></div></div></a>
-      <a class="card" href="layouts/50-data-table.html" style="--accent:#475569"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span></div></div><div class="b"><p class="n">50</p><h3>Data Table</h3><p class="nav"><b>Sort columns</b>, click a row for a detail drawer.</p><div class="tags"><span class="tag">admin</span><span class="tag">records</span></div></div></a>
-      <a class="card" href="layouts/65-ticker-board.html" style="--accent:#22C55E"><div class="thumb"><div class="tw t-board"><div class="brow"><span class="lbl"></span><span class="chip up"></span></div><div class="brow"><span class="lbl"></span><span class="chip down"></span></div><div class="brow"><span class="lbl"></span><span class="chip up"></span></div><div class="brow"><span class="lbl"></span><span class="chip up"></span></div></div></div><div class="b"><p class="n">65</p><h3>Ticker / Stock-Board</h3><p class="nav"><b>Values tick live</b> — a marquee runs above; click a row for its sparkline.</p><div class="tags"><span class="tag">markets</span><span class="tag">leaderboard</span></div></div></a>
-    </div>
-
-    <p class="cat">Immersive — cinematic</p>
-    <div class="grid">
-      <a class="card" href="layouts/20-zaxis-flythrough.html" style="--accent:#22D3EE"><div class="thumb" style="background:#0b1020"><div class="tw t-zaxis"><span class="r" style="width:70%;height:70%;opacity:.3"></span><span class="r" style="width:50%;height:50%;opacity:.55"></span><span class="r" style="width:30%;height:30%"></span></div></div><div class="b"><p class="n">20</p><h3>Z-Axis Fly-Through</h3><p class="nav"><b>Scroll = camera</b> moving forward through depth.</p><div class="tags"><span class="tag">reveal</span><span class="tag">cinematic</span></div></div></a>
-      <a class="card" href="layouts/21-grid-morph.html" style="--accent:#22D3EE"><div class="thumb"><div class="tw t-grid"><i style="height:34px"></i><i style="height:48px"></i><i style="height:30px"></i><i style="height:44px"></i><i style="height:30px"></i><i style="height:40px"></i></div></div><div class="b"><p class="n">21</p><h3>Grid-to-Detail Morph</h3><p class="nav">A tile <b>expands in place</b> into a full page.</p><div class="tags"><span class="tag">gallery</span><span class="tag">portfolio</span></div></div></a>
-      <a class="card" href="layouts/22-poster.html" style="--accent:#E8413B"><div class="thumb"><div class="tw t-poster" style="inset:0"><span class="big"></span></div></div><div class="b"><p class="n">22</p><h3>Poster / Full-Bleed</h3><p class="nav"><b>Vertical snap</b> between full-screen posters.</p><div class="tags"><span class="tag">fashion</span><span class="tag">agency</span></div></div></a>
-      <a class="card" href="layouts/29-marquee.html" style="--accent:#65A30D"><div class="thumb"><div class="tw t-marq"><i style="left:6%;top:22%;width:72%"></i><i style="left:22%;top:45%;width:66%;opacity:.55"></i><i style="left:2%;top:68%;width:80%"></i></div></div><div class="b"><p class="n">29</p><h3>Marquee Index</h3><p class="nav"><b>Auto-scrolling type</b> rows; hover pauses, click opens.</p><div class="tags"><span class="tag">kinetic</span><span class="tag">editorial</span></div></div></a>
-      <a class="card" href="layouts/30-spotlight.html" style="--accent:#FF4D4D"><div class="thumb" style="background:#0c0c0d"><div class="tw t-spot"></div></div><div class="b"><p class="n">30</p><h3>Spotlight Scroll</h3><p class="nav"><b>A spotlight follows</b> the cursor; the rest goes dark.</p><div class="tags"><span class="tag">cinematic</span><span class="tag">finale</span></div></div></a>
-      <a class="card" href="layouts/56-parallax-hero.html" style="--accent:#22D3EE"><div class="thumb"><div class="tw t-parallax"><i></i><i></i><i></i></div></div><div class="b"><p class="n">56</p><h3>Parallax Mouse Hero</h3><p class="nav"><b>Layers shift with the cursor</b> — depth that follows your mouse.</p><div class="tags"><span class="tag">hero</span><span class="tag">landing</span></div></div></a>
-      <a class="card" href="layouts/57-diagonal-editorial.html" style="--accent:#F97316"><div class="thumb"><div class="tw t-diag"><span class="band a"></span><span class="band b"></span><span class="ttl"></span></div></div><div class="b"><p class="n">57</p><h3>Diagonal / Skewed Editorial</h3><p class="nav"><b>Skewed sections</b> + rotated type reveal on scroll.</p><div class="tags"><span class="tag">editorial</span><span class="tag">fashion</span></div></div></a>
-      <a class="card" href="layouts/58-starfield.html" style="--accent:#6366F1"><div class="thumb" style="background:#0b1020"><div class="tw t-stars"><span class="s" style="left:14%;top:22%"></span><span class="s a" style="left:62%;top:30%"></span><span class="s" style="left:80%;top:18%"></span><span class="s" style="left:30%;top:66%"></span><span class="s a" style="left:74%;top:70%"></span><span class="s" style="left:48%;top:14%"></span><span class="ttl"></span></div></div><div class="b"><p class="n">58</p><h3>Particle Starfield Hero</h3><p class="nav"><b>Animated star field</b> drifts behind bold type.</p><div class="tags"><span class="tag">tech</span><span class="tag">launch</span></div></div></a>
-      <a class="card" href="layouts/59-cursor-mask.html" style="--accent:#EF4444"><div class="thumb"><div class="tw t-mask"><span class="under"></span><span class="cur"></span></div></div><div class="b"><p class="n">59</p><h3>Cursor-Mask Reveal</h3><p class="nav"><b>A mask follows the cursor</b>, revealing a different layer beneath.</p><div class="tags"><span class="tag">before/after</span><span class="tag">teaser</span></div></div></a>
-    </div>
-
-    <p class="cat">Slides &amp; frames — presentation layouts</p>
-    <div class="grid">
-      <a class="card" href="layouts/66-kpi-slide.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-kpi"><span class="num"></span><span class="bar"></span><span class="bar lo"></span></div></div><div class="b"><p class="n">66</p><h3>KPI Big-Number Slide</h3><p class="nav"><b>One number leads</b> — arrows cycle variants; the stat counts up, bars re-fill.</p><div class="tags"><span class="tag">QBR</span><span class="tag">exec summary</span></div></div></a>
-      <a class="card" href="layouts/67-steps-slide.html" style="--accent:#2563EB"><div class="thumb"><div class="tw t-steps"><span class="sq a"></span><span class="ln a"></span><span class="sq"></span><span class="ln"></span><span class="sq"></span></div></div><div class="b"><p class="n">67</p><h3>Numbered-Steps Slide</h3><p class="nav"><b>1-2-3 highlight</b> — click a step or arrow along; the caption swaps.</p><div class="tags"><span class="tag">how-it-works</span><span class="tag">process</span></div></div></a>
-      <a class="card" href="layouts/68-quadrant-matrix.html" style="--accent:#7C3AED"><div class="thumb"><div class="tw t-quad"><i class="f"></i><i></i><i></i><i></i><span class="dot" style="left:28%;top:30%"></span><span class="dot" style="left:66%;top:38%"></span><span class="dot" style="left:40%;top:70%"></span></div></div><div class="b"><p class="n">68</p><h3>2×2 Quadrant Matrix</h3><p class="nav"><b>Four quadrants</b> — hover a dot for its note; click a quadrant to focus it.</p><div class="tags"><span class="tag">prioritisation</span><span class="tag">positioning</span></div></div></a>
-      <a class="card" href="layouts/69-versus-slide.html" style="--accent:#E11D48"><div class="thumb"><div class="tw t-vs"><div class="b2 a"></div><div class="b2"></div><span class="knob"></span></div></div><div class="b"><p class="n">69</p><h3>Versus / Comparison Slide</h3><p class="nav"><b>Drag the divider</b> — A-vs-B rows stay aligned; double-click resets 50/50.</p><div class="tags"><span class="tag">before/after</span><span class="tag">build-vs-buy</span></div></div></a>
-      <a class="card" href="layouts/70-roadmap-slide.html" style="--accent:#0D9488"><div class="thumb"><div class="tw t-roadmap"><div class="lane"><i class="a" style="width:34%"></i><i style="width:26%"></i></div><div class="lane"><i class="a" style="width:22%"></i><i style="width:38%"></i><i style="width:18%"></i></div><div class="lane"><i class="a" style="width:44%"></i><i style="width:20%"></i></div></div></div><div class="b"><p class="n">70</p><h3>Roadmap / Timeline Slide</h3><p class="nav"><b>Click a phase to zoom</b> — Now / Next / Later lanes re-flow around it.</p><div class="tags"><span class="tag">roadmap</span><span class="tag">programme</span></div></div></a>
-      <a class="card" href="layouts/71-title-dividers.html" style="--accent:#0F172A"><div class="thumb"><div class="tw t-frames"><div class="pane"><span class="gn"></span><span class="t"></span></div><span class="dots"><i class="a"></i><i></i><i></i><i></i><i></i></span></div></div><div class="b"><p class="n">71</p><h3>Title + Section-Divider System</h3><p class="nav"><b>Page a mini deck</b> — cover, dividers, closing; arrows, dots, edge-click.</p><div class="tags"><span class="tag">deck skeleton</span><span class="tag">template</span></div></div></a>
-    </div>
-
-    <p class="cat">Agentic commerce — chat that buys</p>
-    <div class="grid">
-      <a class="card" href="layouts/51-shop-chat.html" style="--accent:#0EA5E9"><div class="thumb" style="background:#1a1b20"><div class="tw t-shopchat"><div class="scr"><span class="b"></span><span class="b u"></span><span class="b"></span><span class="pc"><i></i></span></div></div></div><div class="b"><p class="n">51</p><h3>Mobile Shopping Chat</h3><p class="nav"><b>Chat to shop</b> — assistant replies with product cards you add to a cart.</p><div class="tags"><span class="tag">concierge</span><span class="tag">mobile</span></div></div></a>
-      <a class="card" href="layouts/52-checkout-journey.html" style="--accent:#8B5CF6"><div class="thumb" style="background:#17171c"><div class="tw t-journey"><div class="scr"><span class="segs"><i class="a"></i><i class="a"></i><i></i><i></i></span><span class="body"></span><span class="cta"></span></div></div></div><div class="b"><p class="n">52</p><h3>Agentic Checkout Journey</h3><p class="nav"><b>Step deck</b> through a buy flow — arrows, keys, progress.</p><div class="tags"><span class="tag">demo</span><span class="tag">walkthrough</span></div></div></a>
-      <a class="card" href="layouts/53-agent-trace.html" style="--accent:#059669"><div class="thumb"><div class="tw t-trace"><span class="u"></span><span class="tc"><i></i></span><span class="tc"><i></i></span><span class="tc"><i></i></span><span class="ans"></span></div></div><div class="b"><p class="n">53</p><h3>Streaming Agent Trace</h3><p class="nav"><b>Watch the agent work</b> — reasoning + tool calls, then the answer.</p><div class="tags"><span class="tag">transparency</span><span class="tag">tool-calls</span></div></div></a>
-      <a class="card" href="layouts/54-agent-handoff.html" style="--accent:#F43F5E"><div class="thumb"><div class="tw t-handoff"><span class="bar"><i></i><i class="a"></i><i></i></span><span class="m"></span><span class="hand"></span><span class="m2"></span></div></div><div class="b"><p class="n">54</p><h3>Multi-Agent Handoff</h3><p class="nav"><b>Agents hand off</b> — shopper → payments → fulfilment.</p><div class="tags"><span class="tag">orchestration</span><span class="tag">workflow</span></div></div></a>
-      <a class="card" href="layouts/55-chatgpt-commerce.html" style="--accent:#10A37F"><div class="thumb"><div class="tw t-gpt"><div class="side"><i class="a"></i><i></i><i></i><i></i></div><div class="main"><span class="l"></span><span class="l s"></span><span class="l"></span><span class="buy"></span></div></div></div><div class="b"><p class="n">55</p><h3>ChatGPT Agentic Commerce</h3><p class="nav"><b>Research → buy in chat</b> — buyer's guide, then inline checkout.</p><div class="tags"><span class="tag">ChatGPT-style</span><span class="tag">instant checkout</span></div></div></a>
-      <a class="card" href="layouts/60-chatgpt-mobile.html" style="--accent:#10A37F"><div class="thumb" style="background:#17171c"><div class="tw t-gptm"><div class="scr"><span class="bar"></span><div class="pc"><span class="img"></span><span class="ln"></span><span class="buy"></span></div><span class="composer"></span></div></div></div><div class="b"><p class="n">60</p><h3>ChatGPT Mobile Commerce</h3><p class="nav"><b>Buy in the chat</b> — mobile ChatGPT; checkout slides up as a sheet.</p><div class="tags"><span class="tag">mobile</span><span class="tag">instant checkout</span></div></div></a>
-      <a class="card" href="layouts/61-agent-canvas.html" style="--accent:#22D3EE"><div class="thumb"><div class="tw t-agentcanvas"><div class="rail"><i></i><i class="a"></i><i></i></div><div class="board"><i class="a"></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">61</p><h3>Chat + Live Product Canvas</h3><p class="nav"><b>Chat drives a canvas</b> — each agent reply lands product tiles; hover a message to see its tiles.</p><div class="tags"><span class="tag">curation</span><span class="tag">artifacts</span></div></div></a>
-      <a class="card" href="layouts/62-approval-queue.html" style="--accent:#F97316"><div class="thumb"><div class="tw t-queue"><span class="p"><span class="ln"></span><i class="ok"></i></span><span class="p"><span class="ln"></span><i class="ok"></i><i class="no"></i></span><span class="p"><span class="ln"></span><i class="no"></i></span></div></div><div class="b"><p class="n">62</p><h3>Human-in-the-Loop Approvals</h3><p class="nav"><b>Approve the agent</b> — proposals queue up; you approve, edit, or reject each.</p><div class="tags"><span class="tag">guardrails</span><span class="tag">moderation</span></div></div></a>
-      <a class="card" href="layouts/63-comparison-chat.html" style="--accent:#6366F1"><div class="thumb"><div class="tw t-compare"><div class="col"><i></i><i></i><i></i><i></i></div><div class="col w"><i></i><i></i><i></i><i></i></div><div class="col"><i></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">63</p><h3>Comparison-in-Chat</h3><p class="nav"><b>Mentions become columns</b> — chat grows a comparison tray; toggle diffs, pick a winner.</p><div class="tags"><span class="tag">comparison</span><span class="tag">tier chooser</span></div></div></a>
-    </div>
-    </div>
-
-    <div class="pane" id="info-design" hidden>
-    <a class="chooser-banner" href="info-design/chooser.html">
-      <div>
-        <p class="cb-kicker">Not sure which chart?</p>
-        <h2>Answer two questions, get the right chart.</h2>
-        <p>A two-step picker over all 36 designs, plus a master prompt you can hand an assistant along with your data.</p>
+    <main class="wl-nav__content">
+      <div class="hero">
+        <p class="kicker">71 layouts · 36 info designs</p>
+        <p>Standalone HTML scaffolds — self-contained, no build, neutral tokens at <code>:root</code>. Fork one as a starting point; each file opens with a comment describing its pattern, nav model, and regions.</p>
       </div>
-      <span class="cb-arrow">Open chooser →</span>
-    </a>
 
-    <p class="cat">Comparison — set side by side</p>
-    <div class="grid">
-      <a class="card" href="info-design/i01-grouped-bars.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-bars"><i class="a" style="height:70px"></i><i style="height:46px"></i><i class="a" style="height:52px"></i><i style="height:48px"></i><i class="a" style="height:82px"></i><i style="height:34px"></i></div></div><div class="b"><p class="n">i01</p><h3>Grouped Bars with Annotation</h3><p class="nav"><b>Hover a bar</b> for its value; one callout points at the standout category.</p><div class="tags"><span class="tag">comparison</span><span class="tag">plan-vs-actual</span></div></div></a>
-      <a class="card" href="info-design/i02-slope.html" style="--accent:#1D4ED8"><div class="thumb"><div class="tw t-i-slope"><span class="post l"></span><span class="post r"></span><svg class="lns" viewBox="0 0 100 100" preserveAspectRatio="none"><path class="a" d="M14,78 L86,20"/><path d="M14,30 L86,55"/><path d="M14,55 L86,68"/></svg></div></div><div class="b"><p class="n">i02</p><h3>Slope Chart</h3><p class="nav"><b>Hover a line</b> to isolate it; risers and fallers split by color.</p><div class="tags"><span class="tag">before/after</span><span class="tag">rank shift</span></div></div></a>
-      <a class="card" href="info-design/i03-dumbbell.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-i-dumbbell"><div class="drow"><i class="o" style="left:14%"></i><i class="f" style="left:64%"></i></div><div class="drow"><i class="o" style="left:30%"></i><i class="f" style="left:56%"></i></div><div class="drow"><i class="o" style="left:44%"></i><i class="f" style="left:52%"></i></div></div></div><div class="b"><p class="n">i03</p><h3>Dumbbell / Dot-Range</h3><p class="nav"><b>Hover a row</b> for exact values; sorted so the biggest gap leads.</p><div class="tags"><span class="tag">gap analysis</span><span class="tag">before/after</span></div></div></a>
-    </div>
+      <div class="facet-bar" id="facet-bar" role="group" aria-label="Filter scaffolds by facet">
+<!-- gen:facet-bar start -->
+<button type="button" class="wb-chip facet-chip" data-facet="" aria-pressed="true">All <span class="facet-n">107</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="mobile" aria-pressed="false" title="phone-shaped: sheets, tab bars, tap, swipe">mobile <span class="facet-n">8</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="conversational" aria-pressed="false" title="chat, voice or agent is the interface">conversational <span class="facet-n">10</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="keyboard-driven" aria-pressed="false" title="driven by typing or keys, not pointing">keyboard-driven <span class="facet-n">9</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="playful" aria-pressed="false" title="toy-like, game-like, characterful">playful <span class="facet-n">12</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="animated" aria-pressed="false" title="motion carries meaning, not decoration">animated <span class="facet-n">20</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="narrative" aria-pressed="false" title="meant to be read start-to-finish">narrative <span class="facet-n">20</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="dashboard" aria-pressed="false" title="many metrics at a glance">dashboard <span class="facet-n">7</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="before/after" aria-pressed="false" title="explicit A-vs-B or then-vs-now">before/after <span class="facet-n">6</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="ranking" aria-pressed="false" title="order or leaderboard is the point">ranking <span class="facet-n">13</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="geospatial" aria-pressed="false" title="place, maps, coordinates">geospatial <span class="facet-n">6</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="hierarchy" aria-pressed="false" title="nested, tree, parent-child">hierarchy <span class="facet-n">11</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="time" aria-pressed="false" title="a time axis is central">time <span class="facet-n">8</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="editorial" aria-pressed="false" title="typographic, publication-like">editorial <span class="facet-n">24</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="gallery" aria-pressed="false" title="browsing a visual collection">gallery <span class="facet-n">12</span></button>
+<button type="button" class="wb-chip facet-chip" data-facet="commerce" aria-pressed="false" title="buying, checkout, loyalty">commerce <span class="facet-n">6</span></button>
+<!-- gen:facet-bar end -->
+      </div>
+      <p class="facet-status" id="filter-status" role="status" aria-live="polite">107 scaffolds</p>
 
-    <p class="cat">Trend / Time-series — the shape of change</p>
-    <div class="grid">
-      <a class="card" href="info-design/i04-band-line.html" style="--accent:#BE123C"><div class="thumb"><div class="tw t-i-line"><svg viewBox="0 0 60 40" preserveAspectRatio="none"><path class="lband" d="M2,30 L15,22 L28,26 L40,14 L52,18 L58,10 L58,34 L2,34 Z"/><path class="lline" d="M2,30 L15,22 L28,26 L40,14 L52,18 L58,10"/></svg></div></div><div class="b"><p class="n">i04</p><h3>Line with Confidence Band + Events</h3><p class="nav"><b>Hover the line</b> for a crosshair readout; two events are called out directly.</p><div class="tags"><span class="tag">trend</span><span class="tag">uncertainty</span></div></div></a>
-      <a class="card" href="info-design/i05-streamgraph.html" style="--accent:#6D28D9"><div class="thumb"><div class="tw t-i-stream"><svg viewBox="0 0 60 40" preserveAspectRatio="none"><path class="s1" d="M0,14 C15,8 45,18 60,12 L60,22 C45,28 15,18 0,24 Z"/><path class="s2" d="M0,20 C15,14 45,24 60,18 L60,28 C45,34 15,24 0,30 Z"/><path class="s3" d="M0,26 C15,20 45,30 60,24 L60,34 C45,40 15,30 0,36 Z"/></svg></div></div><div class="b"><p class="n">i05</p><h3>Streamgraph</h3><p class="nav"><b>Hover a band</b> to isolate it; labels sit inside each series' widest run.</p><div class="tags"><span class="tag">composition</span><span class="tag">share of whole</span></div></div></a>
-      <a class="card" href="info-design/i06-bump.html" style="--accent:#0E7490"><div class="thumb"><div class="tw t-i-bump"><svg viewBox="0 0 60 40"><path class="n1" d="M4,8 L30,28 L56,14"/><path class="n2" d="M4,20 L30,10 L56,30"/><path class="a" d="M4,32 L30,18 L56,6"/></svg></div></div><div class="b"><p class="n">i06</p><h3>Bump Chart</h3><p class="nav"><b>Hover a line</b> for rank chips; the lead-change column is shaded.</p><div class="tags"><span class="tag">ranking</span><span class="tag">league table</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-foundations">
+        <h2>Foundations — app &amp; document shells</h2>
+        <p class="intro">The app and document shells most products start from — sidebars, top bars, split panes. Fork one of these when the structure should disappear behind the content.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:foundations start -->
+<a class="wb-card asset-card" href="layouts/01-split-panel.html" style="--accent:#4F46E5" data-facets="editorial"><div class="thumb"><div class="tw t-split"><div class="b2 fill"></div><div class="b2 lines"><i class="m"></i><i class="s"></i><i class="m"></i></div></div></div><div class="b"><p class="n">01</p><h3>Split Panel</h3><p class="nav">Nav in a <b>fixed identity panel</b>; content scrolls beside it.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/02-centered-doc.html" style="--accent:#B45309" data-facets="editorial"><div class="thumb"><div class="tw t-doc"><div class="b2 bar soft"></div><div class="b2 colm lines"><i class="m"></i><i></i><i class="s"></i></div></div></div><div class="b"><p class="n">02</p><h3>Centered Document</h3><p class="nav"><b>Sticky top bar</b> + in-page anchors; centered column.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/03-sidebar-app.html" style="--accent:#0D9488" data-facets="dashboard"><div class="thumb"><div class="tw t-side"><div class="b2 rail"></div><div class="colx"><div class="b2 top soft"></div><div class="g2"><div class="b2"></div><div class="b2"></div></div></div></div></div><div class="b"><p class="n">03</p><h3>Sidebar App Shell</h3><p class="nav"><b>Persistent sidebar</b> + topbar; the app workhorse.</p><div class="tags"><span class="wb-chip" data-facet="dashboard">dashboard</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/04-three-pane.html" style="--accent:#2563EB" data-facets="keyboard-driven"><div class="thumb"><div class="tw t-three"><div class="b2 rail"></div><div class="b2 list lines"><i class="m"></i><i class="s"></i></div><div class="b2 lines"><i class="m"></i><i></i><i class="s"></i></div></div></div><div class="b"><p class="n">04</p><h3>Three-Pane</h3><p class="nav"><b>Rail → list → detail</b>; master/detail data.</p><div class="tags"><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/23-bento.html" style="--accent:#5B5BD6" data-facets="dashboard gallery"><div class="thumb"><div class="tw t-bento"><i class="a"></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">23</p><h3>Bento Grid</h3><p class="nav"><b>Modular tiles</b> of mixed sizes are the homepage.</p><div class="tags"><span class="wb-chip" data-facet="dashboard">dashboard</span><span class="wb-chip" data-facet="gallery">gallery</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/25-accordion-spine.html" style="--accent:#C2410C" data-facets="editorial"><div class="thumb"><div class="tw t-acc"><div class="b2"></div><div class="b2 open"></div><div class="b2"></div><div class="b2"></div></div></div><div class="b"><p class="n">25</p><h3>Accordion Spine</h3><p class="nav"><b>Expand one section</b> in place; others collapse.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/26-bottom-sheet.html" style="--accent:#1E9E5A" data-facets="mobile geospatial"><div class="thumb"><div class="tw t-sheet"><span class="sh"></span></div></div><div class="b"><p class="n">26</p><h3>Bottom-Sheet</h3><p class="nav"><b>Draggable sheet</b> over a map; snaps peek/half/full.</p><div class="tags"><span class="wb-chip" data-facet="mobile">mobile</span><span class="wb-chip" data-facet="geospatial">geospatial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/31-tabbed-workspace.html" style="--accent:#4338CA" data-facets="keyboard-driven"><div class="thumb"><div class="tw t-tabs"><div class="row"><i class="a"></i><i></i><i></i></div><div class="pane"></div></div></div><div class="b"><p class="n">31</p><h3>Tabbed Workspace</h3><p class="nav"><b>Switch tabs</b> — browser-style; close, add, drag to reorder.</p><div class="tags"><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/32-mobile-tabbar.html" style="--accent:#0EA5A4" data-facets="mobile"><div class="thumb"><div class="tw t-phone"><div class="scr"><div class="bar"><span class="a"></span><span></span><span></span><span></span></div></div></div></div><div class="b"><p class="n">32</p><h3>Mobile Tab-Bar Shell</h3><p class="nav"><b>Bottom tabs</b> — tap or swipe between four sections.</p><div class="tags"><span class="wb-chip" data-facet="mobile">mobile</span></div></div></a>
+<!-- gen:index-cards:foundations end -->
+        </div>
+      </section>
 
-    <p class="cat">Part-to-whole — composition</p>
-    <div class="grid">
-      <a class="card" href="info-design/i07-waffle.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-waffle"><i class="a"></i><i class="a"></i><i class="a"></i><i class="b"></i><i class="b"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="b"></i><i></i><i class="a"></i><i class="a"></i><i class="b"></i><i></i><i></i><i></i><i class="b"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">i07</p><h3>Waffle Grid</h3><p class="nav"><b>Click a key sentence</b> to pulse its cells; a 10x10 grid stands in for 100.</p><div class="tags"><span class="tag">part-to-whole</span><span class="tag">survey split</span></div></div></a>
-      <a class="card" href="info-design/i08-treemap.html" style="--accent:#166534"><div class="thumb"><div class="tw t-i-treemap"><svg viewBox="0 0 60 40"><rect class="g1" x="0" y="0" width="34" height="40"/><rect class="g2" x="34" y="0" width="14" height="24"/><rect class="g3" x="34" y="24" width="14" height="16"/><rect class="g3" x="48" y="0" width="12" height="40"/></svg></div></div><div class="b"><p class="n">i08</p><h3>Treemap</h3><p class="nav"><b>Hover a cell</b> for its share; narrow screens swap to a bar list.</p><div class="tags"><span class="tag">part-to-whole</span><span class="tag">budget</span></div></div></a>
-      <a class="card" href="info-design/i09-stacked-leader.html" style="--accent:#9F1239"><div class="thumb"><div class="tw t-i-stackbar"><svg viewBox="0 0 60 40"><line class="tick" x1="14" y1="18" x2="14" y2="8"/><circle class="dot" cx="14" cy="8" r="1.6"/><line class="tick" x1="35" y1="26" x2="35" y2="34"/><circle class="dot" cx="35" cy="34" r="1.6"/><rect class="seg-a" x="2" y="18" width="24" height="8"/><rect class="seg-b" x="26" y="18" width="18" height="8"/><rect class="seg-c" x="44" y="18" width="14" height="8"/></svg></div></div><div class="b"><p class="n">i09</p><h3>Stacked Bar with Leader Labels</h3><p class="nav"><b>Hover a segment or label</b> to pair-highlight; narrow screens collapse to a list.</p><div class="tags"><span class="tag">part-to-whole</span><span class="tag">single total</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-spatial">
+        <h2>Spatial — navigate through space</h2>
+        <p class="intro">Layouts where the interface is literally a space you move through — canvases, maps, floors, isometric scenes. Reach for these when "where am I" matters as much as what's on screen.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:spatial start -->
+<a class="wb-card asset-card" href="layouts/06-infinite-canvas.html" style="--accent:#7C5CFF" data-facets="hierarchy playful"><div class="thumb"><div class="tw t-canvas"><span class="nd" style="left:8%;top:18%"></span><span class="nd" style="left:54%;top:34%"></span><span class="nd" style="left:30%;top:64%"></span></div></div><div class="b"><p class="n">06</p><h3>Infinite Canvas</h3><p class="nav"><b>Pan + zoom</b> a plane of nodes; semantic zoom.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span><span class="wb-chip" data-facet="playful">playful</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/07-zettelkasten.html" style="--accent:#A33A2B" data-facets="hierarchy editorial"><div class="thumb"><div class="tw t-zettel"><div class="b2 lines"><i class="m"></i><i class="s"></i></div><div class="b2 lines"><i class="m"></i><i></i></div><div class="b2 soft"></div></div></div><div class="b"><p class="n">07</p><h3>Zettelkasten Panes</h3><p class="nav">Links open as <b>new sliding columns</b>; the trail stays.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/08-radial-orbit.html" style="--accent:#2DD4BF" data-facets="hierarchy playful"><div class="thumb"><div class="tw t-ring"><span class="ring"></span><span class="o" style="left:50%;top:14px;margin-left:-5px"></span><span class="o" style="left:80%;top:42%"></span><span class="o" style="left:12%;top:50%"></span><span class="o" style="left:50%;bottom:14px;margin-left:-5px"></span></div></div><div class="b"><p class="n">08</p><h3>Radial Orbit</h3><p class="nav">Peers <b>orbit a hub</b>; click to rotate one to the top.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span><span class="wb-chip" data-facet="playful">playful</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/09-map-pinned.html" style="--accent:#FF7A45" data-facets="geospatial gallery"><div class="thumb"><div class="tw t-map"><span class="dot" style="left:24%;top:30%"></span><span class="dot" style="left:62%;top:56%"></span><span class="dot" style="left:78%;top:24%"></span></div></div><div class="b"><p class="n">09</p><h3>Map-Pinned</h3><p class="nav">Content at <b>coordinates</b>; click a pin for its brief.</p><div class="tags"><span class="wb-chip" data-facet="geospatial">geospatial</span><span class="wb-chip" data-facet="gallery">gallery</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/27-elevator.html" style="--accent:#D97706" data-facets="playful animated"><div class="thumb"><div class="tw t-elev"><div class="floors"><i></i><i class="a"></i><i></i></div><div class="panel"><i></i><i class="a"></i><i></i></div></div></div><div class="b"><p class="n">27</p><h3>Elevator Floors</h3><p class="nav"><b>Ride between floors</b> via an elevator panel.</p><div class="tags"><span class="wb-chip" data-facet="playful">playful</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/28-rooms.html" style="--accent:#6D28D9" data-facets="playful keyboard-driven"><div class="thumb"><div class="tw t-rooms"><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">28</p><h3>Arrow Rooms</h3><p class="nav"><b>Walk a 2D grid</b> of rooms with arrow keys.</p><div class="tags"><span class="wb-chip" data-facet="playful">playful</span><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/33-column-view.html" style="--accent:#9333EA" data-facets="hierarchy"><div class="thumb"><div class="tw t-cols"><div class="b2"><i></i><i class="a"></i><i></i></div><div class="b2"><i class="a"></i><i></i><i></i></div><div class="b2"><i></i><i></i></div></div></div><div class="b"><p class="n">33</p><h3>Folder Column-View</h3><p class="nav"><b>Drill into columns</b> — selecting cascades children to the right.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/34-isometric.html" style="--accent:#0891B2" data-facets="playful animated"><div class="thumb"><div class="tw t-iso"><div class="plane"><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">34</p><h3>Isometric Scene</h3><p class="nav"><b>Travel a 2.5D plane</b> — click a zone; arrow keys move focus.</p><div class="tags"><span class="wb-chip" data-facet="playful">playful</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/35-mind-map.html" style="--accent:#DB2777" data-facets="hierarchy playful"><div class="thumb"><div class="tw t-tree"><svg class="tree-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M24,50 C42,50 46,24 60,24"/><path d="M24,50 H60"/><path d="M24,50 C42,50 46,76 60,76"/></svg><span class="root"></span><span class="kid" style="top:18%"></span><span class="kid" style="top:50%;transform:translateY(-50%)"></span><span class="kid" style="bottom:18%"></span></div></div><div class="b"><p class="n">35</p><h3>Mind-Map Tree</h3><p class="nav"><b>Expand branches</b> — click a node to grow its children.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span><span class="wb-chip" data-facet="playful">playful</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/64-globe.html" style="--accent:#0891B2" data-facets="geospatial animated"><div class="thumb"><div class="tw t-globe"><span class="gd" style="left:30%;top:26%"></span><span class="gd" style="left:60%;top:46%"></span><span class="gd" style="left:42%;top:68%"></span><span class="gd sm" style="left:18%;top:52%"></span><span class="gd sm" style="left:70%;top:26%"></span><span class="gd sm" style="left:54%;top:34%"></span><span class="gd sm" style="left:34%;top:44%"></span></div></div><div class="b"><p class="n">64</p><h3>Globe (3D Points)</h3><p class="nav"><b>Drag to spin</b> a point globe; click a dot to open its brief.</p><div class="tags"><span class="wb-chip" data-facet="geospatial">geospatial</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<!-- gen:index-cards:spatial end -->
+        </div>
+      </section>
 
-    <p class="cat">Distribution — the shape of the data</p>
-    <div class="grid">
-      <a class="card" href="info-design/i10-histogram.html" style="--accent:#1E40AF"><div class="thumb"><div class="tw t-i-hist"><i style="height:22px"></i><i style="height:40px"></i><i class="a" style="height:64px"></i><i class="a" style="height:82px"></i><i class="a" style="height:58px"></i><i style="height:36px"></i><i style="height:20px"></i><i style="height:10px"></i></div></div><div class="b"><p class="n">i10</p><h3>Histogram with Summary Stats</h3><p class="nav"><b>Hover a bar</b> for its count; dashed lines flag the mean and median.</p><div class="tags"><span class="tag">distribution</span><span class="tag">skew</span></div></div></a>
-      <a class="card" href="info-design/i11-ridgeline.html" style="--accent:#7C2D12"><div class="thumb"><div class="tw t-i-ridge"><svg viewBox="0 0 60 40"><path class="r1" d="M0,30 C10,26 16,10 24,10 C32,10 38,26 48,30 L48,34 C38,30 32,14 24,14 C16,14 10,30 0,34 Z"/><path class="r2" d="M4,34 C14,30 20,18 30,18 C40,18 46,30 56,34 L56,38 C46,34 40,22 30,22 C20,22 14,38 4,38 Z"/></svg></div></div><div class="b"><p class="n">i11</p><h3>Ridgeline</h3><p class="nav"><b>Hover a row</b> to lift it forward; a tick marks its median.</p><div class="tags"><span class="tag">distribution</span><span class="tag">compare-groups</span></div></div></a>
-      <a class="card" href="info-design/i12-beeswarm.html" style="--accent:#115E59"><div class="thumb"><div class="tw t-i-swarm"><div class="srow"><i class="a" style="left:20%;top:30%"></i><i class="a" style="left:34%;top:60%"></i><i class="a" style="left:44%;top:20%"></i><i style="left:58%;top:70%"></i><i style="left:80%;top:40%"></i></div><div class="srow"><i style="left:15%;top:50%"></i><i style="left:28%;top:20%"></i><i style="left:40%;top:65%"></i><i style="left:52%;top:35%"></i><i style="left:66%;top:60%"></i></div></div></div><div class="b"><p class="n">i12</p><h3>Beeswarm / Dot Strip</h3><p class="nav"><b>Hover a dot</b> for its value; one named outlier gets a leader line.</p><div class="tags"><span class="tag">distribution</span><span class="tag">outlier</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-sequence-story">
+        <h2>Sequence &amp; story — the axis is the nav</h2>
+        <p class="intro">Layouts where moving through content in order, start to finish, is the whole point — timelines, filmstrips, page-turns. Fork one when the content is a story, not a menu.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:sequence-story start -->
+<a class="wb-card asset-card" href="layouts/05-scrollytelling.html" style="--accent:#E11D48" data-facets="narrative animated"><div class="thumb"><div class="tw t-scroll"><div class="band" style="background:#15161A"></div><div class="band soft"></div><div class="band fill"></div></div></div><div class="b"><p class="n">05</p><h3>Scrollytelling</h3><p class="nav"><b>Scroll-driven</b> full-bleed scenes + progress dots.</p><div class="tags"><span class="wb-chip" data-facet="narrative">narrative</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/10-timeline-scrubber.html" style="--accent:#FFC34D" data-facets="time narrative"><div class="thumb"><div class="tw t-timeline"><span class="ln"></span><span class="dot" style="left:18%;top:50%;transform:translateY(-50%)"></span><span class="dot" style="left:46%;top:50%;transform:translateY(-50%)"></span><span class="dot" style="left:74%;top:50%;transform:translateY(-50%)"></span><span class="th" style="left:46%"></span></div></div><div class="b"><p class="n">10</p><h3>Timeline Scrubber</h3><p class="nav">A <b>draggable time axis</b> reveals events as you scrub.</p><div class="tags"><span class="wb-chip" data-facet="time">time</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/11-filmstrip.html" style="--accent:#E8513C" data-facets="gallery animated"><div class="thumb"><div class="tw t-strip"><div class="b2"></div><div class="b2"></div><div class="b2"></div></div></div><div class="b"><p class="n">11</p><h3>Horizontal Filmstrip</h3><p class="nav"><b>Sideways snap</b> between full-height panels.</p><div class="tags"><span class="wb-chip" data-facet="gallery">gallery</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/12-sticky-stack.html" style="--accent:#1F6F5C" data-facets="narrative editorial"><div class="thumb"><div class="tw t-stack"><span class="c" style="top:16%"></span><span class="c" style="top:33%"></span><span class="c" style="top:50%"></span></div></div><div class="b"><p class="n">12</p><h3>Sticky-Stack Chapters</h3><p class="nav">Chapters <b>pin and stack</b> over each other on scroll.</p><div class="tags"><span class="wb-chip" data-facet="narrative">narrative</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/36-dial-picker.html" style="--accent:#F59E0B" data-facets="mobile playful"><div class="thumb"><div class="tw t-wheel"><i></i><i></i><i class="a"></i><i></i><i></i></div></div><div class="b"><p class="n">36</p><h3>Dial / Wheel Picker</h3><p class="nav"><b>Spin a wheel</b> — drag or scroll; the centred item is selected.</p><div class="tags"><span class="wb-chip" data-facet="mobile">mobile</span><span class="wb-chip" data-facet="playful">playful</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/37-stepper.html" style="--accent:#2563EB" data-facets="narrative commerce"><div class="thumb"><div class="tw t-step"><span class="nd a"></span><span class="ln a"></span><span class="nd a"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span></div></div><div class="b"><p class="n">37</p><h3>Stepper / Wizard</h3><p class="nav"><b>Advance steps</b> — a progress rail; jump back to done steps.</p><div class="tags"><span class="wb-chip" data-facet="narrative">narrative</span><span class="wb-chip" data-facet="commerce">commerce</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/38-page-turn.html" style="--accent:#B45309" data-facets="gallery editorial"><div class="thumb"><div class="tw t-book"><span class="pg l"></span><span class="pg turn"></span><span class="pg r"></span></div></div><div class="b"><p class="n">38</p><h3>Page-Turn Book</h3><p class="nav"><b>Flip pages</b> — click an edge or arrows; spreads fold over.</p><div class="tags"><span class="wb-chip" data-facet="gallery">gallery</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/39-story-tap.html" style="--accent:#E11D48" data-facets="mobile narrative"><div class="thumb"><div class="tw t-story"><div class="segs"><i class="done"></i><i class="a"></i><i></i><i></i></div><div class="body"></div></div></div><div class="b"><p class="n">39</p><h3>Story Tap-Through</h3><p class="nav"><b>Tap to advance</b> — timed segments; hold to pause.</p><div class="tags"><span class="wb-chip" data-facet="mobile">mobile</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/40-carousel.html" style="--accent:#7C3AED" data-facets="gallery animated"><div class="thumb"><div class="tw t-carousel"><span class="pane"></span><span class="dots"><i></i><i class="a"></i><i></i><i></i></span></div></div><div class="b"><p class="n">40</p><h3>Carousel / Slideshow</h3><p class="nav"><b>Page slides</b> — arrows, dots, autoplay that pauses on hover.</p><div class="tags"><span class="wb-chip" data-facet="gallery">gallery</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<!-- gen:index-cards:sequence-story end -->
+        </div>
+      </section>
 
-    <p class="cat">Correlation — how two things move</p>
-    <div class="grid">
-      <a class="card" href="info-design/i13-scatter-trend.html" style="--accent:#A21CAF"><div class="thumb"><div class="tw t-i-scatter"><svg viewBox="0 0 60 40"><line class="fl" x1="4" y1="34" x2="56" y2="8"/><circle class="d" cx="10" cy="30" r="2.2"/><circle class="d" cx="18" cy="24" r="2.2"/><circle class="d" cx="26" cy="21" r="2.2"/><circle class="d a" cx="30" cy="10" r="2.6"/><circle class="d" cx="36" cy="16" r="2.2"/><circle class="d" cx="44" cy="12" r="2.2"/><circle class="d" cx="50" cy="9" r="2.2"/></svg></div></div><div class="b"><p class="n">i13</p><h3>Annotated Scatter with Trendline</h3><p class="nav"><b>Hover a dot</b> for its values; three outliers get named leader lines.</p><div class="tags"><span class="tag">correlation</span><span class="tag">regression</span></div></div></a>
-      <a class="card" href="info-design/i14-bubble-quadrant.html" style="--accent:#B91C1C"><div class="thumb"><div class="tw t-i-quadbub"><svg viewBox="0 0 60 40"><line class="mid" x1="30" y1="2" x2="30" y2="38"/><line class="mid" x1="2" y1="20" x2="58" y2="20"/><circle class="bub a" cx="16" cy="10" r="7"/><circle class="bub" cx="46" cy="12" r="9"/><circle class="bub" cx="18" cy="30" r="4"/><circle class="bub" cx="44" cy="28" r="5.5"/></svg></div></div><div class="b"><p class="n">i14</p><h3>Bubble Quadrant</h3><p class="nav"><b>Hover a bubble</b> for its name and all three values.</p><div class="tags"><span class="tag">correlation</span><span class="tag">effort-impact</span></div></div></a>
-      <a class="card" href="info-design/i15-connected-scatter.html" style="--accent:#1D4ED8"><div class="thumb"><div class="tw t-i-connscatter"><svg viewBox="0 0 60 40"><path class="cs-ghost" d="M7,35 L21,27 L35,15 L53,7"/><path class="cs-path" d="M6,34 L20,26 L34,14 L52,6"/><polygon class="cs-arrow" points="-3,-2.5 3,0 -3,2.5" transform="translate(27,20) rotate(-34)"/><circle class="cs-pt" cx="6" cy="34" r="2.2"/><circle class="cs-pt" cx="52" cy="6" r="2.2"/></svg></div></div><div class="b"><p class="n">i15</p><h3>Connected Scatter</h3><p class="nav"><b>Hover a point</b> for its year and values.</p><div class="tags"><span class="tag">correlation</span><span class="tag">time series</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-command-conversation">
+        <h2>Command &amp; conversation — type, don't click</h2>
+        <p class="intro">Interfaces you drive by typing or talking instead of clicking — command palettes, terminals, chat, voice. Fork one when the fastest way in is a keyboard or a microphone.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:command-conversation start -->
+<a class="wb-card asset-card" href="layouts/13-command-palette.html" style="--accent:#5B8CFF" data-facets="keyboard-driven"><div class="thumb"><div class="tw t-palette"><span class="bar"></span><span class="r" style="top:54%"></span><span class="r" style="top:68%;opacity:.5"></span></div></div><div class="b"><p class="n">13</p><h3>Command-Palette-First</h3><p class="nav">A <b>⌘K palette</b> is the primary way to move.</p><div class="tags"><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/14-terminal.html" style="--accent:#39d98a" data-facets="keyboard-driven playful"><div class="thumb"><div class="tw t-term"><span class="ln a" style="left:14px;top:24%;width:30%"></span><span class="ln" style="left:14px;top:42%;width:60%"></span><span class="ln" style="left:14px;top:60%;width:44%"></span><span class="ln a" style="left:14px;top:78%;width:16%"></span></div></div><div class="b"><p class="n">14</p><h3>Terminal / CLI</h3><p class="nav">The site is a <b>command line</b>; output scrolls.</p><div class="tags"><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span><span class="wb-chip" data-facet="playful">playful</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/15-chat-first.html" style="--accent:#8B7BFF" data-facets="conversational narrative"><div class="thumb"><div class="tw t-chat"><span class="bub l" style="top:22%"></span><span class="bub r" style="top:48%"></span><span class="bub l" style="top:74%;width:36%"></span></div></div><div class="b"><p class="n">15</p><h3>Chat-First</h3><p class="nav"><b>Ask</b>, and content blocks render inline.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/41-conversational-form.html" style="--accent:#10B981" data-facets="conversational narrative"><div class="thumb"><div class="tw t-form"><span class="prog"></span><span class="ql"></span><span class="inp"></span></div></div><div class="b"><p class="n">41</p><h3>Conversational Form</h3><p class="nav"><b>One question at a time</b> — Enter advances; progress fills.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/42-notebook-cells.html" style="--accent:#EA580C" data-facets="keyboard-driven"><div class="thumb"><div class="tw t-cells"><div class="cell"><span class="run"></span><span class="code"></span></div><span class="out"></span><div class="cell"><span class="run"></span><span class="code"></span></div></div></div><div class="b"><p class="n">42</p><h3>Notebook / REPL Cells</h3><p class="nav"><b>Run a cell</b> — ⇧⏎ renders output below; add cells.</p><div class="tags"><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/43-keyboard-inbox.html" style="--accent:#4F46E5" data-facets="keyboard-driven"><div class="thumb"><div class="tw t-inbox"><span class="row"></span><span class="row sel"></span><span class="row"></span><span class="row"></span><span class="row"></span></div></div><div class="b"><p class="n">43</p><h3>Keyboard Inbox</h3><p class="nav"><b>j / k / Enter / e</b> — drive a list entirely by keys.</p><div class="tags"><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/44-slash-editor.html" style="--accent:#0D9488" data-facets="keyboard-driven editorial"><div class="thumb"><div class="tw t-slash"><span class="ln"></span><span class="ln s"></span><div class="menu"><i class="a"></i><i></i><i></i></div><span class="ln"></span></div></div><div class="b"><p class="n">44</p><h3>Slash-Command Editor</h3><p class="nav">Type <b>/</b> to summon a block menu inline.</p><div class="tags"><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/45-filter-search.html" style="--accent:#0284C7" data-facets="keyboard-driven"><div class="thumb"><div class="tw t-filter"><span class="search"></span><span class="chips"><i class="a"></i><i></i><i></i></span><span class="res"></span><span class="res s"></span></div></div><div class="b"><p class="n">45</p><h3>Live Filter Search</h3><p class="nav"><b>Search as you type</b> — facet chips filter instantly.</p><div class="tags"><span class="wb-chip" data-facet="keyboard-driven">keyboard-driven</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/46-voice-assistant.html" style="--accent:#7E22CE" data-facets="conversational mobile"><div class="thumb"><div class="tw t-voice"><span class="miccircle"></span><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i></span></div></div><div class="b"><p class="n">46</p><h3>Voice Assistant</h3><p class="nav"><b>Tap the mic</b> — query transcribes, then an answer card.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="mobile">mobile</span></div></div></a>
+<!-- gen:index-cards:command-conversation end -->
+        </div>
+      </section>
 
-    <p class="cat">Ranking — order matters</p>
-    <div class="grid">
-      <a class="card" href="info-design/i16-ordered-bars.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-rankbars"><i class="a" style="width:86%"></i><i style="width:76%"></i><i style="width:70%"></i><i style="width:62%"></i><i style="width:52%"></i></div></div><div class="b"><p class="n">i16</p><h3>Ordered Bars with Highlight</h3><p class="nav"><b>Hover a row</b> to highlight it; one bar is called out with a note.</p><div class="tags"><span class="tag">ranking</span><span class="tag">highlight</span></div></div></a>
-      <a class="card" href="info-design/i17-lollipop.html" style="--accent:#4D7C0F"><div class="thumb"><div class="tw t-i-lolli"><svg viewBox="0 0 60 40"><line class="bench" x1="34" y1="4" x2="34" y2="36"/><line class="stem a" x1="10" y1="8" x2="46" y2="8"/><circle class="dot a" cx="46" cy="8" r="2.4"/><line class="stem a" x1="10" y1="16" x2="40" y2="16"/><circle class="dot a" cx="40" cy="16" r="2.4"/><line class="stem" x1="10" y1="24" x2="28" y2="24"/><circle class="dot" cx="28" cy="24" r="2.4"/><line class="stem" x1="10" y1="32" x2="20" y2="32"/><circle class="dot" cx="20" cy="32" r="2.4"/></svg></div></div><div class="b"><p class="n">i17</p><h3>Lollipop with Benchmark</h3><p class="nav"><b>Hover a dot</b> for its value; a dashed rule marks the benchmark.</p><div class="tags"><span class="tag">ranking</span><span class="tag">benchmark</span></div></div></a>
-      <a class="card" href="info-design/i18-league-table.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span></div></div><div class="b"><p class="n">i18</p><h3>League Table with Deltas</h3><p class="nav"><b>Sort by value or Δ</b>; ranks renumber after every sort.</p><div class="tags"><span class="tag">ranking</span><span class="tag">table</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-objects-cards">
+        <h2>Objects &amp; cards — the content is a thing</h2>
+        <p class="intro">Layouts that treat each piece of content as a physical thing — cards, decks, boards, a departure display. Reach for these when items should feel handled, not just listed.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:objects-cards start -->
+<a class="wb-card asset-card" href="layouts/16-desktop-os.html" style="--accent:#3B82F6" data-facets="playful animated"><div class="thumb"><div class="tw t-desktop" style="inset:0"><span class="win"></span><span class="dock"></span></div></div><div class="b"><p class="n">16</p><h3>Desktop OS</h3><p class="nav"><b>Draggable windows</b> from a dock; a site as an OS.</p><div class="tags"><span class="wb-chip" data-facet="playful">playful</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/17-card-deck.html" style="--accent:#FF5D8F" data-facets="mobile gallery"><div class="thumb"><div class="tw t-stack t-pin"><span class="c" style="top:20%;transform:scale(.92)"></span><span class="c" style="top:34%;transform:scale(.96)"></span><span class="c" style="top:48%"></span></div></div><div class="b"><p class="n">17</p><h3>Card-Deck Swipe</h3><p class="nav"><b>Flick</b> through a stack; the top card is focus.</p><div class="tags"><span class="wb-chip" data-facet="mobile">mobile</span><span class="wb-chip" data-facet="gallery">gallery</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/18-pinboard.html" style="--accent:#C0392B" data-facets="gallery playful"><div class="thumb"><div class="tw t-stack t-pin" style="inset:14px"><span class="c" style="left:10%;top:14%;width:34%;height:42%;transform:rotate(-6deg)"></span><span class="c" style="left:52%;top:22%;width:34%;height:42%;transform:rotate(5deg)"></span><span class="c" style="left:30%;top:52%;width:34%;height:40%;transform:rotate(-3deg)"></span></div></div><div class="b"><p class="n">18</p><h3>Pinboard Wall</h3><p class="nav"><b>Pinned notes</b> at angles; scan, lift, open.</p><div class="tags"><span class="wb-chip" data-facet="gallery">gallery</span><span class="wb-chip" data-facet="playful">playful</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/19-split-flap.html" style="--accent:#FFD23F" data-facets="animated ranking"><div class="thumb"><div class="tw t-flap" style="inset:0"><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i></div></div><div class="b"><p class="n">19</p><h3>Split-Flap Board</h3><p class="nav">A <b>departure board</b>; filters re-flip the rows.</p><div class="tags"><span class="wb-chip" data-facet="animated">animated</span><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/24-coverflow.html" style="--accent:#1FB6A6" data-facets="gallery animated"><div class="thumb"><div class="tw t-cover"><span class="c l"></span><span class="c r"></span><span class="c mid"></span></div></div><div class="b"><p class="n">24</p><h3>Cover Flow</h3><p class="nav"><b>3D carousel</b>; side cards angle back in perspective.</p><div class="tags"><span class="wb-chip" data-facet="gallery">gallery</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/47-kanban.html" style="--accent:#EA580C" data-facets="playful"><div class="thumb"><div class="tw t-kanban"><div class="col"><span class="h"></span><i></i><i></i></div><div class="col"><span class="h"></span><i></i><i></i><i></i></div><div class="col"><span class="h"></span><i></i></div></div></div><div class="b"><p class="n">47</p><h3>Kanban Board</h3><p class="nav"><b>Drag cards</b> across To-do / Doing / Done columns.</p><div class="tags"><span class="wb-chip" data-facet="playful">playful</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/48-masonry.html" style="--accent:#DB2777" data-facets="gallery editorial"><div class="thumb"><div class="tw t-masonry"><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">48</p><h3>Masonry Gallery</h3><p class="nav"><b>Staggered grid</b> → click a tile to open a lightbox.</p><div class="tags"><span class="wb-chip" data-facet="gallery">gallery</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/49-card-wallet.html" style="--accent:#0F766E" data-facets="mobile commerce"><div class="thumb"><div class="tw t-wallet"><span class="p"></span><span class="p"></span><span class="p"></span></div></div><div class="b"><p class="n">49</p><h3>Card Wallet</h3><p class="nav"><b>Tap a pass</b> to raise it, tap again to flip for detail.</p><div class="tags"><span class="wb-chip" data-facet="mobile">mobile</span><span class="wb-chip" data-facet="commerce">commerce</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/50-data-table.html" style="--accent:#475569" data-facets="ranking"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span></div></div><div class="b"><p class="n">50</p><h3>Data Table</h3><p class="nav"><b>Sort columns</b>, click a row for a detail drawer.</p><div class="tags"><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/65-ticker-board.html" style="--accent:#22C55E" data-facets="ranking animated"><div class="thumb"><div class="tw t-board"><div class="brow"><span class="lbl"></span><span class="chip up"></span></div><div class="brow"><span class="lbl"></span><span class="chip down"></span></div><div class="brow"><span class="lbl"></span><span class="chip up"></span></div><div class="brow"><span class="lbl"></span><span class="chip up"></span></div></div></div><div class="b"><p class="n">65</p><h3>Ticker / Stock-Board</h3><p class="nav"><b>Values tick live</b> — a marquee runs above; click a row for its sparkline.</p><div class="tags"><span class="wb-chip" data-facet="ranking">ranking</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<!-- gen:index-cards:objects-cards end -->
+        </div>
+      </section>
 
-    <p class="cat">Flow &amp; process — where things go</p>
-    <div class="grid">
-      <a class="card" href="info-design/i19-sankey.html" style="--accent:#1E40AF"><div class="thumb"><div class="tw t-i-sankey"><svg viewBox="0 0 60 40"><rect class="nd" x="6" y="6" width="4" height="12"/><rect class="nd" x="6" y="22" width="4" height="10"/><rect class="nd" x="50" y="4" width="4" height="10"/><rect class="nd" x="50" y="18" width="4" height="9"/><rect class="nd" x="50" y="31" width="4" height="5"/><path class="rb a" d="M10,8 C30,8 30,6 50,7 L50,12 C30,11 30,13 10,15 Z"/><path class="rb" d="M10,20 C30,20 30,21 50,20 L50,25 C30,25 30,26 10,27 Z"/></svg></div></div><div class="b"><p class="n">i19</p><h3>Sankey</h3><p class="nav"><b>Hover a ribbon</b> to isolate it; ≤560px it flips to a vertical flow.</p><div class="tags"><span class="tag">flow</span><span class="tag">sankey</span></div></div></a>
-      <a class="card" href="info-design/i20-funnel.html" style="--accent:#C2410C"><div class="thumb"><div class="tw t-i-funnel"><i style="width:70%;height:9px"></i><i class="b2" style="width:54%;height:9px"></i><i class="b3" style="width:40%;height:9px"></i><i class="b4" style="width:28%;height:9px"></i></div></div><div class="b"><p class="n">i20</p><h3>Funnel</h3><p class="nav"><b>Hover a band</b> for its count; the steepest drop is called out.</p><div class="tags"><span class="tag">flow</span><span class="tag">funnel</span></div></div></a>
-      <a class="card" href="info-design/i21-chord.html" style="--accent:#6D28D9"><div class="thumb"><div class="tw t-i-chord"><svg viewBox="0 0 60 40"><circle class="ring" cx="30" cy="20" r="15"/><path class="ring a" d="M30,5 A15,15 0 0 1 44,15" fill="none"/><path class="rb" d="M20,8 Q30,20 40,32"/><path class="rb" d="M40,8 Q30,20 20,32"/><path class="rb" d="M15,22 Q30,20 45,22"/></svg></div></div><div class="b"><p class="n">i21</p><h3>Chord Diagram</h3><p class="nav"><b>Hover an arc</b> to isolate its ribbons; ≤560px it falls back to a heat-grid.</p><div class="tags"><span class="tag">flow</span><span class="tag">chord</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-immersive">
+        <h2>Immersive — cinematic</h2>
+        <p class="intro">Full-bleed, cinematic layouts built to hold attention — flythroughs, spotlights, posters. Fork one for a launch page or a moment that should feel like a scene, not a form.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:immersive start -->
+<a class="wb-card asset-card" href="layouts/20-zaxis-flythrough.html" style="--accent:#22D3EE" data-facets="animated narrative"><div class="thumb"><div class="tw t-zaxis"><span class="r" style="width:70%;height:70%;opacity:.3"></span><span class="r" style="width:50%;height:50%;opacity:.55"></span><span class="r" style="width:30%;height:30%"></span></div></div><div class="b"><p class="n">20</p><h3>Z-Axis Fly-Through</h3><p class="nav"><b>Scroll = camera</b> moving forward through depth.</p><div class="tags"><span class="wb-chip" data-facet="animated">animated</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/21-grid-morph.html" style="--accent:#22D3EE" data-facets="gallery animated"><div class="thumb"><div class="tw t-grid"><i style="height:34px"></i><i style="height:48px"></i><i style="height:30px"></i><i style="height:44px"></i><i style="height:30px"></i><i style="height:40px"></i></div></div><div class="b"><p class="n">21</p><h3>Grid-to-Detail Morph</h3><p class="nav">A tile <b>expands in place</b> into a full page.</p><div class="tags"><span class="wb-chip" data-facet="gallery">gallery</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/22-poster.html" style="--accent:#E8413B" data-facets="editorial gallery"><div class="thumb"><div class="tw t-poster" style="inset:0"><span class="big"></span></div></div><div class="b"><p class="n">22</p><h3>Poster / Full-Bleed</h3><p class="nav"><b>Vertical snap</b> between full-screen posters.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span><span class="wb-chip" data-facet="gallery">gallery</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/29-marquee.html" style="--accent:#65A30D" data-facets="editorial animated"><div class="thumb"><div class="tw t-marq"><i style="left:6%;top:22%;width:72%"></i><i style="left:22%;top:45%;width:66%;opacity:.55"></i><i style="left:2%;top:68%;width:80%"></i></div></div><div class="b"><p class="n">29</p><h3>Marquee Index</h3><p class="nav"><b>Auto-scrolling type</b> rows; hover pauses, click opens.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/30-spotlight.html" style="--accent:#FF4D4D" data-facets="animated playful"><div class="thumb"><div class="tw t-spot"></div></div><div class="b"><p class="n">30</p><h3>Spotlight Scroll</h3><p class="nav"><b>A spotlight follows</b> the cursor; the rest goes dark.</p><div class="tags"><span class="wb-chip" data-facet="animated">animated</span><span class="wb-chip" data-facet="playful">playful</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/56-parallax-hero.html" style="--accent:#22D3EE" data-facets="animated editorial"><div class="thumb"><div class="tw t-parallax"><i></i><i></i><i></i></div></div><div class="b"><p class="n">56</p><h3>Parallax Mouse Hero</h3><p class="nav"><b>Layers shift with the cursor</b> — depth that follows your mouse.</p><div class="tags"><span class="wb-chip" data-facet="animated">animated</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/57-diagonal-editorial.html" style="--accent:#F97316" data-facets="editorial animated"><div class="thumb"><div class="tw t-diag"><span class="band a"></span><span class="band b"></span><span class="ttl"></span></div></div><div class="b"><p class="n">57</p><h3>Diagonal / Skewed Editorial</h3><p class="nav"><b>Skewed sections</b> + rotated type reveal on scroll.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/58-starfield.html" style="--accent:#6366F1" data-facets="animated editorial"><div class="thumb"><div class="tw t-stars"><span class="s" style="left:14%;top:22%"></span><span class="s a" style="left:62%;top:30%"></span><span class="s" style="left:80%;top:18%"></span><span class="s" style="left:30%;top:66%"></span><span class="s a" style="left:74%;top:70%"></span><span class="s" style="left:48%;top:14%"></span><span class="ttl"></span></div></div><div class="b"><p class="n">58</p><h3>Particle Starfield Hero</h3><p class="nav"><b>Animated star field</b> drifts behind bold type.</p><div class="tags"><span class="wb-chip" data-facet="animated">animated</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/59-cursor-mask.html" style="--accent:#EF4444" data-facets="before/after animated"><div class="thumb"><div class="tw t-mask"><span class="under"></span><span class="cur"></span></div></div><div class="b"><p class="n">59</p><h3>Cursor-Mask Reveal</h3><p class="nav"><b>A mask follows the cursor</b>, revealing a different layer beneath.</p><div class="tags"><span class="wb-chip" data-facet="before/after">before/after</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<!-- gen:index-cards:immersive end -->
+        </div>
+      </section>
 
-    <p class="cat">Hierarchy &amp; network — structure</p>
-    <div class="grid">
-      <a class="card" href="info-design/i22-radial-tree.html" style="--accent:#0E7490"><div class="thumb"><div class="tw t-i-radialtree"><svg viewBox="0 0 60 40"><circle class="hub" cx="30" cy="20" r="3"/><path class="lk" d="M30,20 C20,20 15,10 8,8"/><path class="lk" d="M30,20 C20,20 15,30 8,30"/><path class="lk a" d="M30,20 C38,20 44,10 52,8"/><path class="lk a" d="M30,20 C38,20 44,14 52,16"/><circle class="nd" cx="8" cy="8" r="2"/><circle class="nd" cx="8" cy="30" r="2"/><circle class="nd a" cx="52" cy="8" r="2"/><circle class="nd a" cx="52" cy="16" r="2"/></svg></div></div><div class="b"><p class="n">i22</p><h3>Radial Tree</h3><p class="nav"><b>Click a branch</b> to collapse or expand it; ≤560px it becomes an indented outline.</p><div class="tags"><span class="tag">hierarchy</span><span class="tag">radial-tree</span></div></div></a>
-      <a class="card" href="info-design/i23-network.html" style="--accent:#BE123C"><div class="thumb"><div class="tw t-i-net"><svg viewBox="0 0 60 40"><line class="lk" x1="10" y1="12" x2="18" y2="22"/><line class="lk" x1="10" y1="12" x2="14" y2="28"/><line class="lk" x1="18" y1="22" x2="14" y2="28"/><line class="lk a" x1="18" y1="22" x2="34" y2="20"/><line class="lk" x1="34" y1="20" x2="46" y2="10"/><line class="lk" x1="34" y1="20" x2="48" y2="24"/><line class="lk" x1="46" y1="10" x2="48" y2="24"/><circle class="nd" cx="10" cy="12" r="3.4"/><circle class="nd" cx="18" cy="22" r="3"/><circle class="nd" cx="14" cy="28" r="2.4"/><circle class="nd a" cx="34" cy="20" r="3.6"/><circle class="nd" cx="46" cy="10" r="3.2"/><circle class="nd" cx="48" cy="24" r="2.8"/></svg></div></div><div class="b"><p class="n">i23</p><h3>Network Graph</h3><p class="nav"><b>Hover a name</b> to trace their connections; the broker bridges both clusters.</p><div class="tags"><span class="tag">network</span><span class="tag">collaboration</span></div></div></a>
-      <a class="card" href="info-design/i24-icicle.html" style="--accent:#166534"><div class="thumb"><div class="tw t-i-icicle"><i class="row0"></i><div class="row1"><i class="a" style="flex:0.42"></i><i style="flex:0.23"></i><i style="flex:0.20"></i><i style="flex:0.15"></i></div></div></div><div class="b"><p class="n">i24</p><h3>Icicle / Partition</h3><p class="nav"><b>Click a bar</b> to zoom in; a breadcrumb tracks the path back to the root.</p><div class="tags"><span class="tag">hierarchy</span><span class="tag">icicle</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-slides-frames">
+        <h2>Slides &amp; frames — presentation layouts</h2>
+        <p class="intro">16:9 presentation frames — a KPI slide, a quadrant matrix, a roadmap lane. These are layout mechanics for a deck, not a chart; reach for one when the deliverable is something someone will present.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:slides-frames start -->
+<a class="wb-card asset-card" href="layouts/66-kpi-slide.html" style="--accent:#B45309" data-facets="dashboard narrative"><div class="thumb"><div class="tw t-kpi"><span class="num"></span><span class="bar"></span><span class="bar lo"></span></div></div><div class="b"><p class="n">66</p><h3>KPI Big-Number Slide</h3><p class="nav"><b>One number leads</b> — arrows cycle variants; the stat counts up, bars re-fill.</p><div class="tags"><span class="wb-chip" data-facet="dashboard">dashboard</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/67-steps-slide.html" style="--accent:#2563EB" data-facets="narrative editorial"><div class="thumb"><div class="tw t-steps"><span class="sq a"></span><span class="ln a"></span><span class="sq"></span><span class="ln"></span><span class="sq"></span></div></div><div class="b"><p class="n">67</p><h3>Numbered-Steps Slide</h3><p class="nav"><b>1-2-3 highlight</b> — click a step or arrow along; the caption swaps.</p><div class="tags"><span class="wb-chip" data-facet="narrative">narrative</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/68-quadrant-matrix.html" style="--accent:#7C3AED" data-facets="ranking narrative"><div class="thumb"><div class="tw t-quad"><i class="f"></i><i></i><i></i><i></i><span class="dot" style="left:28%;top:30%"></span><span class="dot" style="left:66%;top:38%"></span><span class="dot" style="left:40%;top:70%"></span></div></div><div class="b"><p class="n">68</p><h3>2×2 Quadrant Matrix</h3><p class="nav"><b>Four quadrants</b> — hover a dot for its note; click a quadrant to focus it.</p><div class="tags"><span class="wb-chip" data-facet="ranking">ranking</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/69-versus-slide.html" style="--accent:#E11D48" data-facets="before/after narrative"><div class="thumb"><div class="tw t-vs"><div class="b2 a"></div><div class="b2"></div><span class="knob"></span></div></div><div class="b"><p class="n">69</p><h3>Versus / Comparison Slide</h3><p class="nav"><b>Drag the divider</b> — A-vs-B rows stay aligned; double-click resets 50/50.</p><div class="tags"><span class="wb-chip" data-facet="before/after">before/after</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/70-roadmap-slide.html" style="--accent:#0D9488" data-facets="time narrative"><div class="thumb"><div class="tw t-roadmap"><div class="lane"><i class="a" style="width:34%"></i><i style="width:26%"></i></div><div class="lane"><i class="a" style="width:22%"></i><i style="width:38%"></i><i style="width:18%"></i></div><div class="lane"><i class="a" style="width:44%"></i><i style="width:20%"></i></div></div></div><div class="b"><p class="n">70</p><h3>Roadmap / Timeline Slide</h3><p class="nav"><b>Click a phase to zoom</b> — Now / Next / Later lanes re-flow around it.</p><div class="tags"><span class="wb-chip" data-facet="time">time</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/71-title-dividers.html" style="--accent:#0F172A" data-facets="editorial narrative"><div class="thumb"><div class="tw t-frames"><div class="pane"><span class="gn"></span><span class="t"></span></div><span class="dots"><i class="a"></i><i></i><i></i><i></i><i></i></span></div></div><div class="b"><p class="n">71</p><h3>Title + Section-Divider System</h3><p class="nav"><b>Page a mini deck</b> — cover, dividers, closing; arrows, dots, edge-click.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<!-- gen:index-cards:slides-frames end -->
+        </div>
+      </section>
 
-    <p class="cat">Table &amp; heatmap — dense and exact</p>
-    <div class="grid">
-      <a class="card" href="info-design/i25-calendar-heatmap.html" style="--accent:#15803D"><div class="thumb"><div class="tw t-i-cal"><div class="crow"><i></i><i class="l2"></i><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i></div><div class="crow"><i class="l2"></i><i></i><i class="l4"></i><i class="a"></i><i class="a"></i><i class="l4"></i><i class="l2"></i></div><div class="crow"><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i></i><i class="l2"></i></div></div></div><div class="b"><p class="n">i25</p><h3>Calendar Heatmap</h3><p class="nav"><b>Hover a cell</b> for its date and value; the hottest streak is circled.</p><div class="tags"><span class="tag">rhythm</span><span class="tag">calendar</span></div></div></a>
-      <a class="card" href="info-design/i26-matrix-heatmap.html" style="--accent:#B91C1C"><div class="thumb"><div class="tw t-i-matrix"><i class="l2"></i><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i></i><i class="l3"></i><i class="l2"></i><i class="a"></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i class="l2"></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i class="l2"></i><i></i><i></i><i class="l2"></i><i></i></div></div><div class="b"><p class="n">i26</p><h3>Matrix Heatmap with Marginals</h3><p class="nav"><b>Hover a cell</b> for row + column highlight; bars show each total.</p><div class="tags"><span class="tag">relate</span><span class="tag">heatmap</span></div></div></a>
-      <a class="card" href="info-design/i27-sparkline-table.html" style="--accent:#334155"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><svg class="t-i-spark" viewBox="0 0 34 14"><polyline points="0,11 6,9 12,10 18,6 24,7 29,3 34,2"/><circle cx="34" cy="2" r="1.6"/></svg></div></div><div class="b"><p class="n">i27</p><h3>Sparkline Table</h3><p class="nav"><b>Sort Current or Δ</b>; one focal row stays tinted through every sort.</p><div class="tags"><span class="tag">compare</span><span class="tag">sparkline</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-agentic-commerce">
+        <h2>Agentic commerce — chat that buys</h2>
+        <p class="intro">Chat surfaces built around an agent that can actually buy things — shopping chat, checkout journeys, approval queues. Fork one when the product is commerce conducted in conversation.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:agentic-commerce start -->
+<a class="wb-card asset-card" href="layouts/51-shop-chat.html" style="--accent:#0EA5E9" data-facets="conversational commerce"><div class="thumb"><div class="tw t-shopchat"><div class="scr"><span class="b"></span><span class="b u"></span><span class="b"></span><span class="pc"><i></i></span></div></div></div><div class="b"><p class="n">51</p><h3>Mobile Shopping Chat</h3><p class="nav"><b>Chat to shop</b> — assistant replies with product cards you add to a cart.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="commerce">commerce</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/52-checkout-journey.html" style="--accent:#8B5CF6" data-facets="commerce narrative"><div class="thumb"><div class="tw t-journey"><div class="scr"><span class="segs"><i class="a"></i><i class="a"></i><i></i><i></i></span><span class="body"></span><span class="cta"></span></div></div></div><div class="b"><p class="n">52</p><h3>Agentic Checkout Journey</h3><p class="nav"><b>Step deck</b> through a buy flow — arrows, keys, progress.</p><div class="tags"><span class="wb-chip" data-facet="commerce">commerce</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/53-agent-trace.html" style="--accent:#059669" data-facets="conversational narrative"><div class="thumb"><div class="tw t-trace"><span class="u"></span><span class="tc"><i></i></span><span class="tc"><i></i></span><span class="tc"><i></i></span><span class="ans"></span></div></div><div class="b"><p class="n">53</p><h3>Streaming Agent Trace</h3><p class="nav"><b>Watch the agent work</b> — reasoning + tool calls, then the answer.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/54-agent-handoff.html" style="--accent:#F43F5E" data-facets="conversational narrative"><div class="thumb"><div class="tw t-handoff"><span class="bar"><i></i><i class="a"></i><i></i></span><span class="m"></span><span class="hand"></span><span class="m2"></span></div></div><div class="b"><p class="n">54</p><h3>Multi-Agent Handoff</h3><p class="nav"><b>Agents hand off</b> — shopper → payments → fulfilment.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/55-chatgpt-commerce.html" style="--accent:#10A37F" data-facets="conversational commerce"><div class="thumb"><div class="tw t-gpt"><div class="side"><i class="a"></i><i></i><i></i><i></i></div><div class="main"><span class="l"></span><span class="l s"></span><span class="l"></span><span class="buy"></span></div></div></div><div class="b"><p class="n">55</p><h3>ChatGPT Agentic Commerce</h3><p class="nav"><b>Research → buy in chat</b> — buyer's guide, then inline checkout.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="commerce">commerce</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/60-chatgpt-mobile.html" style="--accent:#10A37F" data-facets="mobile commerce"><div class="thumb"><div class="tw t-gptm"><div class="scr"><span class="bar"></span><div class="pc"><span class="img"></span><span class="ln"></span><span class="buy"></span></div><span class="composer"></span></div></div></div><div class="b"><p class="n">60</p><h3>ChatGPT Mobile Commerce</h3><p class="nav"><b>Buy in the chat</b> — mobile ChatGPT; checkout slides up as a sheet.</p><div class="tags"><span class="wb-chip" data-facet="mobile">mobile</span><span class="wb-chip" data-facet="commerce">commerce</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/61-agent-canvas.html" style="--accent:#22D3EE" data-facets="conversational gallery"><div class="thumb"><div class="tw t-agentcanvas"><div class="rail"><i></i><i class="a"></i><i></i></div><div class="board"><i class="a"></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">61</p><h3>Chat + Live Product Canvas</h3><p class="nav"><b>Chat drives a canvas</b> — each agent reply lands product tiles; hover a message to see its tiles.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="gallery">gallery</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/62-approval-queue.html" style="--accent:#F97316" data-facets="conversational"><div class="thumb"><div class="tw t-queue"><span class="p"><span class="ln"></span><i class="ok"></i></span><span class="p"><span class="ln"></span><i class="ok"></i><i class="no"></i></span><span class="p"><span class="ln"></span><i class="no"></i></span></div></div><div class="b"><p class="n">62</p><h3>Human-in-the-Loop Approvals</h3><p class="nav"><b>Approve the agent</b> — proposals queue up; you approve, edit, or reject each.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span></div></div></a>
+<a class="wb-card asset-card" href="layouts/63-comparison-chat.html" style="--accent:#6366F1" data-facets="conversational before/after"><div class="thumb"><div class="tw t-compare"><div class="col"><i></i><i></i><i></i><i></i></div><div class="col w"><i></i><i></i><i></i><i></i></div><div class="col"><i></i><i></i><i></i><i></i></div></div></div><div class="b"><p class="n">63</p><h3>Comparison-in-Chat</h3><p class="nav"><b>Mentions become columns</b> — chat grows a comparison tray; toggle diffs, pick a winner.</p><div class="tags"><span class="wb-chip" data-facet="conversational">conversational</span><span class="wb-chip" data-facet="before/after">before/after</span></div></div></a>
+<!-- gen:index-cards:agentic-commerce end -->
+        </div>
+      </section>
 
-    <p class="cat">Geospatial — where</p>
-    <div class="grid">
-      <a class="card" href="info-design/i28-tile-cartogram.html" style="--accent:#0369A1"><div class="thumb"><div class="tw t-i-tiles"><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="hole"></i><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="a"></i><i class="l4"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="l2"></i><i class="hole"></i></div></div><div class="b"><p class="n">i28</p><h3>Tile-Grid Cartogram</h3><p class="nav"><b>Hover a tile</b> for its name and value; the max and min get leader lines.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">cartogram</span></div></div></a>
-      <a class="card" href="info-design/i29-symbol-map.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-symbols"><svg viewBox="0 0 60 40"><path class="land" d="M14,8 C24,4 40,5 48,12 C54,18 50,26 42,30 C32,35 18,33 12,26 C6,19 6,12 14,8 Z"/><circle class="sym a" cx="24" cy="18" r="8"/><circle class="sym" cx="38" cy="14" r="5"/><circle class="sym" cx="34" cy="27" r="4"/></svg></div></div><div class="b"><p class="n">i29</p><h3>Proportional Symbol Map</h3><p class="nav"><b>Hover a symbol</b> for its name and value; the two largest are labeled.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">symbol map</span></div></div></a>
-      <a class="card" href="info-design/i30-flow-map.html" style="--accent:#7E22CE"><div class="thumb"><div class="tw t-i-arcs"><svg viewBox="0 0 60 40"><circle class="origin" cx="12" cy="20" r="3"/><path class="fa a" d="M12,20 Q34,4 50,12"/><path class="fa" d="M12,20 Q30,26 48,24"/><path class="fa" d="M12,20 Q26,34 44,33"/><circle class="dest a" cx="50" cy="12" r="2.6"/><circle class="dest" cx="48" cy="24" r="2.2"/><circle class="dest" cx="44" cy="33" r="2.2"/></svg></div></div><div class="b"><p class="n">i30</p><h3>Flow Map</h3><p class="nav"><b>Hover an arc</b> to isolate it; the hero arc carries its share of the total.</p><div class="tags"><span class="tag">geospatial</span><span class="tag">flow map</span></div></div></a>
-    </div>
+      <a class="chooser-banner" href="info-design/chooser.html">
+        <div>
+          <p class="cb-kicker">Not sure which chart?</p>
+          <h2>Answer two questions, get the right chart.</h2>
+          <p>A two-step picker over all 36 designs, plus a master prompt you can hand an assistant along with your data.</p>
+        </div>
+        <span class="cb-arrow">Open chooser →</span>
+      </a>
 
-    <p class="cat">Pictorial — data made human</p>
-    <div class="grid">
-      <a class="card" href="info-design/i31-icon-array.html" style="--accent:#BE123C"><div class="thumb"><div class="tw t-i-icons"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">i31</p><h3>Icon-Array Pictograph</h3><p class="nav"><b>Hover the array</b> for "k in 100"; two 1-in-10 rows compare groups below.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">icon array</span></div></div></a>
-      <a class="card" href="info-design/i32-area-shapes.html" style="--accent:#0F766E"><div class="thumb"><div class="tw t-i-circles"><svg viewBox="0 0 60 40"><circle class="a" cx="14" cy="24" r="10"/><circle cx="34" cy="27" r="7"/><circle cx="47" cy="29.5" r="4.5"/><circle cx="56" cy="31.5" r="2.5"/></svg></div></div><div class="b"><p class="n">i32</p><h3>Proportional-Area Shapes</h3><p class="nav"><b>Hover a shape</b> for its value; area — not radius — carries the comparison.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">proportional area</span></div></div></a>
-      <a class="card" href="info-design/i33-big-number.html" style="--accent:#1E3A8A"><div class="thumb"><div class="tw t-i-bignum"><span class="num">128K</span><svg viewBox="0 0 34 14"><polyline points="0,11 6,9 12,10 18,6 24,7 29,3 34,2"/><circle cx="34" cy="2" r="1.6"/></svg></div></div><div class="b"><p class="n">i33</p><h3>Annotated Big-Number Story</h3><p class="nav"><b>Follow the leader lines</b> from margin notes to the sparkline, a chip, and a date.</p><div class="tags"><span class="tag">pictorial</span><span class="tag">big number</span></div></div></a>
-    </div>
+      <section class="cat-section" id="cat-comparison">
+        <h2>Comparison — set side by side</h2>
+        <p class="intro">Charts that set two or more things side by side so the gap is the message. Reach for these when someone asks "which is bigger, and by how much?"</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:comparison start -->
+<a class="wb-card asset-card" href="info-design/i01-grouped-bars.html" style="--accent:#B45309" data-facets="before/after ranking"><div class="thumb"><div class="tw t-i-bars"><i class="a" style="height:70px"></i><i style="height:46px"></i><i class="a" style="height:52px"></i><i style="height:48px"></i><i class="a" style="height:82px"></i><i style="height:34px"></i></div></div><div class="b"><p class="n">i01</p><h3>Grouped Bars with Annotation</h3><p class="nav">Two-series category comparisons; plan vs actual.</p><div class="tags"><span class="wb-chip" data-facet="before/after">before/after</span><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i02-slope.html" style="--accent:#1D4ED8" data-facets="before/after ranking"><div class="thumb"><div class="tw t-i-slope"><span class="post l"></span><span class="post r"></span><svg class="lns" viewBox="0 0 100 100" preserveAspectRatio="none"><path class="a" d="M14,78 L86,20"/><path d="M14,30 L86,55"/><path d="M14,55 L86,68"/></svg></div></div><div class="b"><p class="n">i02</p><h3>Slope Chart</h3><p class="nav">Before/after across many entities; rank shifts.</p><div class="tags"><span class="wb-chip" data-facet="before/after">before/after</span><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i03-dumbbell.html" style="--accent:#0F766E" data-facets="before/after ranking"><div class="thumb"><div class="tw t-i-dumbbell"><div class="drow"><i class="o" style="left:14%"></i><i class="f" style="left:64%"></i></div><div class="drow"><i class="o" style="left:30%"></i><i class="f" style="left:56%"></i></div><div class="drow"><i class="o" style="left:44%"></i><i class="f" style="left:52%"></i></div></div></div><div class="b"><p class="n">i03</p><h3>Dumbbell / Dot-Range</h3><p class="nav">Gap analysis; before/after by group.</p><div class="tags"><span class="wb-chip" data-facet="before/after">before/after</span><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<!-- gen:index-cards:comparison end -->
+        </div>
+      </section>
 
-    <p class="cat">Dashboard &amp; multi-chart — the whole picture</p>
-    <div class="grid">
-      <a class="card" href="info-design/i34-kpi-dashboard.html" style="--accent:#334155"><div class="thumb"><div class="tw t-i-kpi"><div class="row"><i class="tile a"></i><i class="tile"></i></div><svg class="hint" viewBox="0 0 40 14"><polyline points="0,10 8,8 16,9 24,5 32,6 40,2"/></svg><div class="row"><i class="bar a"></i><i class="bar"></i></div></div></div><div class="b"><p class="n">i34</p><h3>KPI Dashboard</h3><p class="nav"><b>Hover a tile, point, or bar</b> — four KPIs, a trend, and the category mix in one view.</p><div class="tags"><span class="tag">dashboard</span><span class="tag">kpi</span></div></div></a>
-      <a class="card" href="info-design/i35-small-multiples.html" style="--accent:#1D4ED8"><div class="thumb"><div class="tw t-i-multiples"><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,11 5,10 10,8 15,9 20,5"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,4 5,6 10,5 15,8 20,10"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,9 5,7 10,8 15,6 20,4"/></svg><svg viewBox="0 0 20 14" class="a"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,3 5,5 10,6 15,9 20,12"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,10 5,9 10,7 15,6 20,5"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,8 5,8 10,6 15,7 20,5"/></svg></div></div><div class="b"><p class="n">i35</p><h3>Small Multiples</h3><p class="nav"><b>Hover a panel</b> to enlarge it — all twelve share one honest y-scale.</p><div class="tags"><span class="tag">dashboard</span><span class="tag">small multiples</span></div></div></a>
-      <a class="card" href="info-design/i36-narrative-dashboard.html" style="--accent:#B45309"><div class="thumb"><div class="tw t-i-narrative"><svg class="nchart" viewBox="0 0 60 40"><path class="nl" d="M0,30 L15,20 L30,24 L45,10 L60,14"/><circle class="nd" cx="15" cy="20" r="2.4"/><circle class="nd a" cx="45" cy="10" r="2.6"/></svg><div class="rail"><i></i><i class="a"></i><i></i></div></div></div><div class="b"><p class="n">i36</p><h3>Narrative Dashboard</h3><p class="nav"><b>Hover a note or marker</b> — the chart band and the rail highlight each other.</p><div class="tags"><span class="tag">dashboard</span><span class="tag">narrative</span></div></div></a>
-    </div>
-    </div>
+      <section class="cat-section" id="cat-trend-time-series">
+        <h2>Trend / Time-series — the shape of change</h2>
+        <p class="intro">Charts about the shape of change over time — a line with a confidence band, a streamgraph, a bump chart of ranks. Reach for these when the question is how something got here.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:trend-time-series start -->
+<a class="wb-card asset-card" href="info-design/i04-band-line.html" style="--accent:#BE123C" data-facets="time dashboard"><div class="thumb"><div class="tw t-i-line"><svg viewBox="0 0 60 40" preserveAspectRatio="none"><path class="lband" d="M2,30 L15,22 L28,26 L40,14 L52,18 L58,10 L58,34 L2,34 Z"/><path class="lline" d="M2,30 L15,22 L28,26 L40,14 L52,18 L58,10"/></svg></div></div><div class="b"><p class="n">i04</p><h3>Line with Confidence Band + Events</h3><p class="nav">KPIs with uncertainty, forecasts, experiments.</p><div class="tags"><span class="wb-chip" data-facet="time">time</span><span class="wb-chip" data-facet="dashboard">dashboard</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i05-streamgraph.html" style="--accent:#6D28D9" data-facets="time animated"><div class="thumb"><div class="tw t-i-stream"><svg viewBox="0 0 60 40" preserveAspectRatio="none"><path class="s1" d="M0,14 C15,8 45,18 60,12 L60,22 C45,28 15,18 0,24 Z"/><path class="s2" d="M0,20 C15,14 45,24 60,18 L60,28 C45,34 15,24 0,30 Z"/><path class="s3" d="M0,26 C15,20 45,30 60,24 L60,34 C45,40 15,30 0,36 Z"/></svg></div></div><div class="b"><p class="n">i05</p><h3>Streamgraph</h3><p class="nav">Evolving share of voice/volume.</p><div class="tags"><span class="wb-chip" data-facet="time">time</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i06-bump.html" style="--accent:#0E7490" data-facets="time ranking"><div class="thumb"><div class="tw t-i-bump"><svg viewBox="0 0 60 40"><path class="n1" d="M4,8 L30,28 L56,14"/><path class="n2" d="M4,20 L30,10 L56,30"/><path class="a" d="M4,32 L30,18 L56,6"/></svg></div></div><div class="b"><p class="n">i06</p><h3>Bump Chart</h3><p class="nav">League positions, brand rankings over time.</p><div class="tags"><span class="wb-chip" data-facet="time">time</span><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<!-- gen:index-cards:trend-time-series end -->
+        </div>
+      </section>
 
-    <footer>
-      Every layout re-skins from the variables in <code>:root</code> (start with <code>--accent</code>).
-      Serve locally with <code>python3 -m http.server</code>, or just open a file.
-    </footer>
+      <section class="cat-section" id="cat-part-to-whole">
+        <h2>Part-to-whole — composition</h2>
+        <p class="intro">Charts that break one total into its named pieces — a waffle grid, a treemap, a stacked bar with leader labels. Reach for these when the whole matters as much as any single part.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:part-to-whole start -->
+<a class="wb-card asset-card" href="info-design/i07-waffle.html" style="--accent:#B45309" data-facets="editorial"><div class="thumb"><div class="tw t-i-waffle"><i class="a"></i><i class="a"></i><i class="a"></i><i class="b"></i><i class="b"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="b"></i><i></i><i class="a"></i><i class="a"></i><i class="b"></i><i></i><i></i><i></i><i class="b"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">i07</p><h3>Waffle Grid</h3><p class="nav">Shares of a population, survey splits.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i08-treemap.html" style="--accent:#166534" data-facets="hierarchy"><div class="thumb"><div class="tw t-i-treemap"><svg viewBox="0 0 60 40"><rect class="g1" x="0" y="0" width="34" height="40"/><rect class="g2" x="34" y="0" width="14" height="24"/><rect class="g3" x="34" y="24" width="14" height="16"/><rect class="g3" x="48" y="0" width="12" height="40"/></svg></div></div><div class="b"><p class="n">i08</p><h3>Treemap</h3><p class="nav">Budgets, portfolio weights, storage.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i09-stacked-leader.html" style="--accent:#9F1239" data-facets="editorial"><div class="thumb"><div class="tw t-i-stackbar"><svg viewBox="0 0 60 40"><line class="tick" x1="14" y1="18" x2="14" y2="8"/><circle class="dot" cx="14" cy="8" r="1.6"/><line class="tick" x1="35" y1="26" x2="35" y2="34"/><circle class="dot" cx="35" cy="34" r="1.6"/><rect class="seg-a" x="2" y="18" width="24" height="8"/><rect class="seg-b" x="26" y="18" width="18" height="8"/><rect class="seg-c" x="44" y="18" width="14" height="8"/></svg></div></div><div class="b"><p class="n">i09</p><h3>Stacked Bar with Leader Labels</h3><p class="nav">Single-total breakdowns where each part deserves a sentence.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<!-- gen:index-cards:part-to-whole end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-distribution">
+        <h2>Distribution — the shape of the data</h2>
+        <p class="intro">Charts that show the spread and shape of many values, not just their average — histograms, ridgelines, beeswarms. Reach for these when the outliers are the story, not the mean.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:distribution start -->
+<a class="wb-card asset-card" href="info-design/i10-histogram.html" style="--accent:#1E40AF" data-facets="editorial"><div class="thumb"><div class="tw t-i-hist"><i style="height:22px"></i><i style="height:40px"></i><i class="a" style="height:64px"></i><i class="a" style="height:82px"></i><i class="a" style="height:58px"></i><i style="height:36px"></i><i style="height:20px"></i><i style="height:10px"></i></div></div><div class="b"><p class="n">i10</p><h3>Histogram with Summary Stats</h3><p class="nav">Response times, prices, scores.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i11-ridgeline.html" style="--accent:#7C2D12" data-facets="editorial"><div class="thumb"><div class="tw t-i-ridge"><svg viewBox="0 0 60 40"><path class="r1" d="M0,30 C10,26 16,10 24,10 C32,10 38,26 48,30 L48,34 C38,30 32,14 24,14 C16,14 10,30 0,34 Z"/><path class="r2" d="M4,34 C14,30 20,18 30,18 C40,18 46,30 56,34 L56,38 C46,34 40,22 30,22 C20,22 14,38 4,38 Z"/></svg></div></div><div class="b"><p class="n">i11</p><h3>Ridgeline</h3><p class="nav">Distributions across groups / time-of-day.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i12-beeswarm.html" style="--accent:#115E59" data-facets="editorial"><div class="thumb"><div class="tw t-i-swarm"><div class="srow"><i class="a" style="left:20%;top:30%"></i><i class="a" style="left:34%;top:60%"></i><i class="a" style="left:44%;top:20%"></i><i style="left:58%;top:70%"></i><i style="left:80%;top:40%"></i></div><div class="srow"><i style="left:15%;top:50%"></i><i style="left:28%;top:20%"></i><i style="left:40%;top:65%"></i><i style="left:52%;top:35%"></i><i style="left:66%;top:60%"></i></div></div></div><div class="b"><p class="n">i12</p><h3>Beeswarm / Dot Strip</h3><p class="nav">Small-n distributions where individual points matter.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<!-- gen:index-cards:distribution end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-correlation">
+        <h2>Correlation — how two things move</h2>
+        <p class="intro">Charts that show how two or more measures move together — a scatter with a trendline, a bubble quadrant, a connected scatter. Reach for these when the relationship matters more than either metric alone.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:correlation start -->
+<a class="wb-card asset-card" href="info-design/i13-scatter-trend.html" style="--accent:#A21CAF" data-facets="editorial"><div class="thumb"><div class="tw t-i-scatter"><svg viewBox="0 0 60 40"><line class="fl" x1="4" y1="34" x2="56" y2="8"/><circle class="d" cx="10" cy="30" r="2.2"/><circle class="d" cx="18" cy="24" r="2.2"/><circle class="d" cx="26" cy="21" r="2.2"/><circle class="d a" cx="30" cy="10" r="2.6"/><circle class="d" cx="36" cy="16" r="2.2"/><circle class="d" cx="44" cy="12" r="2.2"/><circle class="d" cx="50" cy="9" r="2.2"/></svg></div></div><div class="b"><p class="n">i13</p><h3>Annotated Scatter with Trendline</h3><p class="nav">Two-metric relationships with exceptions worth naming.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i14-bubble-quadrant.html" style="--accent:#B91C1C" data-facets="ranking"><div class="thumb"><div class="tw t-i-quadbub"><svg viewBox="0 0 60 40"><line class="mid" x1="30" y1="2" x2="30" y2="38"/><line class="mid" x1="2" y1="20" x2="58" y2="20"/><circle class="bub a" cx="16" cy="10" r="7"/><circle class="bub" cx="46" cy="12" r="9"/><circle class="bub" cx="18" cy="30" r="4"/><circle class="bub" cx="44" cy="28" r="5.5"/></svg></div></div><div class="b"><p class="n">i14</p><h3>Bubble Quadrant</h3><p class="nav">Effort/impact, risk/return, growth/share.</p><div class="tags"><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i15-connected-scatter.html" style="--accent:#1D4ED8" data-facets="time"><div class="thumb"><div class="tw t-i-connscatter"><svg viewBox="0 0 60 40"><path class="cs-ghost" d="M7,35 L21,27 L35,15 L53,7"/><path class="cs-path" d="M6,34 L20,26 L34,14 L52,6"/><polygon class="cs-arrow" points="-3,-2.5 3,0 -3,2.5" transform="translate(27,20) rotate(-34)"/><circle class="cs-pt" cx="6" cy="34" r="2.2"/><circle class="cs-pt" cx="52" cy="6" r="2.2"/></svg></div></div><div class="b"><p class="n">i15</p><h3>Connected Scatter</h3><p class="nav">Two metrics evolving together over time.</p><div class="tags"><span class="wb-chip" data-facet="time">time</span></div></div></a>
+<!-- gen:index-cards:correlation end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-ranking">
+        <h2>Ranking — order matters</h2>
+        <p class="intro">Charts built to put things in order, best to worst — ordered bars, a lollipop against a benchmark, a league table. Reach for these when "where do we stand" is the whole question.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:ranking start -->
+<a class="wb-card asset-card" href="info-design/i16-ordered-bars.html" style="--accent:#B45309" data-facets="ranking"><div class="thumb"><div class="tw t-i-rankbars"><i class="a" style="width:86%"></i><i style="width:76%"></i><i style="width:70%"></i><i style="width:62%"></i><i style="width:52%"></i></div></div><div class="b"><p class="n">i16</p><h3>Ordered Bars with Highlight</h3><p class="nav">"where do we stand" rankings.</p><div class="tags"><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i17-lollipop.html" style="--accent:#4D7C0F" data-facets="ranking"><div class="thumb"><div class="tw t-i-lolli"><svg viewBox="0 0 60 40"><line class="bench" x1="34" y1="4" x2="34" y2="36"/><line class="stem a" x1="10" y1="8" x2="46" y2="8"/><circle class="dot a" cx="46" cy="8" r="2.4"/><line class="stem a" x1="10" y1="16" x2="40" y2="16"/><circle class="dot a" cx="40" cy="16" r="2.4"/><line class="stem" x1="10" y1="24" x2="28" y2="24"/><circle class="dot" cx="28" cy="24" r="2.4"/><line class="stem" x1="10" y1="32" x2="20" y2="32"/><circle class="dot" cx="20" cy="32" r="2.4"/></svg></div></div><div class="b"><p class="n">i17</p><h3>Lollipop with Benchmark</h3><p class="nav">Targets, SLAs, peer medians.</p><div class="tags"><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i18-league-table.html" style="--accent:#0F766E" data-facets="ranking"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span></div></div><div class="b"><p class="n">i18</p><h3>League Table with Deltas</h3><p class="nav">Leaderboards, portfolio tables, team metrics.</p><div class="tags"><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<!-- gen:index-cards:ranking end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-flow-process">
+        <h2>Flow &amp; process — where things go</h2>
+        <p class="intro">Charts that trace where something moves or drops off — a sankey, a funnel, a chord diagram. Reach for these when the path between stages matters more than any single stage.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:flow-process start -->
+<a class="wb-card asset-card" href="info-design/i19-sankey.html" style="--accent:#1E40AF" data-facets="hierarchy"><div class="thumb"><div class="tw t-i-sankey"><svg viewBox="0 0 60 40"><rect class="nd" x="6" y="6" width="4" height="12"/><rect class="nd" x="6" y="22" width="4" height="10"/><rect class="nd" x="50" y="4" width="4" height="10"/><rect class="nd" x="50" y="18" width="4" height="9"/><rect class="nd" x="50" y="31" width="4" height="5"/><path class="rb a" d="M10,8 C30,8 30,6 50,7 L50,12 C30,11 30,13 10,15 Z"/><path class="rb" d="M10,20 C30,20 30,21 50,20 L50,25 C30,25 30,26 10,27 Z"/></svg></div></div><div class="b"><p class="n">i19</p><h3>Sankey</h3><p class="nav">Traffic sources → outcomes, budget flows, energy.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i20-funnel.html" style="--accent:#C2410C" data-facets="narrative"><div class="thumb"><div class="tw t-i-funnel"><i style="width:70%;height:9px"></i><i class="b2" style="width:54%;height:9px"></i><i class="b3" style="width:40%;height:9px"></i><i class="b4" style="width:28%;height:9px"></i></div></div><div class="b"><p class="n">i20</p><h3>Funnel</h3><p class="nav">Signup/checkout funnels, pipeline stages.</p><div class="tags"><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i21-chord.html" style="--accent:#6D28D9" data-facets="hierarchy"><div class="thumb"><div class="tw t-i-chord"><svg viewBox="0 0 60 40"><circle class="ring" cx="30" cy="20" r="15"/><path class="ring a" d="M30,5 A15,15 0 0 1 44,15" fill="none"/><path class="rb" d="M20,8 Q30,20 40,32"/><path class="rb" d="M40,8 Q30,20 20,32"/><path class="rb" d="M15,22 Q30,20 45,22"/></svg></div></div><div class="b"><p class="n">i21</p><h3>Chord Diagram</h3><p class="nav">Migrations, trade, who-talks-to-whom.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span></div></div></a>
+<!-- gen:index-cards:flow-process end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-hierarchy-network">
+        <h2>Hierarchy &amp; network — structure</h2>
+        <p class="intro">Charts for structure — a radial tree, a network graph, an icicle partition. Reach for these when the data has parents, children, or connections worth drawing.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:hierarchy-network start -->
+<a class="wb-card asset-card" href="info-design/i22-radial-tree.html" style="--accent:#0E7490" data-facets="hierarchy"><div class="thumb"><div class="tw t-i-radialtree"><svg viewBox="0 0 60 40"><circle class="hub" cx="30" cy="20" r="3"/><path class="lk" d="M30,20 C20,20 15,10 8,8"/><path class="lk" d="M30,20 C20,20 15,30 8,30"/><path class="lk a" d="M30,20 C38,20 44,10 52,8"/><path class="lk a" d="M30,20 C38,20 44,14 52,16"/><circle class="nd" cx="8" cy="8" r="2"/><circle class="nd" cx="8" cy="30" r="2"/><circle class="nd a" cx="52" cy="8" r="2"/><circle class="nd a" cx="52" cy="16" r="2"/></svg></div></div><div class="b"><p class="n">i22</p><h3>Radial Tree</h3><p class="nav">Org/topic structures with a focal branch.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i23-network.html" style="--accent:#BE123C" data-facets="hierarchy"><div class="thumb"><div class="tw t-i-net"><svg viewBox="0 0 60 40"><line class="lk" x1="10" y1="12" x2="18" y2="22"/><line class="lk" x1="10" y1="12" x2="14" y2="28"/><line class="lk" x1="18" y1="22" x2="14" y2="28"/><line class="lk a" x1="18" y1="22" x2="34" y2="20"/><line class="lk" x1="34" y1="20" x2="46" y2="10"/><line class="lk" x1="34" y1="20" x2="48" y2="24"/><line class="lk" x1="46" y1="10" x2="48" y2="24"/><circle class="nd" cx="10" cy="12" r="3.4"/><circle class="nd" cx="18" cy="22" r="3"/><circle class="nd" cx="14" cy="28" r="2.4"/><circle class="nd a" cx="34" cy="20" r="3.6"/><circle class="nd" cx="46" cy="10" r="3.2"/><circle class="nd" cx="48" cy="24" r="2.8"/></svg></div></div><div class="b"><p class="n">i23</p><h3>Network Graph</h3><p class="nav">Collaboration, dependencies, influence maps.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i24-icicle.html" style="--accent:#166534" data-facets="hierarchy"><div class="thumb"><div class="tw t-i-icicle"><i class="row0"></i><div class="row1"><i class="a" style="flex:0.42"></i><i style="flex:0.23"></i><i style="flex:0.20"></i><i style="flex:0.15"></i></div></div></div><div class="b"><p class="n">i24</p><h3>Icicle / Partition</h3><p class="nav">File sizes, budget trees, taxonomy weights.</p><div class="tags"><span class="wb-chip" data-facet="hierarchy">hierarchy</span></div></div></a>
+<!-- gen:index-cards:hierarchy-network end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-table-heatmap">
+        <h2>Table &amp; heatmap — dense and exact</h2>
+        <p class="intro">Dense, exact views for reading many values at once — a calendar heatmap, a matrix with marginal totals, a sparkline table. Reach for these when a reader needs the precise number, not just the shape.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:table-heatmap start -->
+<a class="wb-card asset-card" href="info-design/i25-calendar-heatmap.html" style="--accent:#15803D" data-facets="time"><div class="thumb"><div class="tw t-i-cal"><div class="crow"><i></i><i class="l2"></i><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i></div><div class="crow"><i class="l2"></i><i></i><i class="l4"></i><i class="a"></i><i class="a"></i><i class="l4"></i><i class="l2"></i></div><div class="crow"><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i></i><i class="l2"></i></div></div></div><div class="b"><p class="n">i25</p><h3>Calendar Heatmap</h3><p class="nav">Activity rhythms, habit/commit data.</p><div class="tags"><span class="wb-chip" data-facet="time">time</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i26-matrix-heatmap.html" style="--accent:#B91C1C" data-facets="ranking"><div class="thumb"><div class="tw t-i-matrix"><i class="l2"></i><i></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i></i><i class="l3"></i><i class="l2"></i><i class="a"></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i class="l2"></i><i class="l3"></i><i></i><i class="l2"></i><i></i><i class="l2"></i><i></i><i></i><i class="l2"></i><i></i></div></div><div class="b"><p class="n">i26</p><h3>Matrix Heatmap with Marginals</h3><p class="nav">Confusion matrices, region×product, time×channel.</p><div class="tags"><span class="wb-chip" data-facet="ranking">ranking</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i27-sparkline-table.html" style="--accent:#334155" data-facets="time"><div class="thumb"><div class="tw t-table"><span class="hr"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><span class="r"></span><svg class="t-i-spark" viewBox="0 0 34 14"><polyline points="0,11 6,9 12,10 18,6 24,7 29,3 34,2"/><circle cx="34" cy="2" r="1.6"/></svg></div></div><div class="b"><p class="n">i27</p><h3>Sparkline Table</h3><p class="nav">Metric overviews, watchlists.</p><div class="tags"><span class="wb-chip" data-facet="time">time</span></div></div></a>
+<!-- gen:index-cards:table-heatmap end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-geospatial">
+        <h2>Geospatial — where</h2>
+        <p class="intro">Charts that put data on a map or a map-like grid — a tile cartogram, a symbol map, a flow map of arcs. Reach for these when where something happens is the insight.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:geospatial start -->
+<a class="wb-card asset-card" href="info-design/i28-tile-cartogram.html" style="--accent:#0369A1" data-facets="geospatial"><div class="thumb"><div class="tw t-i-tiles"><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="hole"></i><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="a"></i><i class="l4"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="l3"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="hole"></i><i class="l2"></i><i class="l3"></i><i class="l2"></i><i class="l2"></i><i class="hole"></i></div></div><div class="b"><p class="n">i28</p><h3>Tile-Grid Cartogram</h3><p class="nav">Per-region rates where area shouldn’t dominate.</p><div class="tags"><span class="wb-chip" data-facet="geospatial">geospatial</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i29-symbol-map.html" style="--accent:#B45309" data-facets="geospatial"><div class="thumb"><div class="tw t-i-symbols"><svg viewBox="0 0 60 40"><path class="land" d="M14,8 C24,4 40,5 48,12 C54,18 50,26 42,30 C32,35 18,33 12,26 C6,19 6,12 14,8 Z"/><circle class="sym a" cx="24" cy="18" r="8"/><circle class="sym" cx="38" cy="14" r="5"/><circle class="sym" cx="34" cy="27" r="4"/></svg></div></div><div class="b"><p class="n">i29</p><h3>Proportional Symbol Map</h3><p class="nav">Quantities at places (sales by city, outbreaks).</p><div class="tags"><span class="wb-chip" data-facet="geospatial">geospatial</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i30-flow-map.html" style="--accent:#7E22CE" data-facets="geospatial animated"><div class="thumb"><div class="tw t-i-arcs"><svg viewBox="0 0 60 40"><circle class="origin" cx="12" cy="20" r="3"/><path class="fa a" d="M12,20 Q34,4 50,12"/><path class="fa" d="M12,20 Q30,26 48,24"/><path class="fa" d="M12,20 Q26,34 44,33"/><circle class="dest a" cx="50" cy="12" r="2.6"/><circle class="dest" cx="48" cy="24" r="2.2"/><circle class="dest" cx="44" cy="33" r="2.2"/></svg></div></div><div class="b"><p class="n">i30</p><h3>Flow Map</h3><p class="nav">Shipments, migration, network traffic.</p><div class="tags"><span class="wb-chip" data-facet="geospatial">geospatial</span><span class="wb-chip" data-facet="animated">animated</span></div></div></a>
+<!-- gen:index-cards:geospatial end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-pictorial">
+        <h2>Pictorial — data made human</h2>
+        <p class="intro">Charts that make a number feel human — an icon array, proportional shapes, a big-number lead. Reach for these when a reader should feel a rate, not just read it.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:pictorial start -->
+<a class="wb-card asset-card" href="info-design/i31-icon-array.html" style="--accent:#BE123C" data-facets="editorial"><div class="thumb"><div class="tw t-i-icons"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="b"><p class="n">i31</p><h3>Icon-Array Pictograph</h3><p class="nav">Risk communication, survey shares, "1 in N".</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i32-area-shapes.html" style="--accent:#0F766E" data-facets="editorial"><div class="thumb"><div class="tw t-i-circles"><svg viewBox="0 0 60 40"><circle class="a" cx="14" cy="24" r="10"/><circle cx="34" cy="27" r="7"/><circle cx="47" cy="29.5" r="4.5"/><circle cx="56" cy="31.5" r="2.5"/></svg></div></div><div class="b"><p class="n">i32</p><h3>Proportional-Area Shapes</h3><p class="nav">Magnitude gaps too big for bars.</p><div class="tags"><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i33-big-number.html" style="--accent:#1E3A8A" data-facets="narrative editorial"><div class="thumb"><div class="tw t-i-bignum"><span class="num">128K</span><svg viewBox="0 0 34 14"><polyline points="0,11 6,9 12,10 18,6 24,7 29,3 34,2"/><circle cx="34" cy="2" r="1.6"/></svg></div></div><div class="b"><p class="n">i33</p><h3>Annotated Big-Number Story</h3><p class="nav">Report leads, posters, exec one-pagers.</p><div class="tags"><span class="wb-chip" data-facet="narrative">narrative</span><span class="wb-chip" data-facet="editorial">editorial</span></div></div></a>
+<!-- gen:index-cards:pictorial end -->
+        </div>
+      </section>
+
+      <section class="cat-section" id="cat-dashboard-multi-chart">
+        <h2>Dashboard &amp; multi-chart — the whole picture</h2>
+        <p class="intro">Multi-chart views built for a recurring review — a KPI wall, small multiples, a narrative dashboard with annotations. Reach for these when one chart alone can't carry the whole update.</p>
+        <div class="asset-grid">
+<!-- gen:index-cards:dashboard-multi-chart start -->
+<a class="wb-card asset-card" href="info-design/i34-kpi-dashboard.html" style="--accent:#334155" data-facets="dashboard"><div class="thumb"><div class="tw t-i-kpi"><div class="row"><i class="tile a"></i><i class="tile"></i></div><svg class="hint" viewBox="0 0 40 14"><polyline points="0,10 8,8 16,9 24,5 32,6 40,2"/></svg><div class="row"><i class="bar a"></i><i class="bar"></i></div></div></div><div class="b"><p class="n">i34</p><h3>KPI Dashboard</h3><p class="nav">Weekly ops reviews, product health.</p><div class="tags"><span class="wb-chip" data-facet="dashboard">dashboard</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i35-small-multiples.html" style="--accent:#1D4ED8" data-facets="dashboard"><div class="thumb"><div class="tw t-i-multiples"><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,11 5,10 10,8 15,9 20,5"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,4 5,6 10,5 15,8 20,10"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,9 5,7 10,8 15,6 20,4"/></svg><svg viewBox="0 0 20 14" class="a"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,3 5,5 10,6 15,9 20,12"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,10 5,9 10,7 15,6 20,5"/></svg><svg viewBox="0 0 20 14"><line class="med" x1="0" y1="7" x2="20" y2="7"/><polyline points="0,8 5,8 10,6 15,7 20,5"/></svg></div></div><div class="b"><p class="n">i35</p><h3>Small Multiples</h3><p class="nav">Regions/products over time without spaghetti.</p><div class="tags"><span class="wb-chip" data-facet="dashboard">dashboard</span></div></div></a>
+<a class="wb-card asset-card" href="info-design/i36-narrative-dashboard.html" style="--accent:#B45309" data-facets="dashboard narrative"><div class="thumb"><div class="tw t-i-narrative"><svg class="nchart" viewBox="0 0 60 40"><path class="nl" d="M0,30 L15,20 L30,24 L45,10 L60,14"/><circle class="nd" cx="15" cy="20" r="2.4"/><circle class="nd a" cx="45" cy="10" r="2.6"/></svg><div class="rail"><i></i><i class="a"></i><i></i></div></div></div><div class="b"><p class="n">i36</p><h3>Narrative Dashboard</h3><p class="nav">Post-mortems, monthly narratives, board packs.</p><div class="tags"><span class="wb-chip" data-facet="dashboard">dashboard</span><span class="wb-chip" data-facet="narrative">narrative</span></div></div></a>
+<!-- gen:index-cards:dashboard-multi-chart end -->
+        </div>
+      </section>
+
+      <footer class="site-foot">
+        <p>The info-design collection took its taxonomy and card anatomy from
+        <a href="https://infodesign.netlify.app/" target="_blank" rel="noopener">Info Design for GenAI</a>
+        by Vinay Thakur — a reference library of 210 chart patterns. The charts here are
+        original work in that spirit: live, hand-coded, and self-contained rather than images.</p>
+      </footer>
+    </main>
   </div>
+</div>
 
-  <script>
-  (function(){
-    var tabs = document.querySelectorAll('.tab');
-    var panes = document.querySelectorAll('.wrap > .pane');
+<script>
+(function () {
+  var shell = document.getElementById('shell');
+  var burger = document.getElementById('hamburger');
+  var scrim = document.getElementById('scrim');
+  var sidebar = document.getElementById('sidebar');
 
-    function selectPane(id){
-      tabs.forEach(function(t){ t.classList.toggle('on', t.dataset.pane === id); });
-      panes.forEach(function(p){ p.hidden = p.id !== id; });
-    }
+  function open() {
+    shell.classList.add('is-open');
+    document.documentElement.classList.add('wl-locked');
+    burger.setAttribute('aria-expanded', 'true');
+    scrim.hidden = false;
+  }
+  function close() {
+    shell.classList.remove('is-open');
+    document.documentElement.classList.remove('wl-locked');
+    burger.setAttribute('aria-expanded', 'false');
+    scrim.hidden = true;
+    burger.focus();
+  }
+  burger.addEventListener('click', function () {
+    shell.classList.contains('is-open') ? close() : open();
+  });
+  scrim.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && shell.classList.contains('is-open')) close();
+  });
+  /* tapping a nav item closes the drawer on mobile */
+  sidebar.querySelectorAll('.wl-nav__item').forEach(function (a) {
+    a.addEventListener('click', function () {
+      /* placeholder active-state — real routing belongs in your behaviour layer */
+      sidebar.querySelectorAll('.wl-nav__item[aria-current]').forEach(function (n) { n.removeAttribute('aria-current'); });
+      a.setAttribute('aria-current', 'page');
+      if (shell.classList.contains('is-open')) close();
+    });
+  });
+})();
 
-    tabs.forEach(function(t){
-      t.addEventListener('click', function(){
-        var id = t.dataset.pane;
-        selectPane(id);
-        location.hash = id;
-      });
+/* ---- facet filtering -------------------------------------------------
+   OR across selected chips: with ~2 facets per item, AND is empty almost
+   every time. No selection = everything. Cards stay under their category
+   heading rather than flattening into one grid, because seeing WHERE a
+   facet turns up is the cross-cutting answer the bar exists to give. */
+(function () {
+  var bar = document.getElementById('facet-bar');
+  var status = document.getElementById('filter-status');
+  if (!bar || !status) return;
+
+  var cards = [].slice.call(document.querySelectorAll('.asset-card'));
+  var sections = [].slice.call(document.querySelectorAll('.cat-section'));
+  var chips = [].slice.call(bar.querySelectorAll('.facet-chip'));
+  var active = Object.create(null);
+
+  function activeKeys() { return Object.keys(active); }
+
+  function apply() {
+    var keys = activeKeys();
+    cards.forEach(function (card) {
+      var own = (card.getAttribute('data-facets') || '').split(' ');
+      var show = keys.length === 0 || own.some(function (f) { return active[f]; });
+      card.hidden = !show;
     });
 
-    var initial = location.hash.replace('#', '');
-    if(initial === 'info-design'){
-      selectPane('info-design');
-    }
-  })();
-  </script>
+    var shown = 0;
+    sections.forEach(function (sec) {
+      var n = sec.querySelectorAll('.asset-card:not([hidden])').length;
+      sec.hidden = n === 0;
+      shown += n;
+      var railItem = document.querySelector('.wl-nav__item[href="#' + sec.id + '"]');
+      if (railItem) railItem.classList.toggle('is-muted', n === 0);
+    });
+
+    chips.forEach(function (chip) {
+      var key = chip.getAttribute('data-facet');
+      chip.setAttribute('aria-pressed', key === '' ? String(keys.length === 0) : String(!!active[key]));
+    });
+
+    status.textContent = keys.length === 0
+      ? cards.length + ' scaffolds'
+      : shown + ' of ' + cards.length + ' — ' + keys.join(' or ');
+
+    /* file:// forbids replaceState in some Chrome builds; the filter must
+       keep working there, so a failure here is swallowed by design. */
+    try {
+      /* Preserve any other query params (e.g. ?utm_source=x) — only the `f`
+         key is ours to touch. URLSearchParams.toString() would re-encode our
+         literal comma delimiter back to %2C, so `f` is built by hand and
+         concatenated with whatever else URLSearchParams reports. */
+      var params = new URLSearchParams(location.search);
+      params.delete('f');
+      var q = keys.map(encodeURIComponent).join(',');
+      var rest = params.toString();
+      var qs = (q ? 'f=' + q : '') + (q && rest ? '&' : '') + rest;
+      history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+    } catch (e) { /* no-op on file:// */ }
+  }
+
+  function toggle(key) {
+    if (!key) { active = Object.create(null); }
+    else if (active[key]) { delete active[key]; }
+    else { active[key] = true; }
+    apply();
+  }
+
+  bar.addEventListener('click', function (e) {
+    var chip = e.target.closest && e.target.closest('.facet-chip');
+    if (chip) toggle(chip.getAttribute('data-facet'));
+  });
+
+  /* Card chips are <span>s inside an <a> — they cannot be buttons without
+     nesting interactive elements. Intercept the click before the anchor
+     navigates. Mouse-only by design; the bar above is the keyboard route. */
+  document.addEventListener('click', function (e) {
+    var chip = e.target.closest && e.target.closest('.asset-card .wb-chip[data-facet]');
+    if (!chip) return;
+    e.preventDefault();
+    toggle(chip.getAttribute('data-facet'));
+    bar.scrollIntoView({ block: 'nearest' });
+  });
+
+  var known = Object.create(null);
+  chips.forEach(function (c) { known[c.getAttribute('data-facet')] = true; });
+  var initial = new URLSearchParams(location.search).get('f');
+  if (initial) {
+    initial.split(',').forEach(function (k) { if (k && known[k]) active[k] = true; });
+  }
+  apply();
+})();
+</script>
 </body>
 </html>

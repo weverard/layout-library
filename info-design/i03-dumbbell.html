@@ -14,12 +14,11 @@
 -->
 <style>
   :root{
-    --accent:#0F766E;
-    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --accent:#0F766E; --accent-ink:#fff;
+    --bg:#FBFAF8; --surface:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
     --pos:var(--accent); --neg:#B3261E;
     --serif:Georgia,"Times New Roman",serif;
-    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
-    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif; --mono:ui-monospace,"SF Mono",Menlo,monospace;
     --s1:8px; --s2:14px; --s3:24px; --s4:40px;
   }
   *{box-sizing:border-box}
@@ -32,7 +31,7 @@
   .dek{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 8px}
   .key{color:var(--muted);font-size:12.5px;margin:0 0 var(--s3)}
   .key .swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 2px -1px 0;vertical-align:baseline}
-  .key .swatch.open{border:1.5px solid var(--muted);background:var(--panel)}
+  .key .swatch.open{border:1.5px solid var(--muted);background:var(--surface)}
   .key .swatch.filled{background:var(--accent);border:1.5px solid var(--accent)}
 
   figure{margin:0 0 var(--s2);position:relative}
@@ -44,7 +43,7 @@
   @media (prefers-reduced-motion:reduce){ .rowband{transition:none} }
 
   .track{stroke:var(--line);stroke-width:2}
-  .dot-from{fill:var(--panel);stroke:var(--muted);stroke-width:1.6}
+  .dot-from{fill:var(--surface);stroke:var(--muted);stroke-width:1.6}
   .dot-to{fill:var(--accent);stroke:var(--accent)}
   .rowlabel{font-size:12.5px;fill:var(--ink)}
   .delta{font-family:var(--mono);font-size:12px;fill:var(--accent);font-weight:600}
@@ -70,7 +69,7 @@
   dd{color:var(--muted);margin:2px 0 0}
   .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
   .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
-  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt{margin-top:var(--s3);background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
   .prompt-head b{font-size:13px;font-weight:600}
   #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);

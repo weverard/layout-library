@@ -24,6 +24,17 @@ A gallery (`index.html`) links to all of them with mini wireframe thumbnails.
 > browser-verified (clean console + working interaction). Catalog/backlog/counts
 > below are current.
 
+> **Status — Phase 2 done (2026-07-22).** The 107 scaffolds (71 layouts + 36
+> info-design charts) now share one token vocabulary and one helper canon
+> (`tools/canon/`), enforced by an executable contract checker
+> (`node tools/check.mjs`, rules R1–R12) instead of eyeballing. `catalog.json`
+> is the single source of truth for every card, README row, chooser entry, and
+> facet — `node tools/build.mjs` regenerates all three from it, so nothing is
+> hand-edited in more than one place. The master index (`index.html`) is
+> rebuilt on the wb-base-ui design system with a cross-cutting facet filter
+> across all 107 (see Facets below); the chooser (`info-design/chooser.html`)
+> is re-skinned onto the same atoms, its picker logic untouched.
+
 ---
 
 ## Quick start
@@ -46,10 +57,21 @@ fresh load in the browser.
 1. **One file, fully self-contained.** All CSS in a single `<style>`, all JS in a
    single `<script>`. No imports, no CDNs, no build. It must open and run from a
    bare file server.
-2. **Design tokens in `:root`.** Color, type, and spacing live as CSS custom
-   properties at the top. Re-skinning starts with **`--accent`** (one variable
-   changes the identity). Keep a neutral base palette so the structure — not the
-   colour — is the point.
+2. **Design tokens in `:root` — the canonical 16, in order.** From
+   `tools/canon/tokens.css`: `--accent`, `--accent-ink`, `--bg`, `--surface`,
+   `--ink`, `--muted`, `--line`, `--pos`, `--neg`, `--serif`, `--sans`,
+   `--mono`, `--s1`, `--s2`, `--s3`, `--s4`. Names and order are the contract;
+   values are yours, except the spacing scale, which is canonical (`8px 14px
+   24px 40px`). Re-skinning starts with **`--accent`** (one variable changes
+   the identity). Keep a neutral base palette so the structure — not the
+   colour — is the point. Extra file-specific tokens may follow the 16, never
+   replace one. The shared helper canon (`tools/canon/helpers.js`) is `el`,
+   `hideChip`, `escHtml` — any function using one of those three names must
+   match canon byte-for-byte. `xOf`/`yOf`-style scale functions and chart
+   interaction helpers like `showChip`/`attachHover` are chart-specific by
+   design and sit outside that canon: each chart's scale domain and hover
+   behaviour genuinely differ, so forcing them to one shape would just
+   relabel two dozen unrelated functions under a shared name.
 3. **A documentation header comment** at the very top of `<body>`/`<head>`:
    ```html
    <!--
@@ -75,26 +97,50 @@ fresh load in the browser.
 
 ## Adding a new layout
 
-1. Create `NN-slug.html` following the contract above (next free number).
+Index cards are **generated** from `catalog.json` — hand-editing a card in
+`index.html`, or a row in the README catalog, is erased by the next
+`node tools/build.mjs`. The catalog entry is the only thing you write.
+
+1. Create `NN-slug.html` following the Conventions above (next free number).
 2. **Verify it in a browser**, not just by reading it — open it, exercise the
    interaction, and check the console is clean.
-3. Add a card to `index.html` in the most fitting category section. Card shape:
-   ```html
-   <a class="card" href="NN-slug.html" style="--accent:#HEX">
-     <div class="thumb"><div class="tw t-MOTIF"> … </div></div>
-     <div class="b">
-       <p class="n">NN</p>
-       <h3>Name</h3>
-       <p class="nav"><b>Key verb</b> — one line on how you navigate.</p>
-       <div class="tags"><span class="tag">use</span><span class="tag">use</span></div>
-     </div>
-   </a>
+3. Add its entry to `catalog.json`'s `items` array. A real entry
+   (`layouts/01-split-panel.html`'s) looks like this:
+   ```json
+   {
+     "id": "01",
+     "group": "layouts",
+     "file": "layouts/01-split-panel.html",
+     "title": "Split Panel",
+     "category": "foundations",
+     "accent": "#4F46E5",
+     "oneliner": "Nav in a <b>fixed identity panel</b>; content scrolls beside it.",
+     "tags": ["landing", "portfolio"],
+     "facets": ["editorial"],
+     "thumb": "<div class=\"tw t-split\"><div class=\"b2 fill\"></div>…</div>"
+   }
    ```
-4. **Thumbnail:** the gallery draws mini wireframes purely in CSS via a `.tw`
-   container plus a `t-MOTIF` modifier class (see the `<style>` block — search
-   `t-split`, `t-canvas`, `t-bento`, etc.). Either reuse an existing motif or add
-   a new `.t-yourmotif` rule. Keep thumbnails abstract and lightweight.
-5. Bump the count in the intro (`N layouts` / heading).
+   - `category` must be an existing key in `catalog.json`'s `categories` array
+     for the `layouts` group.
+   - `oneliner` may carry inline HTML (e.g. `<b>`) — it becomes the card's nav
+     line verbatim.
+   - `tags` are flavour text for the README catalog only; they never appear
+     on the card.
+   - `facets` are the filter axis and DO appear on the card, as chips. They
+     must come from the closed vocabulary in `tools/canon/facets.json` (see
+     Facets below) — anything outside it fails checker rule R12. Give the
+     item at least one.
+   - `thumb` is the mini wireframe: reuse an existing `.tw`/`.t-MOTIF` pairing
+     from `index.html`'s `<style>` block (search `t-split`, `t-canvas`,
+     `t-bento`, etc.), or add a new `.t-yourmotif` rule. Keep it abstract and
+     lightweight.
+4. Run `node tools/build.mjs`, then `node tools/check.mjs`. Build regenerates
+   the card — `<a class="wb-card asset-card" href="…" style="--accent:#HEX"
+   data-facets="…">`, with `<span class="wb-chip" data-facet="…">` chips —
+   plus the README catalog row and the facet counts, straight from the entry
+   above. Check confirms the whole contract still holds.
+5. Bump the count where it's still written by hand: the `71 layouts` kicker
+   in `index.html`'s hero, and the `## The catalog (71)` heading below.
 
 ---
 
@@ -105,6 +151,30 @@ fresh load in the browser.
 - Replace placeholder content; wire the nav JS to real routes/data.
 - The structural CSS (the layout mechanics) is the part worth keeping — that's
   what each scaffold exists to demonstrate.
+
+---
+
+## Tooling
+
+- `node tools/build.mjs` — regenerates every `gen:*` marker region (README
+  catalogs + facet list, `info-design/chooser.html`'s CATALOG, and the
+  index.html facet bar + cards) from `catalog.json`. Idempotent: a second run
+  is a no-op.
+- `node tools/check.mjs` — the contract checker; enforces R1-R12 across all
+  107 scaffolds plus the repo-level rules (generated regions in sync, the
+  catalog<->disk bijection, the closed facet vocabulary). Exits 1 on any
+  violation.
+- Adding a scaffold: create the file per Conventions, add its `catalog.json`
+  entry, run build then check, browser-verify. Full field-by-field walkthrough
+  in **Adding a new layout** above.
+- `node --test --test-concurrency=1 tools/test/*.test.mjs` — the test suite.
+  **Run it serially — do not drop `--test-concurrency=1`.** `build.test.mjs`
+  and `check.test.mjs` both write the real `README.md`, `index.html`, and
+  `info-design/chooser.html` as part of their setup; Node runs test files as
+  concurrent processes by default, and two of them writing those same
+  repo-root files at once has already corrupted `info-design/chooser.html`
+  once (a truncated file with an unterminated JS literal). Serial execution
+  is the only thing preventing a repeat.
 
 ---
 
@@ -131,10 +201,11 @@ fresh load in the browser.
 
 ## The catalog (71)
 
+<!-- gen:readme-layout-catalog start -->
 **Foundations — app & document shells**
 `01` Split Panel · `02` Centered Document · `03` Sidebar App Shell ·
-`04` Three-Pane · `23` Bento Grid · `25` Accordion Spine · `26` Bottom-Sheet ·
-`31` Tabbed Workspace · `32` Mobile Tab-Bar Shell
+`04` Three-Pane · `23` Bento Grid · `25` Accordion Spine ·
+`26` Bottom-Sheet · `31` Tabbed Workspace · `32` Mobile Tab-Bar Shell
 
 **Spatial — navigate through space**
 `06` Infinite Canvas · `07` Zettelkasten Panes · `08` Radial Orbit ·
@@ -144,13 +215,15 @@ fresh load in the browser.
 
 **Sequence & story — the axis is the nav**
 `05` Scrollytelling · `10` Timeline Scrubber · `11` Horizontal Filmstrip ·
-`12` Sticky-Stack Chapters · `36` Dial / Wheel Picker · `37` Stepper / Wizard ·
-`38` Page-Turn Book · `39` Story Tap-Through · `40` Carousel / Slideshow
+`12` Sticky-Stack Chapters · `36` Dial / Wheel Picker ·
+`37` Stepper / Wizard · `38` Page-Turn Book · `39` Story Tap-Through ·
+`40` Carousel / Slideshow
 
 **Command & conversation — type, don't click**
 `13` Command-Palette-First · `14` Terminal / CLI · `15` Chat-First ·
-`41` Conversational Form · `42` Notebook / REPL Cells · `43` Keyboard Inbox ·
-`44` Slash-Command Editor · `45` Live Filter Search · `46` Voice Assistant
+`41` Conversational Form · `42` Notebook / REPL Cells ·
+`43` Keyboard Inbox · `44` Slash-Command Editor · `45` Live Filter Search ·
+`46` Voice Assistant
 
 **Objects & cards — the content is a thing**
 `16` Desktop OS · `17` Card-Deck Swipe · `18` Pinboard Wall ·
@@ -159,14 +232,15 @@ fresh load in the browser.
 `65` Ticker / Stock-Board
 
 **Immersive — cinematic**
-`20` Z-Axis Fly-Through · `21` Grid-to-Detail Morph · `22` Poster / Full-Bleed ·
-`29` Marquee Index · `30` Spotlight Scroll · `56` Parallax Mouse Hero ·
-`57` Diagonal / Skewed Editorial · `58` Particle Starfield Hero · `59` Cursor-Mask Reveal
+`20` Z-Axis Fly-Through · `21` Grid-to-Detail Morph ·
+`22` Poster / Full-Bleed · `29` Marquee Index · `30` Spotlight Scroll ·
+`56` Parallax Mouse Hero · `57` Diagonal / Skewed Editorial ·
+`58` Particle Starfield Hero · `59` Cursor-Mask Reveal
 
 **Slides & frames — presentation layouts**
-`66` KPI Big-Number Slide · `67` Numbered-Steps Slide · `68` 2×2 Quadrant Matrix ·
-`69` Versus / Comparison Slide · `70` Roadmap / Timeline Slide ·
-`71` Title + Section-Divider System
+`66` KPI Big-Number Slide · `67` Numbered-Steps Slide ·
+`68` 2×2 Quadrant Matrix · `69` Versus / Comparison Slide ·
+`70` Roadmap / Timeline Slide · `71` Title + Section-Divider System
 > 16:9 slide *frames* — each renders as a centered slide stage
 > (`aspect-ratio: 16/9`, scales to the viewport). These are layout mechanics
 > for presentation-shaped pages; data *figures* (charts) are info-design
@@ -185,6 +259,7 @@ fresh load in the browser.
 > sheet. `61` pairs a chat rail with a persistent product canvas, `62` is an
 > approve/edit/reject proposal queue, `63` grows a comparison tray from chat
 > mentions.
+<!-- gen:readme-layout-catalog end -->
 
 ---
 
@@ -219,101 +294,138 @@ follows this contract (full detail in `.superpowers/sdd/info-design-recipe.md`):
 
 ## Info-design catalog (36)
 
+<!-- gen:readme-info-catalog start -->
 **Comparison — set side by side**
 
 | # | Chart | Data shape | Best for |
 |---|---|---|---|
-| `i01` | Grouped Bars with Annotation | 4 categories x 2 series | Two-series comparisons, plan-vs-actual |
-| `i02` | Slope Chart | 6 entities x 2 time points | Before/after across many entities, rank shifts |
-| `i03` | Dumbbell / Dot-Range | 8 rows x 2 values, sorted by delta | Gap analysis, before/after by group |
+| `i01` | Grouped Bars with Annotation | 4 categories × 2 series | Two-series category comparisons; plan vs actual |
+| `i02` | Slope Chart | 6 entities × 2 time points | Before/after across many entities; rank shifts |
+| `i03` | Dumbbell / Dot-Range | 8 rows × 2 values, sorted by delta | Gap analysis; before/after by group |
 
 **Trend / Time-series — the shape of change**
 
 | # | Chart | Data shape | Best for |
 |---|---|---|---|
-| `i04` | Line with Confidence Band + Events | 36 monthly points + band, 2 events | KPIs with uncertainty, forecasts, experiments |
-| `i05` | Streamgraph | 5 series x 12 points, stacked offsets | Evolving share of voice/volume |
-| `i06` | Bump Chart | 6 entities x 6 periods of ranks | League positions, brand rankings |
+| `i04` | Line with Confidence Band + Events | 1 series × 36 monthly points + band | KPIs with uncertainty, forecasts, experiments |
+| `i05` | Streamgraph | 5 series × 12 monthly points, stacked | Evolving share of voice/volume |
+| `i06` | Bump Chart | 6 entities × 6 periods of ranks | League positions, brand rankings over time |
 
 **Part-to-whole — composition**
 
 | # | Chart | Data shape | Best for |
 |---|---|---|---|
 | `i07` | Waffle Grid | 3 named segments + remainder, sum to 100 | Shares of a population, survey splits |
-| `i08` | Treemap | 8 leaves x 3 groups, precomputed rects | Budgets, portfolio weights, storage |
+| `i08` | Treemap | 8 leaves across 3 groups, rects precomputed | Budgets, portfolio weights, storage |
 | `i09` | Stacked Bar with Leader Labels | 5 segments of one whole | Single-total breakdowns where each part deserves a sentence |
 
 **Distribution — the shape of the data**
 
 | # | Chart | Data shape | Best for |
 |---|---|---|---|
-| `i10` | Histogram with Summary Stats | ~200 values pre-binned into 20 buckets + n/mean/median/p90 | Response times, prices, scores |
-| `i11` | Ridgeline | 5 groups x 24 precomputed density points | Distributions across groups / time-of-day |
-| `i12` | Beeswarm / Dot Strip | 3 categories x ~40 values, jitter precomputed | Small-n distributions where individual points matter |
+| `i10` | Histogram with Summary Stats | ~200 values pre-binned into 20 buckets | Response times, prices, scores |
+| `i11` | Ridgeline (joyplot) | 5 groups × precomputed density curves | Distributions across groups / time-of-day |
+| `i12` | Beeswarm / Dot Strip | 3 categories × ~40 values, jitter precomputed | Small-n distributions where individual points matter |
 
 **Correlation — how two things move**
 
 | # | Chart | Data shape | Best for |
 |---|---|---|---|
-| `i13` | Annotated Scatter with Trendline | 30 points (x,y) + precomputed regression (m,b,r²) | Two-metric relationships with named exceptions |
-| `i14` | Bubble Quadrant | 12 items (label, x, y, size), x/y in [0,1] | Effort/impact, risk/return, growth/share |
-| `i15` | Connected Scatter | One entity x 12 yearly points (year, x, y) | Two metrics evolving together over time |
+| `i13` | Annotated Scatter with Trendline | 30 points + precomputed regression line | Two-metric relationships with exceptions worth naming |
+| `i14` | Bubble Quadrant | 12 items — {label, x, y, size} | Effort/impact, risk/return, growth/share |
+| `i15` | Connected Scatter | One entity × 12 yearly points | Two metrics evolving together over time |
 
 **Ranking — order matters**
 
 | # | Chart | Data shape | Best for |
 |---|---|---|---|
-| `i16` | Ordered Bars with Highlight | 10 items (label, v, focal) sorted desc | "Where do we stand" rankings |
-| `i17` | Lollipop with Benchmark | 12 items (label, v) + a benchmark value | Targets, SLAs, peer medians |
-| `i18` | League Table with Deltas | 8 rows (name, v, prev) | Leaderboards, portfolios, team metrics |
+| `i16` | Ordered Bars with Highlight | 10 items sorted descending | "Where do we stand" rankings |
+| `i17` | Lollipop with Benchmark | 12 items + a single benchmark value | Targets, SLAs, peer medians |
+| `i18` | League Table with Deltas | 8 rows (name, v, prev) | Leaderboards, portfolio tables, team metrics |
 
 **Flow & process — where things go**
 
 | # | Chart | Data shape | Best for |
 |---|---|---|---|
-| `i19` | Sankey | 3 sources → 4 targets, node y-extents + ribbon bands precomputed | Traffic sources → outcomes, budget/energy flows |
-| `i20` | Funnel | 5 stages (label, n) descending | Signup/checkout funnels, pipeline stages |
-| `i21` | Chord Diagram | 5 entities, symmetric flow matrix, arc angles precomputed | Migrations, trade, who-talks-to-whom |
+| `i19` | Sankey | 3 sources → 4 targets | Traffic sources → outcomes, budget flows, energy |
+| `i20` | Funnel | 5 stages, descending | Signup/checkout funnels, pipeline stages |
+| `i21` | Chord Diagram | 5 entities, symmetric flow matrix | Migrations, trade, who-talks-to-whom |
 
 **Hierarchy & network — structure**
 
 | # | Chart | Data shape | Best for |
-| --- | --- | --- | --- |
-| `i22` | Radial Tree | Root + 2 levels, polar coords precomputed | Org/topic structures with a focal branch |
-| `i23` | Network Graph | 14 nodes + 18 links, positions precomputed | Collaboration, dependencies, influence maps |
-| `i24` | Icicle / Partition | 3-depth hierarchy, spans precomputed (x0,x1) | File sizes, budget trees, taxonomy weights |
+|---|---|---|---|
+| `i22` | Radial Tree | root + 2 levels (6 branches × 2–4 leaves) | Org/topic structures with a focal branch |
+| `i23` | Network Graph | 14 nodes, 18 links, positions precomputed | Collaboration, dependencies, influence maps |
+| `i24` | Icicle / Partition | 3-depth hierarchy, spans precomputed | File sizes, budget trees, taxonomy weights |
 
 **Table & heatmap — dense and exact**
 
 | # | Chart | Data shape | Best for |
-| --- | --- | --- | --- |
-| `i25` | Calendar Heatmap | 52 weeks × 7 days of counts (deterministic) | Activity rhythms, habit/commit data |
-| `i26` | Matrix Heatmap with Marginals | 8×6 matrix + row/col totals | Confusion matrices, region×product, time×channel |
-| `i27` | Sparkline Table | 6 rows (name, series[12], current, prev) | Metric overviews, watchlists |
+|---|---|---|---|
+| `i25` | Calendar Heatmap | 52 weeks × 7 days of counts | Activity rhythms, habit/commit data |
+| `i26` | Matrix Heatmap with Marginals | 8 rows × 6 cols matrix + totals | Confusion matrices, region×product, time×channel |
+| `i27` | Sparkline Table | 6 rows — {name, series[12], current, prev} | Metric overviews, watchlists |
 
 **Geospatial — where**
 
 | # | Chart | Data shape | Best for |
-| --- | --- | --- | --- |
-| `i28` | Tile-Grid Cartogram | 24 regions (code, label, col, row, v) | Per-region rates where area shouldn't dominate |
-| `i29` | Proportional Symbol Map | Coastline path + 10 locations (label, x, y, v) | Quantities at places (sales by city, outbreaks) |
-| `i30` | Flow Map | Coastline path + 1 origin → 6 destinations | Shipments, migration, network traffic |
+|---|---|---|---|
+| `i28` | Tile-Grid Cartogram | 24 regions — {code, label, col, row, v} | Per-region rates where area shouldn’t dominate |
+| `i29` | Proportional Symbol Map | coastline path + 10 locations | Quantities at places (sales by city, outbreaks) |
+| `i30` | Flow Map | coastline path + 1 origin + 6 destinations | Shipments, migration, network traffic |
 
 **Pictorial — data made human**
 
 | # | Chart | Data shape | Best for |
-| --- | --- | --- | --- |
-| `i31` | Icon-Array Pictograph | {k, n} + a two-group comparison pair | Risk communication, survey shares, "1 in N" |
-| `i32` | Proportional-Area Shapes | 4 items (label, v) + shape flag | Magnitude gaps too big for bars |
-| `i33` | Annotated Big-Number Story | 1 hero stat + 3 facts + 12-point sparkline | Report leads, posters, exec one-pagers |
+|---|---|---|---|
+| `i31` | Icon-Array Pictograph | {k, n} rate + a two-group comparison pair | Risk communication, survey shares, "1 in N" |
+| `i32` | Proportional-Area Shapes | 4 items + a shape flag | Magnitude gaps too big for bars |
+| `i33` | Annotated Big-Number Story | 1 hero stat + 3 support facts + sparkline | Report leads, posters, exec one-pagers |
 
 **Dashboard & multi-chart — the whole picture**
 
 | # | Chart | Data shape | Best for |
-| --- | --- | --- | --- |
-| `i34` | KPI Dashboard | 4 KPIs (label, v, prev, series[12]) + main series + breakdown | Weekly ops reviews, product health |
+|---|---|---|---|
+| `i34` | KPI Dashboard | 4 KPIs + 1 main series + breakdown | Weekly ops reviews, product health |
 | `i35` | Small Multiples | 12 series × 12 points, shared y-scale | Regions/products over time without spaghetti |
-| `i36` | Narrative Dashboard | Main series + 4 numbered annotations (x-range targets) | Post-mortems, monthly narratives, board packs |
+| `i36` | Narrative Dashboard | 1 main series (24 points) + 4 annotations | Post-mortems, monthly narratives, board packs |
+<!-- gen:readme-info-catalog end -->
+
+---
+
+## Facets — the cross-cutting filter
+
+Facets are a closed 15-value vocabulary defined in `tools/canon/facets.json`;
+the array order there is the on-screen chip order in `index.html`. Every one
+of the 107 catalog items carries at least one facet, so no card is
+unreachable through the filter. Checker rule R12 enforces four things: each
+item carries ≥1 facet, every value used is in the closed set, no facet is
+carried by zero items, and every facet spans ≥2 categories — a facet confined
+to a single category would just duplicate the left rail, which already
+partitions the library by category. `index.html?f=mobile` opens the gallery
+pre-filtered to that facet; multiple values OR together, e.g.
+`?f=mobile,gallery`. Facets are separate from the per-card `tags`: tags are
+flavour text on the catalog listing, facets are the filter axis, and the two
+vocabularies are not interchangeable.
+
+<!-- gen:readme-facets start -->
+- `mobile` — phone-shaped: sheets, tab bars, tap, swipe
+- `conversational` — chat, voice or agent is the interface
+- `keyboard-driven` — driven by typing or keys, not pointing
+- `playful` — toy-like, game-like, characterful
+- `animated` — motion carries meaning, not decoration
+- `narrative` — meant to be read start-to-finish
+- `dashboard` — many metrics at a glance
+- `before/after` — explicit A-vs-B or then-vs-now
+- `ranking` — order or leaderboard is the point
+- `geospatial` — place, maps, coordinates
+- `hierarchy` — nested, tree, parent-child
+- `time` — a time axis is central
+- `editorial` — typographic, publication-like
+- `gallery` — browsing a visual collection
+- `commerce` — buying, checkout, loyalty
+<!-- gen:readme-facets end -->
 
 ---
 

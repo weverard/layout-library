@@ -13,7 +13,14 @@
   RE-SKIN    Per-room --tone; GRID dims set the world size.
 -->
 <style>
-  :root{--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  :root{
+    --accent:#000; --accent-ink:#fff;
+    --bg:#fff; --surface:#fff; --ink:#000; --muted:#666; --line:rgba(0,0,0,.12);
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);height:100vh;overflow:hidden;background:#000;-webkit-font-smoothing:antialiased}
 

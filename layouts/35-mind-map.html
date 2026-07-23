@@ -18,11 +18,13 @@
 -->
 <style>
   :root{
-    --bg:#F4F4F2; --surface:#fff; --ink:#16161a; --muted:#6b6f76;
-    --line:rgba(20,20,26,.14); --accent:#DB2777;
+    --accent:#DB2777; --accent-ink:#fff;
+    --bg:#F4F4F2; --surface:#fff; --ink:#16161a; --muted:#6b6f76; --line:rgba(20,20,26,.14);
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
     --accent-light:rgba(219,39,119,.08); --accent-border:rgba(219,39,119,.35);
-    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh}

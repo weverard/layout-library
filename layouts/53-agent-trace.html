@@ -18,21 +18,15 @@
              collapses to single column on screens below 600px.
 -->
 <style>
-  :root {
-    --bg: #F5F5F3;
-    --surface: #ffffff;
-    --ink: #141417;
-    --muted: #72737c;
-    --line: rgba(20,20,23,.10);
-    --accent: #059669;
-    --accent-bg: #ecfdf5;
-    --accent-muted: #6ee7b7;
-    --user-bg: #1a1a1f;
-    --user-ink: #f0f0ee;
-    --trace-bg: #f8faf9;
-    --tool-bg: #f0fdf8;
-    --sans: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono: ui-monospace,SFMono-Regular,Menlo,monospace;
+  :root{
+    --accent:#059669; --accent-ink:#fff;
+    --bg:#F5F5F3; --surface:#ffffff; --ink:#141417; --muted:#72737c; --line:rgba(20,20,23,.10);
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+    --accent-bg:#ecfdf5; --accent-muted:#6ee7b7; --user-bg:#1a1a1f;
+    --user-ink:#f0f0ee; --trace-bg:#f8faf9; --tool-bg:#f0fdf8;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -589,8 +583,8 @@
   }
 
   /* ── escape helper ── */
-  function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   /* ── wire up ── */

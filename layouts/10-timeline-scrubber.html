@@ -14,10 +14,13 @@
 -->
 <style>
   :root{
-    --bg:#0f1117; --panel:#161922; --ink:#EAECF2; --muted:#9498a6; --line:rgba(255,255,255,.13);
-    --accent:#FFC34D;
-    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --accent:#FFC34D; --accent-ink:#fff;
+    --bg:#0f1117; --surface:#fff; --ink:#EAECF2; --muted:#9498a6; --line:rgba(255,255,255,.13);
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+    --panel:#161922;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);background:var(--bg);color:var(--ink);height:100vh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}

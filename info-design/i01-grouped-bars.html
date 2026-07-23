@@ -14,12 +14,11 @@
 -->
 <style>
   :root{
-    --accent:#B45309;
-    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+    --accent:#B45309; --accent-ink:#fff;
+    --bg:#FBFAF8; --surface:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
     --pos:var(--accent); --neg:#B3261E;
     --serif:Georgia,"Times New Roman",serif;
-    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
-    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif; --mono:ui-monospace,"SF Mono",Menlo,monospace;
     --s1:8px; --s2:14px; --s3:24px; --s4:40px;
   }
   *{box-sizing:border-box}
@@ -72,7 +71,7 @@
   dd{color:var(--muted);margin:2px 0 0}
   .tags{margin:var(--s2) 0 0;display:flex;flex-wrap:wrap;gap:6px;padding:0}
   .tags span{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
-  .prompt{margin-top:var(--s3);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .prompt{margin-top:var(--s3);background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
   .prompt-head b{font-size:13px;font-weight:600}
   #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);

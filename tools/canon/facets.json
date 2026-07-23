@@ -1,0 +1,19 @@
+{
+  "facets": [
+    { "key": "mobile",          "label": "mobile",          "blurb": "phone-shaped: sheets, tab bars, tap, swipe" },
+    { "key": "conversational",  "label": "conversational",  "blurb": "chat, voice or agent is the interface" },
+    { "key": "keyboard-driven", "label": "keyboard-driven", "blurb": "driven by typing or keys, not pointing" },
+    { "key": "playful",         "label": "playful",         "blurb": "toy-like, game-like, characterful" },
+    { "key": "animated",        "label": "animated",        "blurb": "motion carries meaning, not decoration" },
+    { "key": "narrative",       "label": "narrative",       "blurb": "meant to be read start-to-finish" },
+    { "key": "dashboard",       "label": "dashboard",       "blurb": "many metrics at a glance" },
+    { "key": "before/after",    "label": "before/after",    "blurb": "explicit A-vs-B or then-vs-now" },
+    { "key": "ranking",         "label": "ranking",         "blurb": "order or leaderboard is the point" },
+    { "key": "geospatial",      "label": "geospatial",      "blurb": "place, maps, coordinates" },
+    { "key": "hierarchy",       "label": "hierarchy",       "blurb": "nested, tree, parent-child" },
+    { "key": "time",            "label": "time",            "blurb": "a time axis is central" },
+    { "key": "editorial",       "label": "editorial",       "blurb": "typographic, publication-like" },
+    { "key": "gallery",         "label": "gallery",         "blurb": "browsing a visual collection" },
+    { "key": "commerce",        "label": "commerce",        "blurb": "buying, checkout, loyalty" }
+  ]
+}

@@ -12,94 +12,575 @@
   RE-SKIN     --accent = the selected-state color for verb cards, question
               pills, and links. Grids collapse to 2 then 1 column under ~760/460px.
 -->
+<style id="wb-base-ui" data-wb-version="1.0.0">
+/* ============================================================
+   wb-base-ui · TOKENS  (the theme layer)
+   This is the ONLY file you edit per project.
+   Change colours, radius, and density here. Never touch components.css.
+   Re-declare [data-theme="dark"] on any container to theme a single
+   canvas panel independently.
+   ============================================================ */
+
+:root {
+  /* ---- Palette (edit these per project) ---- */
+  --wb-color-bg:              #ffffff;
+  --wb-color-surface:         #ffffff;
+  --wb-color-surface-2:       #f5f6f8;
+  --wb-color-border:          #e2e5ea;
+  --wb-color-border-strong:   #c8cdd6;
+  --wb-color-text:            #1a1d23;
+  --wb-color-text-muted:      #626875;
+  --wb-color-text-subtle:     #6b7280;  /* AA-normal 4.83:1 on bg */
+
+  --wb-color-primary:         #2b59ff;
+  --wb-color-primary-hover:   #1e46d6;
+  --wb-color-primary-active:  #1839b0;
+  --wb-color-on-primary:      #ffffff;
+
+  --wb-color-danger:          #d92d20;
+  --wb-color-danger-hover:    #b42318;
+  --wb-color-on-danger:       #ffffff;
+
+  --wb-color-success:         #128a50;
+  --wb-color-warning:         #b25a00;
+
+  --wb-color-focus-ring:      color-mix(in srgb, var(--wb-color-primary) 45%, transparent);
+
+  /* ---- Radius (edit for softer/sharper look) ---- */
+  --wb-radius-sm:  6px;
+  --wb-radius-md:  10px;
+  --wb-radius-lg:  16px;
+  --wb-radius-full: 999px;
+
+  /* ---- Spacing scale (4px base) ---- */
+  --wb-space-1: 4px;
+  --wb-space-2: 8px;
+  --wb-space-3: 12px;
+  --wb-space-4: 16px;
+  --wb-space-5: 20px;
+  --wb-space-6: 24px;
+  --wb-space-8: 32px;
+
+  /* ---- Typography ---- */
+  --wb-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --wb-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --wb-text-xs:   0.75rem;   /* 12 */
+  --wb-text-sm:   0.875rem;  /* 14 */
+  --wb-text-md:   1rem;      /* 16 */
+  --wb-text-lg:   1.125rem;  /* 18 */
+  --wb-text-xl:   1.375rem;  /* 22 */
+
+  --wb-weight-normal:   400;
+  --wb-weight-medium:   500;
+  --wb-weight-semibold: 600;
+
+  --wb-leading-tight: 1.25;
+  --wb-leading-normal: 1.5;
+
+  /* ---- Elevation ---- */
+  --wb-shadow-sm: 0 1px 2px rgba(16,20,28,0.06), 0 1px 1px rgba(16,20,28,0.04);
+  --wb-shadow-md: 0 4px 12px rgba(16,20,28,0.10), 0 2px 4px rgba(16,20,28,0.06);
+
+  /* ---- Controls (density knob) ----
+     md = 44px meets Apple HIG minimum tap target (44pt).
+     sm = 36px is for pointer/dense desktop contexts only — not primary
+     touch targets. lg for prominent CTAs. */
+  --wb-control-h-sm: 36px;
+  --wb-control-h-md: 44px;
+  --wb-control-h-lg: 52px;
+  --wb-control-pad-x: var(--wb-space-4);
+  /* Minimum tap target enforced on checkable rows regardless of glyph size. */
+  --wb-tap-min: 44px;
+
+  /* ---- Motion ---- */
+  --wb-transition: 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ---- Dark theme ----
+   Apply on <html data-theme="dark"> for a whole page,
+   or on any container for a single canvas panel. */
+[data-theme="dark"] {
+  --wb-color-bg:              #0e1116;
+  --wb-color-surface:         #161a21;
+  --wb-color-surface-2:       #1e232c;
+  --wb-color-border:          #2a303a;
+  --wb-color-border-strong:   #3a414d;
+  --wb-color-text:            #eef1f5;
+  --wb-color-text-muted:      #a4abb8;
+  --wb-color-text-subtle:     #7f8794;  /* AA-normal 5.22:1 on dark bg */
+
+  --wb-color-primary:         #5b82ff;
+  --wb-color-primary-hover:   #7091ff;
+  --wb-color-primary-active:  #90a8ff;
+  --wb-color-on-primary:      #0b1020;
+
+  --wb-color-danger:          #f0554a;
+  --wb-color-danger-hover:    #ff6d63;
+  --wb-color-on-danger:       #1a0a08;
+
+  --wb-color-success:         #35c67f;
+  --wb-color-warning:         #e39a3a;
+
+  --wb-shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --wb-shadow-md: 0 4px 14px rgba(0,0,0,0.5);
+}
+
+/* ============================================================
+   wb-base-ui · COMPONENTS  (the atoms)
+   DO NOT EDIT per project. Every colour/size comes from tokens.css.
+   Editing this file breaks the cross-file consistency guarantee.
+   All classes are prefixed `wb-` to avoid collisions on merge.
+   Scope: buttons, form controls, cards/panels, badges/chips.
+   Intentionally NO layout/nav — layout stays yours.
+   ============================================================ */
+
+/* ---- Shared control resets ---- */
+.wb-btn,
+.wb-input,
+.wb-textarea,
+.wb-select {
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-sm);
+  color: var(--wb-color-text);
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   BUTTONS
+   .wb-btn  +  --primary | --secondary | --ghost | --danger
+             +  --sm | --lg   (default is md)
+   ============================================================ */
+.wb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wb-space-2);
+  height: var(--wb-control-h-md);
+  padding: 0 var(--wb-control-pad-x);
+  border: 1px solid transparent;
+  border-radius: var(--wb-radius-md);
+  font-weight: var(--wb-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--wb-transition), border-color var(--wb-transition),
+              color var(--wb-transition), box-shadow var(--wb-transition);
+}
+.wb-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wb-color-focus-ring);
+}
+.wb-btn:disabled,
+.wb-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.wb-btn svg { width: 1.05em; height: 1.05em; flex: none; }
+
+/* sizes */
+.wb-btn--sm { height: var(--wb-control-h-sm); padding: 0 var(--wb-space-3); font-size: var(--wb-text-xs); }
+.wb-btn--lg { height: var(--wb-control-h-lg); padding: 0 var(--wb-space-6); font-size: var(--wb-text-md); }
+
+/* variants */
+.wb-btn--primary {
+  background: var(--wb-color-primary);
+  color: var(--wb-color-on-primary);
+}
+.wb-btn--primary:hover { background: var(--wb-color-primary-hover); }
+.wb-btn--primary:active { background: var(--wb-color-primary-active); }
+
+.wb-btn--secondary {
+  background: var(--wb-color-surface);
+  color: var(--wb-color-text);
+  border-color: var(--wb-color-border-strong);
+}
+.wb-btn--secondary:hover { background: var(--wb-color-surface-2); }
+
+.wb-btn--ghost {
+  background: transparent;
+  color: var(--wb-color-text);
+}
+.wb-btn--ghost:hover { background: var(--wb-color-surface-2); }
+
+.wb-btn--danger {
+  background: var(--wb-color-danger);
+  color: var(--wb-color-on-danger);
+}
+.wb-btn--danger:hover { background: var(--wb-color-danger-hover); }
+
+/* ============================================================
+   FORM FIELDS
+   Wrap in .wb-field for label + control + help stacking.
+   ============================================================ */
+.wb-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-space-2);
+}
+.wb-label {
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-sm);
+  font-weight: var(--wb-weight-medium);
+  color: var(--wb-color-text);
+}
+.wb-help {
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-xs);
+  color: var(--wb-color-text-muted);
+}
+.wb-help--error { color: var(--wb-color-danger); }
+
+.wb-input,
+.wb-textarea,
+.wb-select {
+  width: 100%;
+  height: var(--wb-control-h-md);
+  padding: 0 var(--wb-space-3);
+  /* 16px prevents iOS Safari auto-zoom on focus. Do not lower below 16px. */
+  font-size: var(--wb-text-md);
+  background: var(--wb-color-surface);
+  border: 1px solid var(--wb-color-border-strong);
+  border-radius: var(--wb-radius-md);
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--wb-transition), box-shadow var(--wb-transition);
+}
+.wb-textarea {
+  height: auto;
+  min-height: calc(var(--wb-control-h-md) * 2);
+  padding: var(--wb-space-3);
+  resize: vertical;
+  line-height: var(--wb-leading-normal);
+}
+.wb-input::placeholder,
+.wb-textarea::placeholder { color: var(--wb-color-text-subtle); }
+
+.wb-input:focus,
+.wb-textarea:focus,
+.wb-select:focus {
+  outline: none;
+  border-color: var(--wb-color-primary);
+  box-shadow: 0 0 0 3px var(--wb-color-focus-ring);
+}
+.wb-input:disabled,
+.wb-textarea:disabled,
+.wb-select:disabled {
+  background: var(--wb-color-surface-2);
+  color: var(--wb-color-text-subtle);
+  cursor: not-allowed;
+}
+.wb-input--error,
+.wb-textarea--error,
+.wb-select--error { border-color: var(--wb-color-danger); }
+
+/* native select chevron */
+.wb-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: var(--wb-space-8);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23888' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--wb-space-3) center;
+  background-size: 12px;
+}
+
+/* ---- Checkbox & radio (accessible, styles the native input) ---- */
+.wb-check,
+.wb-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-2);
+  min-height: var(--wb-tap-min);   /* whole row is a 44px tap target */
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-sm);
+  color: var(--wb-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.wb-check input,
+.wb-radio input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 1.5px solid var(--wb-color-border-strong);
+  background: var(--wb-color-surface);
+  cursor: pointer;
+  flex: none;
+  transition: background var(--wb-transition), border-color var(--wb-transition);
+}
+.wb-check input { border-radius: var(--wb-radius-sm); }
+.wb-radio input { border-radius: var(--wb-radius-full); }
+.wb-check input:checked,
+.wb-radio input:checked {
+  background: var(--wb-color-primary);
+  border-color: var(--wb-color-primary);
+}
+.wb-check input:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.6 9.5 3.6' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.wb-radio input:checked { box-shadow: inset 0 0 0 3.5px var(--wb-color-surface); }
+.wb-check input:focus-visible,
+.wb-radio input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wb-color-focus-ring);
+}
+
+/* ---- Switch / toggle ---- */
+.wb-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-2);
+  min-height: var(--wb-tap-min);   /* 44px tap row */
+  cursor: pointer;
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-sm);
+  color: var(--wb-color-text);
+  -webkit-tap-highlight-color: transparent;
+}
+.wb-switch input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: var(--wb-radius-full);
+  background: var(--wb-color-border-strong);
+  cursor: pointer;
+  flex: none;
+  transition: background var(--wb-transition);
+}
+.wb-switch input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--wb-radius-full);
+  background: #fff;
+  box-shadow: var(--wb-shadow-sm);
+  transition: transform var(--wb-transition);
+}
+.wb-switch input:checked { background: var(--wb-color-primary); }
+.wb-switch input:checked::after { transform: translateX(18px); }
+.wb-switch input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wb-color-focus-ring);
+}
+
+/* ============================================================
+   CARDS / PANELS
+   ============================================================ */
+.wb-card {
+  background: var(--wb-color-surface);
+  border: 1px solid var(--wb-color-border);
+  border-radius: var(--wb-radius-lg);
+  box-shadow: var(--wb-shadow-sm);
+  overflow: hidden;
+  font-family: var(--wb-font-sans);
+  color: var(--wb-color-text);
+}
+.wb-card__header,
+.wb-card__body,
+.wb-card__footer { padding: var(--wb-space-5); }
+.wb-card__header { border-bottom: 1px solid var(--wb-color-border); }
+.wb-card__footer {
+  border-top: 1px solid var(--wb-color-border);
+  background: var(--wb-color-surface-2);
+  display: flex;
+  gap: var(--wb-space-3);
+  justify-content: flex-end;
+}
+.wb-card__title {
+  margin: 0;
+  font-size: var(--wb-text-lg);
+  font-weight: var(--wb-weight-semibold);
+  line-height: var(--wb-leading-tight);
+}
+.wb-card__subtitle {
+  margin: var(--wb-space-1) 0 0;
+  font-size: var(--wb-text-sm);
+  color: var(--wb-color-text-muted);
+}
+
+/* Flat panel variant (no shadow) for dense canvas surfaces */
+.wb-panel {
+  background: var(--wb-color-surface);
+  border: 1px solid var(--wb-color-border);
+  border-radius: var(--wb-radius-md);
+  padding: var(--wb-space-4);
+  font-family: var(--wb-font-sans);
+  color: var(--wb-color-text);
+}
+
+/* ============================================================
+   BADGES / CHIPS
+   .wb-badge + --primary | --success | --warning | --danger | --neutral
+   ============================================================ */
+.wb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-1);
+  padding: 2px var(--wb-space-2);
+  border-radius: var(--wb-radius-full);
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-xs);
+  font-weight: var(--wb-weight-medium);
+  line-height: 1.4;
+  background: var(--wb-color-surface-2);
+  color: var(--wb-color-text-muted);
+}
+.wb-badge--primary { background: color-mix(in srgb, var(--wb-color-primary) 14%, transparent); color: var(--wb-color-primary); }
+.wb-badge--success { background: color-mix(in srgb, var(--wb-color-success) 14%, transparent); color: var(--wb-color-success); }
+.wb-badge--warning { background: color-mix(in srgb, var(--wb-color-warning) 16%, transparent); color: var(--wb-color-warning); }
+.wb-badge--danger  { background: color-mix(in srgb, var(--wb-color-danger)  14%, transparent); color: var(--wb-color-danger); }
+
+/* Chip = interactive/removable badge */
+.wb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-space-2);
+  height: var(--wb-control-h-sm);
+  padding: 0 var(--wb-space-3);
+  border: 1px solid var(--wb-color-border-strong);
+  border-radius: var(--wb-radius-full);
+  background: var(--wb-color-surface);
+  font-family: var(--wb-font-sans);
+  font-size: var(--wb-text-xs);
+  color: var(--wb-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--wb-transition), border-color var(--wb-transition);
+}
+.wb-chip:hover { background: var(--wb-color-surface-2); }
+.wb-chip[aria-pressed="true"] {
+  background: var(--wb-color-primary);
+  border-color: var(--wb-color-primary);
+  color: var(--wb-color-on-primary);
+}
+
+/* ---- Respect reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .wb-btn, .wb-input, .wb-textarea, .wb-select,
+  .wb-check input, .wb-radio input, .wb-switch input,
+  .wb-switch input::after, .wb-chip { transition: none; }
+}
+</style>
 <style>
-  :root{
-    --accent:#9333EA;
-    --bg:#FBFAF8; --panel:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
-    --pos:var(--accent); --neg:#B3261E;
-    --serif:Georgia,"Times New Roman",serif;
-    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
-    --mono:ui-monospace,"SF Mono",Menlo,monospace;
-    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+/* ============================================================
+   Project look — palette overrides only (wb-base-ui components.css
+   above is byte-identical and untouched; theme lives here).
+   ============================================================ */
+:root{
+  --wb-color-bg:#FBFAF8;
+  --wb-color-surface:#FFFFFF;
+  --wb-color-text:#191919;
+  --wb-color-text-muted:#6E6A63;
+  --wb-color-border:#E5E1D8;
+  --wb-color-primary:#4F46E5;
+}
 
-  .fig{width:min(880px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
-  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
-    line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
-  .dek{color:var(--muted);font-size:15px;max-width:64ch;margin:0 0 var(--s4)}
+/* ============================================================
+   Chooser-specific layout — local tokens + step/grid CSS.
+   Bespoke button/chip/card rules removed; .wb-btn/.wb-chip/.wb-card
+   from the atoms layer above supply those now.
+   ============================================================ */
+:root{
+  --accent:#9333EA;
+  --bg:#FBFAF8; --surface:#FFFFFF; --ink:#191919; --muted:#6E6A63; --line:#E5E1D8;
+  --pos:var(--accent); --neg:#B3261E;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
 
-  .step-label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.fig{width:min(880px,94vw);margin:0 auto;padding:var(--s4) 0 var(--s3)}
+/* Uppercase letter-spaced labels (.kicker, .step-label, .rec-cat) are kept:
+   .kicker is the library-wide masthead signature carried by index.html and
+   all 107 scaffolds, and .step-label is a wizard step indicator doing real
+   navigational work, not an eyebrow. All three predate this re-skin.
+   DEBT: they use three different tracking values (.14 / .1 / .08em) — house
+   value is .14em; worth reconciling in a pass that owns the type scale. */
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(23px,3.4vw,31px);
+  line-height:1.18;letter-spacing:-.005em;margin:8px 0 8px}
+.dek{color:var(--muted);font-size:15px;max-width:64ch;margin:0 0 var(--s4)}
 
-  .verb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  @media (max-width:760px){.verb-grid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:460px){.verb-grid{grid-template-columns:1fr}}
+.step-label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
 
-  .verb-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--panel);
-    cursor:pointer;text-align:left;font:inherit;color:inherit;display:block;width:100%;
-    transition:border-color .15s,transform .15s,box-shadow .15s}
-  .verb-card:hover{border-color:var(--accent);transform:translateY(-1px)}
-  .verb-card.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-  .verb-card svg{width:26px;height:26px;color:var(--muted);margin-bottom:10px;display:block;
-    stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .verb-card.on svg{color:var(--accent)}
-  .verb-card .ring-bg{stroke:var(--line);stroke-width:5;fill:none}
-  .verb-card .ring-fg{stroke:currentColor;stroke-width:5;fill:none;stroke-linecap:round}
-  .verb-card .vlabel{font-weight:600;font-size:14.5px;color:var(--ink);text-transform:capitalize;margin:0 0 4px}
-  .verb-card .vdef{font-size:12.5px;color:var(--muted);line-height:1.4;margin:0}
+.verb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:760px){.verb-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:460px){.verb-grid{grid-template-columns:1fr}}
 
-  #step2{margin-top:var(--s4);padding-top:var(--s3);border-top:1px solid var(--line)}
-  #step2, #results{animation:fadein .25s ease}
-  @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-  @media (prefers-reduced-motion:reduce){#step2,#results{animation:none}}
+/* .verb-card layers on top of .wb-card (background/border/radius/shadow) —
+   this local class supplies the grid-item shape, icon coloring, and
+   selected-ring state. Kept as a card, not a chip: each option carries an
+   SVG progress ring plus a label and a definition line. */
+.verb-card{padding:16px;cursor:pointer;text-align:left;font:inherit;color:inherit;display:block;width:100%;
+  transition:border-color .15s,transform .15s,box-shadow .15s}
+.verb-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.verb-card.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.verb-card svg{width:26px;height:26px;color:var(--muted);margin-bottom:10px;display:block;
+  stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.verb-card.on svg{color:var(--accent)}
+.verb-card .ring-bg{stroke:var(--line);stroke-width:5;fill:none}
+.verb-card .ring-fg{stroke:currentColor;stroke-width:5;fill:none;stroke-linecap:round}
+.verb-card .vlabel{font-weight:600;font-size:14.5px;color:var(--ink);text-transform:capitalize;margin:0 0 4px}
+.verb-card .vdef{font-size:12.5px;color:var(--muted);line-height:1.4;margin:0}
 
-  .reset{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;
-    border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);margin-bottom:var(--s3);
-    transition:border-color .15s,color .15s}
-  .reset:hover{border-color:var(--ink);color:var(--ink)}
+#step2{margin-top:var(--s4);padding-top:var(--s3);border-top:1px solid var(--line)}
+#step2, #results{animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){#step2,#results{animation:none}}
 
-  .q-group{margin-bottom:var(--s3)}
-  .q-group .qlabel{font-size:14px;color:var(--ink);margin:0 0 8px;font-weight:600}
-  .q-options{display:flex;gap:8px;flex-wrap:wrap}
-  .q-option{font-family:var(--sans);font-size:13px;border:1px solid var(--line);background:#fff;
-    border-radius:999px;padding:7px 16px;cursor:pointer;color:var(--ink);
-    transition:border-color .15s,background .15s,color .15s}
-  .q-option:hover{border-color:var(--accent)}
-  .q-option.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.reset{margin-bottom:var(--s3)}
 
-  #results{margin-top:var(--s3)}
-  .rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  @media (max-width:760px){.rec-grid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:460px){.rec-grid{grid-template-columns:1fr}}
-  .rec-card{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--panel);
-    display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;
-    transition:border-color .15s,transform .15s,box-shadow .15s}
-  .rec-card:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.07)}
-  .rec-cat{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-  .rec-title{font-family:var(--serif);font-size:17px;margin:0;line-height:1.25}
-  .rec-shape{font-size:12px;color:var(--muted);font-family:var(--mono)}
-  .rec-why{font-size:13px;color:var(--ink);line-height:1.45;margin-top:2px}
-  .rec-link{font-size:12.5px;color:var(--accent);font-weight:600;margin-top:6px}
+.q-group{margin-bottom:var(--s3)}
+.q-group .qlabel{font-size:14px;color:var(--ink);margin:0 0 8px;font-weight:600}
+.q-options{display:flex;gap:8px;flex-wrap:wrap}
 
-  .source{color:var(--muted);font-size:12.5px;margin:var(--s3) 0 0}
+#results{margin-top:var(--s3)}
+.rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:760px){.rec-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:460px){.rec-grid{grid-template-columns:1fr}}
+/* .rec-card layers on top of .wb-card for the same reason as .verb-card
+   above: local class for content flex layout + hover lift, wb-card for
+   the surface/border/shadow. */
+.rec-card{padding:16px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;
+  transition:border-color .15s,transform .15s,box-shadow .15s}
+.rec-card:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.07)}
+.rec-cat{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.rec-title{font-family:var(--serif);font-size:17px;margin:0;line-height:1.25}
+.rec-shape{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.rec-why{font-size:13px;color:var(--ink);line-height:1.45;margin-top:2px}
+.rec-link{font-size:12.5px;color:var(--accent);font-weight:600;margin-top:6px}
 
-  details.spec{width:min(880px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
-  summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
-  summary:hover{color:var(--ink)}
-  .prompt-dek{color:var(--muted);font-size:14px;margin:var(--s2) 0 0}
-  .prompt{margin-top:var(--s2);background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
-  .prompt-head b{font-size:13px;font-weight:600}
-  #copy{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink);
-    border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
-  #copy:hover{border-color:var(--ink)}
-  #prompt-text{margin:0;padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink);max-height:340px;overflow:auto}
+.source{color:var(--muted);font-size:12.5px;margin:var(--s3) 0 0}
 
-  .scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
-  .scaffold a{color:#fff;opacity:.6}
-  .scaffold a:hover{opacity:1}
+details.spec{width:min(880px,94vw);margin:0 auto var(--s4);padding-top:var(--s2);border-top:1px solid var(--line)}
+summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+summary:hover{color:var(--ink)}
+.prompt-dek{color:var(--muted);font-size:14px;margin:var(--s2) 0 0}
+.prompt{margin-top:var(--s2)}
+.prompt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.prompt-head b{font-size:13px;font-weight:600}
+#prompt-text{margin:0;padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink);max-height:340px;overflow:auto}
+
+.scaffold{position:fixed;right:16px;bottom:16px;z-index:9;background:#000;color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-family:var(--mono)}
+.scaffold a{color:#fff;opacity:.6}
+.scaffold a:hover{opacity:1}
 </style>
 </head>
 <body>
@@ -117,7 +598,7 @@
   </section>
 
   <section id="step2" hidden>
-    <button class="reset" id="resetBtn" type="button">&larr; Start over</button>
+    <button class="reset wb-btn wb-btn--secondary wb-btn--sm" id="resetBtn" type="button">&larr; Start over</button>
     <p class="step-label" id="step2Label">Step 2 — one more question</p>
     <div class="q-groups" id="qGroups"></div>
   </section>
@@ -133,8 +614,8 @@
 <details class="spec" open>
   <summary>Master picker prompt — hand the whole catalog to an assistant</summary>
   <p class="prompt-dek">Skip the two-step picker and paste this straight into a chat with your data. It lists all 36 designs so the assistant can recommend and then build.</p>
-  <div class="prompt">
-    <div class="prompt-head"><b>Picker prompt</b><button id="copy" type="button">Copy prompt</button></div>
+  <div class="prompt wb-card">
+    <div class="prompt-head"><b>Picker prompt</b><button id="copy" class="wb-btn wb-btn--primary wb-btn--sm" type="button">Copy prompt</button></div>
     <pre id="prompt-text"></pre>
   </div>
 </details>
@@ -145,6 +626,7 @@
 (function(){
 
   var CATALOG = [
+    // gen:chooser-catalog start
     {id:'i01', title:'Grouped Bars with Annotation', cat:'Comparison', href:'i01-grouped-bars.html', shape:'4 categories × 2 series', verbs:['compare'], when:'two-series category comparisons; plan vs actual'},
     {id:'i02', title:'Slope Chart', cat:'Comparison', href:'i02-slope.html', shape:'6 entities × 2 time points', verbs:['compare'], when:'before/after across many entities; rank shifts'},
     {id:'i03', title:'Dumbbell / Dot-Range', cat:'Comparison', href:'i03-dumbbell.html', shape:'8 rows × 2 values, sorted by delta', verbs:['compare'], when:'gap analysis; before/after by group'},
@@ -180,7 +662,8 @@
     {id:'i33', title:'Annotated Big-Number Story', cat:'Pictorial', href:'i33-big-number.html', shape:'1 hero stat + 3 support facts + sparkline', verbs:['tell-a-story'], when:'report leads, posters, exec one-pagers'},
     {id:'i34', title:'KPI Dashboard', cat:'Dashboard', href:'i34-kpi-dashboard.html', shape:'4 KPIs + 1 main series + breakdown', verbs:['compare'], when:'weekly ops reviews, product health'},
     {id:'i35', title:'Small Multiples', cat:'Dashboard', href:'i35-small-multiples.html', shape:'12 series × 12 points, shared y-scale', verbs:['compare'], when:'regions/products over time without spaghetti'},
-    {id:'i36', title:'Narrative Dashboard', cat:'Dashboard', href:'i36-narrative-dashboard.html', shape:'1 main series (24 points) + 4 annotations', verbs:['reveal-change'], when:'post-mortems, monthly narratives, board packs'}
+    {id:'i36', title:'Narrative Dashboard', cat:'Dashboard', href:'i36-narrative-dashboard.html', shape:'1 main series (24 points) + 4 annotations', verbs:['reveal-change'], when:'post-mortems, monthly narratives, board packs'},
+    // gen:chooser-catalog end
   ];
 
   var GLYPHS = {
@@ -377,7 +860,7 @@
     VERBS.forEach(function(v){
       var btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'verb-card' + (state.verb === v.id ? ' on' : '');
+      btn.className = 'verb-card wb-card' + (state.verb === v.id ? ' on' : '');
       btn.innerHTML =
         '<svg viewBox="0 0 32 32">' + GLYPHS[v.id] + '</svg>' +
         '<p class="vlabel">' + v.label + '</p>' +
@@ -411,12 +894,13 @@
       q.options.forEach(function(opt){
         var ob = document.createElement('button');
         ob.type = 'button';
-        ob.className = 'q-option';
+        ob.className = 'q-option wb-chip';
+        ob.setAttribute('aria-pressed', 'false');
         ob.textContent = opt.label;
         ob.addEventListener('click', function(){
           state.answers[q.key] = opt.value;
-          Array.prototype.forEach.call(opts.querySelectorAll('.q-option'), function(el){ el.classList.remove('on'); });
-          ob.classList.add('on');
+          Array.prototype.forEach.call(opts.querySelectorAll('.q-option'), function(el){ el.setAttribute('aria-pressed', 'false'); });
+          ob.setAttribute('aria-pressed', 'true');
           renderResults();
         });
         opts.appendChild(ob);
@@ -441,7 +925,7 @@
     ids.forEach(function(id){
       var c = byId[id];
       var a = document.createElement('a');
-      a.className = 'rec-card';
+      a.className = 'rec-card wb-card';
       a.href = c.href;
       a.innerHTML =
         '<p class="rec-cat">' + c.cat + ' · ' + c.id + '</p>' +

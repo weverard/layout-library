@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>01 · Fixture Scaffold — Layout scaffold</title>
+<!--
+  PATTERN    Fixture Pattern
+  NAV MODEL  A minimal nav model for the contract-checker fixture.
+  BEST FOR   Verifying the contract checker against a conforming file.
+  REGIONS    .panel (fixed nav)  |  .content (scrolling column)
+  RE-SKIN    Change --accent. No responsive behavior needed for the fixture.
+-->
+<style>
+  :root{
+    --accent:#4F46E5; --accent-ink:#fff;
+    --surface:#fff; --bg:#FAFAF8; --ink:#16161A; --muted:#6b6f76; --line:rgba(20,20,26,.10);
+    --pos:#2E7D32; --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink)}
+</style>
+</head>
+<body>
+  <main class="content">
+    <p>Fixture body content for the contract checker.</p>
+  </main>
+  <script>
+    var chip = { classList: { add: function(){}, remove: function(){} } };
+    function hideChip(){ chip.classList.remove('active'); }
+  </script>
+
+  <div class="scaffold">01 · fixture &nbsp;<a href="../index.html">↔ gallery</a></div>
+</body>
+</html>
+</invoke>

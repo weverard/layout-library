@@ -19,22 +19,16 @@
              active states. Sidebar collapses under ~820px via hamburger toggle.
 -->
 <style>
-  :root {
-    --bg: #f9f9f9;
-    --surface: #fff;
-    --ink: #0d0d0d;
-    --muted: #6b7280;
-    --line: rgba(0,0,0,.08);
-    --accent: #10A37F;
-    --accent-lt: #e6f7f3;
-    --accent-dk: #0d8f6e;
-    --sidebar-w: 260px;
-    --user-bg: #10A37F;
-    --asst-bg: #fff;
-    --thread-max: 740px;
-    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-    --radius: 12px;
+  :root{
+    --accent:#10A37F; --accent-ink:#fff;
+    --bg:#f9f9f9; --surface:#fff; --ink:#0d0d0d; --muted:#6b7280; --line:rgba(0,0,0,.08);
+    --pos:var(--accent); --neg:#B3261E;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; --mono:ui-monospace, SFMono-Regular, Menlo, monospace;
+    --s1:8px; --s2:14px; --s3:24px; --s4:40px;
+    --accent-lt:#e6f7f3; --accent-dk:#0d8f6e; --sidebar-w:260px;
+    --user-bg:#10A37F; --asst-bg:#fff; --thread-max:740px;
+    --radius:12px;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
